@@ -1,0 +1,26 @@
+function [SpikeAmplitudes, SpikeWaveforms] = GetSpikeAmplitudes(DirectoryName,DataFileName,ChannelNo,SpikeTimes)
+
+if (DirectoryName(end) ~= '/')
+    DirectoryName = [DirectoryName,'/'];
+end
+
+if (ChannelNo(1) ~= 'o')
+    ChannelString = ['obs',num2str(ChannelNo),'r'];
+else
+    ChannelString = ChannelNo;
+end
+
+[RawData,Fs] = soundin_copy(DirectoryName,DataFileName,ChannelString);
+RawData = RawData * 500/32768;
+Times = 0:1/Fs:length(RawData)/Fs;
+Times(end) = [];
+
+SpikeAmplitudes = [];
+SpikeWaveforms = [];
+for i = 1:length(SpikeTimes),
+    Temp = SpikeTimes(i);
+    SpikeIndex = find(Times < Temp,1,'last');
+    if (((SpikeIndex - 32) < 1) || ((SpikeIndex + 63) > length(RawData))
+    SpikeAmplitudes(i,1) = max(RawData((SpikeIndex - 8):(SpikeIndex + 40))) - min(RawData((SpikeIndex - 8):(SpikeIndex + 40)));
+    SpikeWaveforms(i,:) = (RawData((SpikeIndex - 8):(SpikeIndex + 40)));
+end

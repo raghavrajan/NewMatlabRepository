@@ -1,0 +1,76 @@
+function [] = PlotRawWaveforms(DirectoryName, DirFileInfo, UnDirFileInfo, ChannelNo, MainFigure)
+
+figure(MainFigure);
+axes('Position',[0.15 0.15 0.75 0.75]);
+set(gca,'Box','off');
+hold on;
+MaxRawData = 0;
+
+if (length(DirFileInfo.RecordLengths) > 0)
+    if (size(DirFileInfo.Syllables.Start,1) > 3)
+        NoofSongs = 3;
+    else
+        NoofSongs = size(DirFileInfo.Syllables.Start,1);
+    end
+        
+    for i = 1:NoofSongs,
+        FileIndex = find(cumsum(DirFileInfo.RecordLengths) < DirFileInfo.Syllables.Start(i,1),1,'last');
+
+        if (length(FileIndex) == 0)
+            FileIndex = 1;
+            TotalRecordLength = 0;
+        else
+            FileIndex = FileIndex + 1;
+            TotalRecordLength = sum(DirFileInfo.RecordLengths(1:(FileIndex - 1)));
+        end
+
+        [RawData,Fs] = soundin_copy(DirectoryName, [DirFileInfo.FileNames{FileIndex}],['obs',num2str(ChannelNo),'r']);
+
+        RawData = RawData * 500/32768;
+
+        Time = 0:1/Fs:length(RawData)/Fs;
+        Indices = find((Time > (DirFileInfo.Syllables.Start(i,1) - TotalRecordLength)) & (Time < (DirFileInfo.Syllables.End(i,end) - TotalRecordLength)));
+
+        TempMax = max(RawData(Indices)) - min(RawData(Indices));
+        TempMax = TempMax + 0.05 * TempMax;
+        RawData = RawData + MaxRawData;
+        MaxRawData = MaxRawData + TempMax;
+
+        plot((Time(Indices) - Time(Indices(1))),RawData(Indices),'k');
+    end
+end
+
+if (length(UnDirFileInfo.RecordLengths) > 0)
+    for i = 1:3,
+        FileIndex = find(cumsum(UnDirFileInfo.RecordLengths) < UnDirFileInfo.Syllables.Start(i,1),1,'last');
+
+        if (length(FileIndex) == 0)
+            FileIndex = 1;
+            TotalRecordLength = 0;
+        else
+            FileIndex = FileIndex + 1;
+            TotalRecordLength = sum(UnDirFileInfo.RecordLengths(1:(FileIndex - 1)));
+        end
+
+        [RawData,Fs] = soundin_copy(DirectoryName, [UnDirFileInfo.FileNames{FileIndex}],['obs',num2str(ChannelNo),'r']);
+
+        RawData = RawData * 500/32768;
+
+        Time = 0:1/Fs:length(RawData)/Fs;
+        Indices = find((Time > (UnDirFileInfo.Syllables.Start(i,1) - TotalRecordLength)) & (Time < (UnDirFileInfo.Syllables.End(i,end) - TotalRecordLength)));
+
+        TempMax = max(RawData(Indices)) - min(RawData(Indices));
+        TempMax = TempMax + 0.05 * TempMax;
+        RawData = RawData + MaxRawData;
+        MaxRawData = MaxRawData + TempMax;
+
+        plot((Time(Indices) - Time(Indices(1))), RawData(Indices),'Color',[0.6 0.6 0.6]);
+    end
+end
+
+axis tight;
+set(gca,'FontSize',14,'FontWeight','bold');
+xlabel('Time (sec)','FontSize',14,'FontWeight','bold');
+ylabel('Amplitude (\muV)','FontSize',14,'FontWeight','bold');
+title('Raw Waveforms','FontSize',16,'FontWeight','bold');        
+    

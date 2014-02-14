@@ -1,0 +1,21 @@
+function [] = PlotCorrelations(DirFileInfo, UnDirFileInfo, MainFigure)
+
+figure(MainFigure);
+
+axes('Position',[0.15 0.80 0.35 0.15]);
+set(gca,'Box','off');
+hold on;
+
+if (length(DirFileInfo.GaussianCorrelations) > 0)
+    plot(DirFileInfo.GaussianCorrelations(:,1),DirFileInfo.GaussianCorrelations(:,2),'k');
+end
+
+if (length(UnDirFileInfo.GaussianCorrelations) > 0)
+    plot(UnDirFileInfo.GaussianCorrelations(:,1),UnDirFileInfo.GaussianCorrelations(:,2),'Color',[0.6 0.6 0.6]);
+end
+
+axis tight;
+set(gca,'FontSize',8,'FontWeight','bold');
+xlabel('Width of Gaus (ms)','FontSize',8,'FontWeight','bold');
+ylabel('Percentage of intervals','FontSize',8,'FontWeight','bold');    
+title('ISI Histogram - UnDirected','FontSize',8,'FontWeight','bold');    

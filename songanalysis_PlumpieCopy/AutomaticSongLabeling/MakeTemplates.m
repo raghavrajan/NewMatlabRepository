@@ -1,0 +1,902 @@
+function varargout = MakeTemplates(varargin)
+% MAKETEMPLATES M-file for MakeTemplates.fig
+%      MAKETEMPLATES, by itself, creates a new MAKETEMPLATES or raises the existing
+%      singleton*.
+%
+%      H = MAKETEMPLATES returns the handle to a new MAKETEMPLATES or the handle to
+%      the existing singleton*.
+%
+%      MAKETEMPLATES('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in MAKETEMPLATES.M with the given input arguments.
+%
+%      MAKETEMPLATES('Property','Value',...) creates a new MAKETEMPLATES or raises the
+%      existing singleton*.  Starting from the left, property value pairs are
+%      applied to the GUI before MakeTemplates_OpeningFunction gets called.  An
+%      unrecognized property name or invalid value makes property application
+%      stop.  All inputs are passed to MakeTemplates_OpeningFcn via varargin.
+%
+%      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
+%      instance to run (singleton)".
+%
+% See also: GUIDE, GUIDATA, GUIHANDLES
+
+% Edit the above text to modify the response to help MakeTemplates
+
+% Last Modified by GUIDE v2.5 15-Oct-2009 19:31:54
+
+% Begin initialization code - DO NOT EDIT
+gui_Singleton = 1;
+gui_State = struct('gui_Name',       mfilename, ...
+                   'gui_Singleton',  gui_Singleton, ...
+                   'gui_OpeningFcn', @MakeTemplates_OpeningFcn, ...
+                   'gui_OutputFcn',  @MakeTemplates_OutputFcn, ...
+                   'gui_LayoutFcn',  [] , ...
+                   'gui_Callback',   []);
+if nargin && ischar(varargin{1})
+    gui_State.gui_Callback = str2func(varargin{1});
+end
+
+if nargout
+    [varargout{1:nargout}] = gui_mainfcn(gui_State, varargin{:});
+else
+    gui_mainfcn(gui_State, varargin{:});
+end
+% End initialization code - DO NOT EDIT
+
+
+% --- Executes just before MakeTemplates is made visible.
+function MakeTemplates_OpeningFcn(hObject, eventdata, handles, varargin)
+% This function has no output args, see OutputFcn.
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+% varargin   command line arguments to MakeTemplates (see VARARGIN)
+
+% Choose default command line output for MakeTemplates
+handles.output = hObject;
+
+%==========================================================================
+% Variables used in the program - Raghav 09.28.2009
+%==========================================================================
+handles.MakeTemplatesData.DataDirectory = pwd;
+handles.MakeTemplatesData.FileType = get(handles.FileTypeEdit, 'String');
+handles.MakeTemplatesData.TemplateFileName = '';
+handles.MakeTemplatesData.FFTWindowLength = str2double(get(handles.FFTWindowLengthEdit, 'String'));
+handles.MakeTemplatesData.FFTWindowOverlap = str2double(get(handles.FFTWindowOverlapEdit, 'String'));
+handles.MakeTemplatesData.Threshold = str2double(get(handles.ThresholdEdit, 'String'));
+%==========================================================================
+
+% Update handles structure
+guidata(hObject, handles);
+
+% UIWAIT makes MakeTemplates wait for user response (see UIRESUME)
+% uiwait(handles.MakeTemplatesMainWindow);
+
+
+% --- Outputs from this function are returned to the command line.
+function varargout = MakeTemplates_OutputFcn(hObject, eventdata, handles) 
+% varargout  cell array for returning output args (see VARARGOUT);
+% hObject    handle to figure
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get default command line output from handles structure
+varargout{1} = handles.output;
+
+
+% --- Executes on button press in LoadSongFileButton.
+function LoadSongFileButton_Callback(hObject, eventdata, handles)
+% hObject    handle to LoadSongFileButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[handles.MakeTemplatesData.SongFileName, Pathname] = uigetfile('*', 'Pick a data file');
+
+if (handles.MakeTemplatesData.DataDirectory(end) ~= '/')
+    handles.MakeTemplatesData.DataDirectory(end + 1) = '/';
+end
+   
+if (strfind(handles.MakeTemplatesData.FileType, 'okrank'))
+        [RawData, Fs] = ReadOKrankData(handles.MakeTemplatesData.DataDirectory, handles.MakeTemplatesData.SongFileName, 0);
+else
+    if (strfind(handles.MakeTemplatesData.FileType, 'obs'))
+        [RawData, Fs] = soundin_copy(handles.MakeTemplatesData.DataDirectory, handles.MakeTemplatesData.SongFileName, handles.MakeTemplatesData.FileType);   
+        RawData = RawData/32768;
+    else
+        if (strfind(handles.MakeTemplatesData.FileType, 'wav'))
+            [RawData, Fs] = wavread(handles.MakeTemplatesData.SongFileName);    
+        end
+    end
+end
+
+Time = (1:1:length(RawData))/Fs;
+
+% Now using an 8 pole butterworth bandpass filter as default.
+[b,a]=butter(8,[300*2/Fs, 10000*2/Fs]);
+
+FiltSong=filtfilt(b, a, RawData);
+  
+if length(RawData) ~= length(FiltSong) 
+  disp(['warning! bandpass: input and output file lengths do not match!']);
+end
+
+RawData = FiltSong;
+clear FiltSong;
+
+[Spect, Freq, SpectTime, Power] = spectrogram(RawData, handles.MakeTemplatesData.FFTWindowLength, handles.MakeTemplatesData.FFTWindowOverlap, handles.MakeTemplatesData.FFTWindowLength, Fs);
+FreqRows = find((Freq >= 1700) & (Freq <= 7100));
+
+Spect = Spect(FreqRows,:);
+Power = Power(FreqRows,:);
+
+axes(handles.AmplitudePlot);
+hold off;
+%plot(Time, RawData);
+plot(SpectTime, 10*log10(sum(Power)), 'r');
+hold on;
+
+axis tight;
+
+set(handles.AmplitudePlot, 'FontSize', 12, 'FontWeight', 'bold');
+%xlabel('Time (sec)', 'FontSize', 12, 'FontWeight', 'bold');
+%ylabel('Amplitude', 'FontSize', 12, 'FontWeight', 'bold');
+
+handles.MakeTemplatesData.AmpPlotAxis = axis;
+handles.MakeTemplatesData.AmpPlotAxis(1:2) = [Time(1) Time(end)];
+
+SpectFs = 1/(SpectTime(2) - SpectTime(1));
+
+[onsets, offsets] = segment(10*log10(sum(Power)), SpectFs, 5, 10, handles.MakeTemplatesData.Threshold);
+
+onsets = onsets/1000;
+offsets = offsets/1000;
+
+handles.SyllBounds = [];
+
+for i = 1:length(onsets),
+    if (handles.MakeTemplatesData.AmpPlotAxis(4) > 0)
+        handles.SyllBounds(i) = plot([onsets(i) onsets(i) offsets(i) offsets(i)], [handles.MakeTemplatesData.AmpPlotAxis(3) handles.MakeTemplatesData.AmpPlotAxis(4)*0.9 handles.MakeTemplatesData.AmpPlotAxis(4)*0.9 handles.MakeTemplatesData.AmpPlotAxis(3)], 'm');
+    else
+        handles.SyllBounds(i) = plot([onsets(i) onsets(i) offsets(i) offsets(i)], [handles.MakeTemplatesData.AmpPlotAxis(3) handles.MakeTemplatesData.AmpPlotAxis(4)*1.1 handles.MakeTemplatesData.AmpPlotAxis(4)*1.1 handles.MakeTemplatesData.AmpPlotAxis(3)], 'm');
+    end
+end
+
+%MedianMotif.FileName = handles.MakeTemplatesData.SongFileName;
+%MedianMotif.Length = Time(end) - Time(1);
+%MedianMotif.StartTime = Time(1);
+
+axes(handles.SpectrogramPlot);
+hold off;
+plot_motif_spectrogram(RawData, Fs, gcf, handles.SpectrogramPlot);
+%PlotMotifSpectrogram(handles.MakeTemplatesData.DataDirectory, handles.MakeTemplatesData.FileType, MedianMotif, handles.MakeTemplatesMainWindow, handles.SpectrogramPlot);
+hold on;
+
+handles.MakeTemplatesData.SpecPlotAxis = handles.MakeTemplatesData.AmpPlotAxis;
+handles.MakeTemplatesData.SpecPlotAxis(3:4) = [300 10000];
+axis(handles.MakeTemplatesData.SpecPlotAxis);
+%xlabel('Time (sec)', 'FontSize', 12, 'FontWeight', 'bold');
+%ylabel('Frequency (Hz)', 'FontSize', 12, 'FontWeight', 'bold');
+
+handles.MakeTemplatesData.LabelPlotAxis = handles.MakeTemplatesData.AmpPlotAxis;
+handles.MakeTemplatesData.LabelPlotAxis(3:4) = [0 1];
+
+axes(handles.LabelPlot);
+plot(0, 0.5, 'w+');
+handles.MakeTemplatesData.SyllableLabels = [];
+handles.MakeTemplatesData.SyllableBoundaries = [];
+handles.SyllableLabels = [];
+
+for i = 1:length(onsets),
+    handles.MakeTemplatesData.SyllableLabels{i} = '0';
+    handles.SyllableLabels(end + 1) = text((onsets(i) + offsets(i))/2, 0.5, handles.MakeTemplatesData.SyllableLabels{end});
+    set(handles.SyllableLabels(end), 'FontSize', 12, 'FontWeight', 'bold');
+    handles.MakeTemplatesData.SyllableBoundaries(i, :) = [onsets(i) offsets(i)];
+end
+
+axis(handles.MakeTemplatesData.LabelPlotAxis);
+
+%set(handles.LabelPlot, 'Visible', 'off');
+
+handles.MakeTemplatesData.PresentXCoordinates = [Time(1) Time(end)];
+handles.MakeTemplatesData.PresentYCoordinates = handles.MakeTemplatesData.AmpPlotAxis(3:4);
+handles.MakeTemplatesData.RawData = RawData;
+handles.MakeTemplatesData.Fs = Fs;
+handles.MakeTemplatesData.SpectFs = SpectFs;
+handles.MakeTemplatesData.Time = Time;
+handles.MakeTemplatesData.Freq = Freq;
+handles.MakeTemplatesData.SpectTime = SpectTime;
+handles.MakeTemplatesData.Spect = Spect;
+handles.MakeTemplatesData.FreqRows = FreqRows;
+
+clear RawData Fs Spect SpectTime b a Freq Time FreqRows;
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+disp('Finished');
+
+
+function FileTypeEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to FileTypeEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of FileTypeEdit as text
+%        str2double(get(hObject,'String')) returns contents of FileTypeEdit as a double
+
+handles.MakeTemplatesData.FileType = get(hObject,'String');
+guidata(handles.MakeTemplatesMainWindow, handles);
+disp(['File type is ', handles.MakeTemplatesData.FileType]);
+
+function FFTWindowLengthEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to FFTWindowLengthEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of FFTWindowLengthEdit as text
+%        str2double(get(hObject,'String')) returns contents of FFTWindowLengthEdit as a double
+
+handles.MakeTemplatesData.FFTWindowLength = str2double(get(hObject,'String'));
+guidata(handles.MakeTemplatesMainWindow, handles);
+if (isfield(handles.MakeTemplatesData, 'Fs'))
+    Fs = handles.MakeTemplatesData.Fs;
+    set(handles.FFTWindowLengthText, 'String', [num2str(round(handles.MakeTemplatesData.FFTWindowLength * 1000/Fs)), ' ms']);
+else
+    set(handles.FFTWindowLengthText, 'String', [num2str(round(handles.MakeTemplatesData.FFTWindowLength * 1000/32000)), ' ms']);
+end
+
+% --- Executes during object creation, after setting all properties.
+function FFTWindowLengthEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to FFTWindowLengthEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function FFTWindowOverlapEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to FFTWindowOverlapEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of FFTWindowOverlapEdit as text
+%        str2double(get(hObject,'String')) returns contents of FFTWindowOverlapEdit as a double
+
+handles.MakeTemplatesData.FFTWindowOverlap = str2double(get(hObject,'String'));
+guidata(handles.MakeTemplatesMainWindow, handles);
+if (isfield(handles.MakeTemplatesData, 'Fs'))
+    Fs = handles.MakeTemplatesData.Fs;
+    set(handles.FFTWindowOverlapText, 'String', [num2str(round(handles.MakeTemplatesData.FFTWindowOverlap * 1000/Fs)), ' ms']);
+else
+    set(handles.FFTWindowOverlapText, 'String', [num2str(round(handles.MakeTemplatesData.FFTWindowOverlap * 1000/32000)), ' ms']);
+end
+
+
+% --- Executes during object creation, after setting all properties.
+function FFTWindowOverlapEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to FFTWindowOverlapEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in ChooseDirectoryButton.
+function ChooseDirectoryButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ChooseDirectoryButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.MakeTemplatesData.DataDirectory = uigetdir('','Choose the data directory');
+guidata(handles.MakeTemplatesMainWindow, handles);
+cd(handles.MakeTemplatesData.DataDirectory);
+disp(['Data directory is ', handles.MakeTemplatesData.DataDirectory]);
+
+% --- Executes on button press in MarkSyllableButton.
+function MarkSyllableButton_Callback(hObject, eventdata, handles)
+% hObject    handle to MarkSyllableButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+set(handles.ZoomInstructionsText, 'String', 'Enter the syllable labels (q to quit)');
+
+axes(handles.LabelPlot);
+TempAxis = axis;
+
+LabelIndex = find(handles.MakeTemplatesData.SyllableBoundaries(:,1) > TempAxis(1),1, 'first');
+set(handles.SyllableLabels(LabelIndex), 'Color', 'r');
+    
+Flag = 1;
+
+while(Flag)
+    axes(handles.LabelPlot);
+    [x, y, button] = ginput(1);
+    
+    if (((length(x) == 0) && (length(y) == 0) && (length(button) == 0)))
+        continue;
+    end
+
+    if (button == 113)
+        Flag = 0;
+        disp('Quit label');
+        set(handles.SyllableLabels(LabelIndex), 'Color', 'k');
+        break;
+    else
+        if (button < 4)
+            set(handles.SyllableLabels(LabelIndex), 'Color', 'k');
+            LabelIndex = find(handles.MakeTemplatesData.SyllableBoundaries(:,1) > x,1, 'first');
+            set(handles.SyllableLabels(LabelIndex), 'Color', 'r');
+            continue;
+        end
+        axes(handles.LabelPlot);
+        handles.MakeTemplatesData.SyllableLabels{LabelIndex} = char(button);
+        set(handles.SyllableLabels(LabelIndex), 'Color', 'k', 'String', char(button));
+        LabelIndex = LabelIndex + 1;
+        
+        if (LabelIndex > length(handles.SyllableLabels))
+            LabelIndex = LabelIndex - 1;
+        end
+        
+        if (handles.MakeTemplatesData.SyllableBoundaries(LabelIndex,2) > TempAxis(2))
+            if ((LabelIndex > 1) && (LabelIndex < (length(handles.SyllableLabels))))
+                NewAxis(1) = handles.MakeTemplatesData.SyllableBoundaries((LabelIndex-1),1) - 0.1;
+                NewAxis(2) = handles.MakeTemplatesData.SyllableBoundaries((LabelIndex + 1), 2) + 0.1;
+            else
+                if ((LabelIndex > 1))
+                    NewAxis(1) = handles.MakeTemplatesData.SyllableBoundaries((LabelIndex-1),1) - 0.1;
+                    NewAxis(2) = handles.MakeTemplatesData.SyllableBoundaries(LabelIndex, 2) + 0.1;
+                else
+                    if (LabelIndex < (length(handles.SyllableLabels)))
+                        NewAxis(1) = 0;
+                        NewAxis(2) = handles.MakeTemplatesData.SyllableBoundaries((LabelIndex + 1), 2) + 0.1;
+                    else
+                        NewAxis(1) = 0;
+                        NewAxis(2) = handles.MakeTemplatesData.SyllableBoundaries(LabelIndex, 2) + 0.1;
+                    end
+                end
+            end
+        else
+            NewAxis = TempAxis(1:2);
+        end
+        
+        set(handles.SyllableLabels(LabelIndex), 'Color', 'r');
+        TempAxis(1:2) = NewAxis;
+        handles.MakeTemplatesData.PresentXCoordinates = TempAxis(1:2);
+        
+        axes(handles.LabelPlot);
+        TempAxis(3:4) = handles.MakeTemplatesData.LabelPlotAxis(3:4);
+        axis(TempAxis);
+
+        axes(handles.SpectrogramPlot);
+        TempAxis(3:4) = handles.MakeTemplatesData.SpecPlotAxis(3:4);
+        axis(TempAxis);
+
+        axes(handles.AmplitudePlot);
+        TempAxis(3:4) = handles.MakeTemplatesData.AmpPlotAxis(3:4);
+        axis(TempAxis);
+    end
+end
+
+set(handles.ZoomInstructionsText, 'String', 'Watch this space for instructions for zoom and marking syllable boundaries');
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+% --- Executes on button press in SaveTemplatesButton.
+function SaveTemplatesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveTemplatesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[SortedBounds, SortedIndices] = sort(handles.MakeTemplatesData.SyllableBoundaries(:,1));
+handles.MakeTemplatesData.SyllableBoundaries = handles.MakeTemplatesData.SyllableBoundaries(SortedIndices,:);
+handles.MakeTemplatesData.SyllableLabels = handles.MakeTemplatesData.SyllableLabels(SortedIndices);
+handles.SyllBounds = handles.SyllBounds(SortedIndices);
+handles.SyllableLabels = handles.SyllableLabels(SortedIndices);
+
+for i = 1:length(handles.MakeTemplatesData.SyllableLabels);
+    SyllableLabels(i) = handles.MakeTemplatesData.SyllableLabels{i};
+end
+
+UniqueSyllableLabels = unique(SyllableLabels);
+
+for i = 1:length(UniqueSyllableLabels),
+    Matches = find(SyllableLabels == UniqueSyllableLabels(i));
+    Templates(i).Label = UniqueSyllableLabels(i);
+    Duration = 0;
+    for j = 1:length(Matches),
+        SyllableData = handles.MakeTemplatesData.RawData(round(handles.MakeTemplatesData.SyllableBoundaries(Matches(j),1) * handles.MakeTemplatesData.Fs):round(handles.MakeTemplatesData.SyllableBoundaries(Matches(j),2) * handles.MakeTemplatesData.Fs));
+        [Spect, Freq, SpectTime, Power] = spectrogram(SyllableData, handles.MakeTemplatesData.FFTWindowLength, handles.MakeTemplatesData.FFTWindowOverlap, handles.MakeTemplatesData.FFTWindowLength, handles.MakeTemplatesData.Fs);
+        FreqRows = find((Freq >= 1700) & (Freq <= 7100));
+     
+        Spect = Spect(FreqRows,:);
+        MeanSpect = (mean(mean(Spect)));
+        STDSpect = (sqrt((sum(sum((Spect - MeanSpect).*(Spect - MeanSpect))))/((size(Spect, 1) * size(Spect, 2)) - 1)));
+        Spect = (Spect - mean(mean(Spect)))/STDSpect;
+        
+        SpectDerivative = diff(abs(Spect)')';
+        SpectDerivative = sum(SpectDerivative);
+        
+        if (j ~= 1)
+            [CorrCoeff, lags] = xcorr(Templates(i).SpectDerivative{1}, SpectDerivative);
+            [MaxCorrCoeff, MaxCCIndex] = max(CorrCoeff);
+            
+            GreaterThanZero = 0;
+            LessThanZero = 0;
+            
+            while (lags(MaxCCIndex) ~= 0)
+                if ((GreaterThanZero == 1) && (LessThanZero == 1))
+                    break;
+                end
+                
+                if (lags(MaxCCIndex) > 0)
+                    GreaterThanZero = 1;
+                    handles.MakeTemplatesData.SyllableBoundaries(Matches(j),1) = handles.MakeTemplatesData.SyllableBoundaries(Matches(j),1) - 1/handles.MakeTemplatesData.SpectFs;
+                    handles.MakeTemplatesData.SyllableBoundaries(Matches(j),2) = handles.MakeTemplatesData.SyllableBoundaries(Matches(j),2) - 1/handles.MakeTemplatesData.SpectFs;
+                else
+                    if (lags(MaxCCIndex) < 0)
+                        LessThanZero = 1;
+                        handles.MakeTemplatesData.SyllableBoundaries(Matches(j),1) = handles.MakeTemplatesData.SyllableBoundaries(Matches(j),1) + 1/handles.MakeTemplatesData.SpectFs;
+                        handles.MakeTemplatesData.SyllableBoundaries(Matches(j),2) = handles.MakeTemplatesData.SyllableBoundaries(Matches(j),2) + 1/handles.MakeTemplatesData.SpectFs;
+                    end
+                end
+                SyllableData = handles.MakeTemplatesData.RawData(round(handles.MakeTemplatesData.SyllableBoundaries(Matches(j),1) * handles.MakeTemplatesData.Fs):round(handles.MakeTemplatesData.SyllableBoundaries(Matches(j),2) * handles.MakeTemplatesData.Fs));
+                [Spect, Freq, SpectTime, Power] = spectrogram(SyllableData, handles.MakeTemplatesData.FFTWindowLength, handles.MakeTemplatesData.FFTWindowOverlap, handles.MakeTemplatesData.FFTWindowLength, handles.MakeTemplatesData.Fs);
+                FreqRows = find((Freq >= 1700) & (Freq <= 7100));
+
+                Spect = Spect(FreqRows,:);
+                MeanSpect = (mean(mean(Spect)));
+                STDSpect = (sqrt((sum(sum((Spect - MeanSpect).*(Spect - MeanSpect))))/((size(Spect, 1) * size(Spect, 2)) - 1)));
+                Spect = (Spect - mean(mean(Spect)))/STDSpect;
+
+                SpectDerivative = diff(abs(Spect)')';
+                SpectDerivative = sum(SpectDerivative);
+
+                [CorrCoeff, lags] = xcorr(Templates(i).SpectDerivative{1}, SpectDerivative);
+                [MaxCorrCoeff, MaxCCIndex] = max(CorrCoeff);
+            end
+        end
+        
+        [Spect, Freq, SpectTime, Power] = spectrogram(SyllableData, handles.MakeTemplatesData.FFTWindowLength, handles.MakeTemplatesData.FFTWindowOverlap, handles.MakeTemplatesData.FFTWindowLength, handles.MakeTemplatesData.Fs);
+        FreqRows = find((Freq >= 1700) & (Freq <= 7100));
+     
+        Spect = Spect(FreqRows,:);
+        Spect = ScaleSpect(abs(Spect));
+        MeanSpect = (mean(mean(Spect)));
+        STDSpect = (sqrt((sum(sum((Spect - MeanSpect).*(Spect - MeanSpect))))/((size(Spect, 1) * size(Spect, 2)) - 1)));
+        Spect = (Spect - mean(mean(Spect)))/STDSpect;
+        
+        Templates(i).STemplate{j} = Spect;
+        Templates(i).TemplateTime{j} = SpectTime;
+        Templates(i).TemplateFreq{j} = Freq(FreqRows);
+        Templates(i).SpectDerivative{j} = SpectDerivative;
+        Duration = Duration + SpectTime(end) - SpectTime(1);
+    end
+    Templates(i).Duration = Duration/(j);
+end 
+handles.MakeTemplatesData.TemplateFileName = [handles.MakeTemplatesData.SongFileName, '_templates.mat'];
+save(handles.MakeTemplatesData.TemplateFileName, 'Templates');
+msgbox(['Saved templates to ', handles.MakeTemplatesData.TemplateFileName]);
+
+
+function TemplateFileName_Callback(hObject, eventdata, handles)
+% hObject    handle to TemplateFileName (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of TemplateFileName as text
+%        str2double(get(hObject,'String')) returns contents of TemplateFileName as a double
+handles.MakeTemplatesData.TemplateFileName = get(hObject,'String');
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function TemplateFileName_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to TemplateFileName (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in QuitButton.
+function QuitButton_Callback(hObject, eventdata, handles)
+% hObject    handle to QuitButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+FigureTag = findobj('Tag','MakeTemplatesMainWindow');
+close(FigureTag);
+
+
+% --- Executes on button press in ZoomXButton.
+function ZoomXButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ZoomXButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+set(handles.ZoomInstructionsText, 'String', 'Left mouse button for left edge, right mouse button for right edge and then press enter (q to quit)');
+
+axes(handles.AmplitudePlot);
+TempAxis = axis;
+handles.MakeTemplatesData.PresentXCoordinates = TempAxis(1:2);
+LeftLine = plot([TempAxis(1) TempAxis(1)], [TempAxis(3) TempAxis(4)], '-.r');
+RightLine = plot([TempAxis(2) TempAxis(2)], [TempAxis(3) TempAxis(4)], '-.g');
+
+NewXCoords = TempAxis(1:2);
+ZoomBoundaryPatch = patch([NewXCoords(1) NewXCoords(1) NewXCoords(2) NewXCoords(2)], [TempAxis(3) TempAxis(4) TempAxis(4) TempAxis(3)], 'g');
+set(ZoomBoundaryPatch, 'FaceAlpha', 0.2);
+
+
+Flag = 1;
+
+while(Flag)
+    [x, y, button] = ginput(1);
+    
+    if (((length(x) == 0) && (length(y) == 0) && (length(button) == 0)) || (button == 113))
+        Flag = 0;
+        if (exist('LeftLine', 'var'))
+            delete(LeftLine);
+        end
+        if (exist('RightLine', 'var'))
+            delete(RightLine);
+        end
+        if (exist('ZoomBoundaryPatch', 'var'))
+            delete(ZoomBoundaryPatch);
+        end
+        if (button == 113)
+            disp('Quit zoom');
+        else
+            axes(handles.AmplitudePlot);
+            TempAxis(1:2) = handles.MakeTemplatesData.PresentXCoordinates;
+            TempAxis(3:4) = handles.MakeTemplatesData.PresentYCoordinates;
+            axis(TempAxis);
+
+            axes(handles.SpectrogramPlot);
+            TempAxis(3:4) = handles.MakeTemplatesData.SpecPlotAxis(3:4);
+            axis(TempAxis);
+
+            axes(handles.LabelPlot);
+            TempAxis(3:4) = handles.MakeTemplatesData.LabelPlotAxis(3:4);
+            axis(TempAxis);
+        end
+            break;
+    else
+        if (button == 1)
+            axes(handles.AmplitudePlot);
+            delete(LeftLine);
+            LeftLine = plot([x x], [TempAxis(3) TempAxis(4)], '-.r');
+            handles.MakeTemplatesData.PresentXCoordinates(1) = x;
+            delete(ZoomBoundaryPatch);
+            NewXCoords(1) = x;
+            ZoomBoundaryPatch = patch([NewXCoords(1) NewXCoords(1) NewXCoords(2) NewXCoords(2)], [TempAxis(3) TempAxis(4) TempAxis(4) TempAxis(3)], 'g');
+            set(ZoomBoundaryPatch, 'FaceAlpha', 0.2);
+        else
+            if (button == 3)
+                axes(handles.AmplitudePlot);
+                delete(RightLine);
+                RightLine = plot([x x], [TempAxis(3) TempAxis(4)], '-.g');
+                handles.MakeTemplatesData.PresentXCoordinates(2) = x;
+                delete(ZoomBoundaryPatch);
+                NewXCoords(2) = x;
+                ZoomBoundaryPatch = patch([NewXCoords(1) NewXCoords(1) NewXCoords(2) NewXCoords(2)], [TempAxis(3) TempAxis(4) TempAxis(4) TempAxis(3)], 'g');
+                set(ZoomBoundaryPatch, 'FaceAlpha', 0.2);                
+            end
+        end
+    end
+end
+
+set(handles.ZoomInstructionsText, 'String', 'Watch this space for instructions for zoom and marking syllable boundaries');
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+
+% --- Executes on button press in ZoomYButton.
+function ZoomYButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ZoomYButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+set(handles.ZoomInstructionsText, 'String', 'Left mouse button for top edge, right mouse button for bottom edge and then press enter (q to quit)');
+
+axes(handles.AmplitudePlot);
+TempAxis = axis;
+handles.MakeTemplatesData.PresentYCoordinates = TempAxis(3:4);
+TopLine = plot([TempAxis(1) TempAxis(2)], [TempAxis(4) TempAxis(4)], '-.r');
+BottomLine = plot([TempAxis(1) TempAxis(2)], [TempAxis(3) TempAxis(3)], '-.g');
+
+NewYCoords = TempAxis(3:4);
+ZoomBoundaryPatch = patch([TempAxis(1) TempAxis(1) TempAxis(2) TempAxis(2)],[NewYCoords(1) NewYCoords(2) NewYCoords(2) NewYCoords(1)], 'g');
+set(ZoomBoundaryPatch, 'FaceAlpha', 0.2);
+
+
+Flag = 1;
+
+while(Flag)
+    [x, y, button] = ginput(1);
+    
+    if (((length(x) == 0) && (length(y) == 0) && (length(button) == 0)) || (button == 113))
+        Flag = 0;
+        if (exist('TopLine', 'var'))
+            delete(TopLine);
+        end
+        if (exist('BottomLine', 'var'))
+            delete(BottomLine);
+        end
+        if (exist('ZoomBoundaryPatch', 'var'))
+            delete(ZoomBoundaryPatch);
+        end
+        if (button == 113)
+            disp('Quit zoom');
+        else
+            axes(handles.AmplitudePlot);
+            TempAxis(1:2) = handles.MakeTemplatesData.PresentXCoordinates;
+            TempAxis(3:4) = handles.MakeTemplatesData.PresentYCoordinates;
+            axis(TempAxis);
+
+            axes(handles.SpectrogramPlot);
+            TempAxis(3:4) = handles.MakeTemplatesData.SpecPlotAxis(3:4);
+            axis(TempAxis);
+
+            axes(handles.LabelPlot);
+            TempAxis(3:4) = handles.MakeTemplatesData.LabelPlotAxis(3:4);
+            axis(TempAxis);
+        end
+            break;
+    else
+        if (button == 1)
+            axes(handles.AmplitudePlot);
+            delete(TopLine);
+            TopLine = plot([TempAxis(1) TempAxis(2)], [y y], '-.r');
+            handles.MakeTemplatesData.PresentYCoordinates(2) = y;
+            delete(ZoomBoundaryPatch);
+            NewYCoords(2) = y;
+            ZoomBoundaryPatch = patch([TempAxis(1) TempAxis(1) TempAxis(2) TempAxis(2)],[NewYCoords(1) NewYCoords(2) NewYCoords(2) NewYCoords(1)], 'g');
+            set(ZoomBoundaryPatch, 'FaceAlpha', 0.2);
+        else
+            if (button == 3)
+                axes(handles.AmplitudePlot);
+                delete(BottomLine);
+                BottomLine = plot([TempAxis(1) TempAxis(2)], [y y], '-.g');
+                handles.MakeTemplatesData.PresentYCoordinates(1) = y;
+                delete(ZoomBoundaryPatch);
+                NewYCoords(1) = y;
+                ZoomBoundaryPatch = patch([TempAxis(1) TempAxis(1) TempAxis(2) TempAxis(2)],[NewYCoords(1) NewYCoords(2) NewYCoords(2) NewYCoords(1)], 'g');
+                set(ZoomBoundaryPatch, 'FaceAlpha', 0.2);
+            end
+        end
+    end
+end
+
+set(handles.ZoomInstructionsText, 'String', 'Watch this space for instructions for zoom and marking syllable boundaries');
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+% --- Executes on button press in UnZoomXButton.
+function UnZoomXButton_Callback(hObject, eventdata, handles)
+% hObject    handle to UnZoomXButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.MakeTemplatesData.PresentXCoordinates = handles.MakeTemplatesData.AmpPlotAxis(1:2);
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+axes(handles.AmplitudePlot);
+axis([handles.MakeTemplatesData.AmpPlotAxis(1:2) handles.MakeTemplatesData.PresentYCoordinates]);
+
+axes(handles.SpectrogramPlot);
+axis(handles.MakeTemplatesData.SpecPlotAxis);
+
+axes(handles.LabelPlot);
+axis(handles.MakeTemplatesData.LabelPlotAxis);
+
+% --- Executes on button press in UnZoomYButton.
+function UnZoomYButton_Callback(hObject, eventdata, handles)
+% hObject    handle to UnZoomYButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.MakeTemplatesData.PresentYCoordinates = handles.MakeTemplatesData.AmpPlotAxis(3:4);
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+axes(handles.AmplitudePlot);
+axis([handles.MakeTemplatesData.PresentXCoordinates handles.MakeTemplatesData.AmpPlotAxis(3:4)]);
+
+% --- Executes on button press in EditSyllableButton.
+function EditSyllableButton_Callback(hObject, eventdata, handles)
+% hObject    handle to EditSyllableButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+set(handles.ZoomInstructionsText, 'String', 'Left mouse button for left edge, right mouse button for right edge (enter to select, d to delete, q to quit)');
+
+axes(handles.AmplitudePlot);
+TempAxis = axis;
+
+LeftLine = plot([TempAxis(1) TempAxis(1)], [TempAxis(3) TempAxis(4)], '-.r');
+RightLine = plot([TempAxis(2) TempAxis(2)], [TempAxis(3) TempAxis(4)], '-.g');
+
+NewSyllBounds = TempAxis(1:2);
+
+EditBoundaryPatch = patch([NewSyllBounds(1) NewSyllBounds(1) NewSyllBounds(2) NewSyllBounds(2)], [TempAxis(3) TempAxis(4) TempAxis(4) TempAxis(3)], 'g');
+set(EditBoundaryPatch, 'FaceAlpha', 0.2);
+
+
+Flag = 1;
+
+while(Flag)
+    [x, y, button] = ginput(1);
+    
+    if (((length(x) == 0) && (length(y) == 0) && (length(button) == 0)) || (button == 113) || (button == 100))
+        Flag = 0;
+        if (exist('LeftLine', 'var'))
+            delete(LeftLine);
+        end
+        if (exist('RightLine', 'var'))
+            delete(RightLine);
+        end
+        if (exist('EditBoundaryPatch', 'var'))
+            delete(EditBoundaryPatch);
+        end
+        if (button == 113)
+            disp('Quit edit');
+            Flag = 0;
+            break;
+        else
+            if (button == 100)
+                axes(handles.AmplitudePlot);
+                Bounds = find((handles.MakeTemplatesData.SyllableBoundaries(:,1) >= NewSyllBounds(1)) & (handles.MakeTemplatesData.SyllableBoundaries(:,1) <= NewSyllBounds(2)));
+                if (~isempty(Bounds))
+                    delete(handles.SyllBounds(Bounds));
+                    handles.SyllBounds(Bounds) = [];
+                    handles.MakeTemplatesData.SyllableBoundaries(Bounds,:) = [];
+                    handles.MakeTemplatesData.SyllableLabels(Bounds) = [];
+                    delete(handles.SyllableLabels(Bounds));
+                    handles.SyllableLabels(Bounds) = [];
+                end
+            else
+                axes(handles.AmplitudePlot);
+                Bounds = find((handles.MakeTemplatesData.SyllableBoundaries(:,1) > NewSyllBounds(1)) & (handles.MakeTemplatesData.SyllableBoundaries(:,1) < NewSyllBounds(2)));
+                if (~isempty(Bounds))
+                    if (length(Bounds) > 1)
+                        delete(handles.SyllBounds(Bounds(2:end)));
+                        handles.SyllBounds(Bounds(2:end)) = [];
+                        handles.MakeTemplatesData.SyllableBoundaries(Bounds(2:end),:) = [];
+                        handles.MakeTemplatesData.SyllableLabels(Bounds(2:end)) = [];
+                        delete(handles.SyllableLabels(Bounds(2:end)));
+                        handles.SyllableLabels(Bounds(2:end)) = [];
+                    end
+                    delete(handles.SyllBounds(Bounds(1)));
+                    handles.SyllBounds(Bounds(1)) = plot([NewSyllBounds(1) NewSyllBounds(1) NewSyllBounds(2) NewSyllBounds(2)], [0 handles.MakeTemplatesData.AmpPlotAxis(4)*0.9 handles.MakeTemplatesData.AmpPlotAxis(4)*0.9 0], 'm');
+                    handles.MakeTemplatesData.SyllableBoundaries(Bounds(1),:) = NewSyllBounds;
+                    handles.MakeTemplatesData.SyllableLabels{Bounds(1)} = '0';
+                    delete(handles.SyllableLabels(Bounds(1)));
+                    axes(handles.LabelPlot);
+                    handles.SyllableLabels(Bounds(1)) = text((NewSyllBounds(1) + NewSyllBounds(2))/2, 0.5, handles.MakeTemplatesData.SyllableLabels{Bounds(1)});
+                    set(handles.SyllableLabels(Bounds(1)), 'FontSize', 12, 'FontWeight', 'bold');
+                else
+                    axes(handles.AmplitudePlot);
+                    handles.SyllBounds(end + 1) = plot([NewSyllBounds(1) NewSyllBounds(1) NewSyllBounds(2) NewSyllBounds(2)], [0 handles.MakeTemplatesData.AmpPlotAxis(4)*0.9 handles.MakeTemplatesData.AmpPlotAxis(4)*0.9 0], 'm');
+                    handles.MakeTemplatesData.SyllableBoundaries((end + 1),:) = NewSyllBounds;
+                    handles.MakeTemplatesData.SyllableLabels{end + 1} = '0';
+                    axes(handles.LabelPlot);
+                    handles.SyllableLabels(end + 1) = text((NewSyllBounds(1) + NewSyllBounds(2))/2, 0.5, handles.MakeTemplatesData.SyllableLabels{end});
+                    set(handles.SyllableLabels(end), 'FontSize', 12, 'FontWeight', 'bold');
+                    [SortedBounds, SortedIndices] = sort(handles.MakeTemplatesData.SyllableBoundaries(:,1));
+                    handles.MakeTemplatesData.SyllableBoundaries = handles.MakeTemplatesData.SyllableBoundaries(SortedIndices,:);
+                    handles.MakeTemplatesData.SyllableLabels = handles.MakeTemplatesData.SyllableLabels(SortedIndices);
+                    handles.SyllBounds = handles.SyllBounds(SortedIndices);
+                    handles.SyllableLabels = handles.SyllableLabels(SortedIndices);
+                end
+            end
+        end
+        break;
+    else
+        if (button == 1)
+            axes(handles.AmplitudePlot);
+            delete(LeftLine);
+            LeftLine = plot([x x], [TempAxis(3) TempAxis(4)], '-.r');
+            handles.MakeTemplatesData.PresentXCoordinates(1) = x;
+            delete(EditBoundaryPatch);
+            NewSyllBounds(1) = x;
+            EditBoundaryPatch = patch([NewSyllBounds(1) NewSyllBounds(1) NewSyllBounds(2) NewSyllBounds(2)], [TempAxis(3) TempAxis(4) TempAxis(4) TempAxis(3)], 'g');
+            set(EditBoundaryPatch, 'FaceAlpha', 0.2);
+        else
+            if (button == 3)
+                axes(handles.AmplitudePlot);
+                delete(RightLine);
+                RightLine = plot([x x], [TempAxis(3) TempAxis(4)], '-.g');
+                handles.MakeTemplatesData.PresentXCoordinates(2) = x;
+                delete(EditBoundaryPatch);
+                NewSyllBounds(2) = x;
+                EditBoundaryPatch = patch([NewSyllBounds(1) NewSyllBounds(1) NewSyllBounds(2) NewSyllBounds(2)], [TempAxis(3) TempAxis(4) TempAxis(4) TempAxis(3)], 'g');
+                set(EditBoundaryPatch, 'FaceAlpha', 0.2);
+            end
+        end
+    end
+end
+
+set(handles.ZoomInstructionsText, 'String', 'Watch this space for instructions for zoom and marking syllable boundaries');
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+
+function ThresholdEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to ThresholdEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of ThresholdEdit as text
+%        str2double(get(hObject,'String')) returns contents of ThresholdEdit as a double
+handles.MakeTemplatesData.Threshold = str2double(get(hObject,'String'));
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+% --- Executes during object creation, after setting all properties.
+function ThresholdEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ThresholdEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in NextFrameButton.
+function NextFrameButton_Callback(hObject, eventdata, handles)
+% hObject    handle to NextFrameButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+axes(handles.AmplitudePlot);
+TempAxis = axis;
+TempAxis(1:2) = TempAxis(1:2) + 0.8 * (TempAxis(2) - TempAxis(1));
+
+handles.MakeTemplatesData.PresentXCoordinates = TempAxis(1:2);
+
+axes(handles.AmplitudePlot);
+TempAxis(3:4) = handles.MakeTemplatesData.PresentYCoordinates;
+axis(TempAxis);
+
+axes(handles.SpectrogramPlot);
+TempAxis(3:4) = handles.MakeTemplatesData.SpecPlotAxis(3:4);
+axis(TempAxis);
+
+axes(handles.LabelPlot);
+TempAxis(3:4) = handles.MakeTemplatesData.LabelPlotAxis(3:4);
+axis(TempAxis);
+
+guidata(handles.MakeTemplatesMainWindow, handles);
+
+% --- Executes on button press in PreviousFrameButton.
+function PreviousFrameButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PreviousFrameButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+axes(handles.AmplitudePlot);
+TempAxis = axis;
+TempAxis(1:2) = TempAxis(1:2) - 0.8 * (TempAxis(2) - TempAxis(1));
+
+handles.MakeTemplatesData.PresentXCoordinates = TempAxis(1:2);
+
+axes(handles.AmplitudePlot);
+TempAxis(3:4) = handles.MakeTemplatesData.PresentYCoordinates;
+axis(TempAxis);
+
+axes(handles.SpectrogramPlot);
+TempAxis(3:4) = handles.MakeTemplatesData.SpecPlotAxis(3:4);
+axis(TempAxis);
+
+axes(handles.LabelPlot);
+TempAxis(3:4) = handles.MakeTemplatesData.LabelPlotAxis(3:4);
+axis(TempAxis);
+
+guidata(handles.MakeTemplatesMainWindow, handles);

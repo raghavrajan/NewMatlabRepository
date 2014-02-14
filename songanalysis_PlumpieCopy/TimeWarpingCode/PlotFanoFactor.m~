@@ -1,0 +1,13 @@
+function [] = PlotFanoFactor(DirFileInfo, UnDirFileInfo, MedianMotif, MainFigure)
+
+figure(MainFigure);
+
+axes('Position',[0.15 0.15 0.8 0.1]);
+set(gca,'Box','off');
+hold on;
+
+Edges = 0:0.001:(MedianMotif.Length + Latency);
+Edges = Edges - Latency;
+
+plot(Edges, DirFileInfo.FanoFactor, 'k');
+hold on;

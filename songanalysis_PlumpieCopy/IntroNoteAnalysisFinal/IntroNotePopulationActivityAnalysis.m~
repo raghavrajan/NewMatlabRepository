@@ -1,0 +1,18 @@
+function [] = IntroNotePopulationActivityAnalysis(Neural_INR, BinSize)
+
+Edges = -0.1:BinSize:0.1;
+
+MaxINs = -10;
+
+for i = 1:length(Neural_INR),
+    MaxINs = max([MaxINs; max(Neural_INR{i}.NoofINs); max(Neural_INR{i}.WithinBoutNoofINs)]);
+end
+
+for i = 1:length(MaxINs),
+    
+    IN{i}.Raster{i} = [];
+    INPST{i} = [];
+end
+
+for i = 1:length(Neural_INR),
+    for j = 

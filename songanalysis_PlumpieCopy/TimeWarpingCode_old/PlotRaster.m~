@@ -1,0 +1,8 @@
+function [] = PlotRaster(Raster, MainFigure, RasterPlot)
+
+figure(MainFigure);
+axes(RasterPlot);
+hold on;
+plot(Raster(:,1),Raster(:,2),'w+');
+MarkerString = repmat('|',size(Raster,1),1);
+text(Raster(:,1),Raster(:,2),MarkerString,'HorizontalAlignment','center','VerticalAlignment','middle','FontSize',2,'k');

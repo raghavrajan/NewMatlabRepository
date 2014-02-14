@@ -1,0 +1,134 @@
+function [RawWaveformFigure] = SSAPlotRawWaveforms(DirectoryName, RecFileDirectoryName, DirFileInfo, UnDirFileInfo, ChannelNo, SongChanNo, FileType, PreSongStartDuration, NoofExamples)
+
+RawWaveformFigure = figure;
+set(gcf, 'Position', [360 260 575 650])
+axes('Position',[0.15 0.15 0.75 0.75]);
+set(gca,'Box','off');
+hold on;
+MaxRawData = 0;
+set(gcf, 'Color', 'w');
+
+if (~isempty(DirFileInfo))
+    if (size(DirFileInfo.Syllables.Start,1) > NoofExamples)
+        NoofSongs = NoofExamples;
+    else
+        NoofSongs = size(DirFileInfo.Syllables.Start,1);
+    end
+        
+    for i = 1:NoofSongs,
+        FileIndex = DirFileInfo.Syllables.Index(i);
+
+        if (strfind(FileType, 'obs'))
+            [RawData,Fs] = SSASoundIn(DirectoryName, RecFileDirectoryName, [DirFileInfo.FileNames{FileIndex}],['obs',num2str(DirFileInfo.NChans{FileIndex} - ChannelNo),'r']);
+            RawData = RawData * 500/32768;
+            [RawSong,Fs] = SSASoundIn(DirectoryName, RecFileDirectoryName, [DirFileInfo.FileNames{FileIndex}],['obs',num2str(DirFileInfo.NChans{FileIndex} - SongChanNo),'r']);
+            RawSong = RawSong * 50/32768;
+        else
+            if (strfind(FileType, 'okrank'))
+                [RawData,Fs] = SSAReadOKrankData(DirectoryName, RecFileDirectoryName, [DirFileInfo.FileNames{FileIndex}], num2str(ChannelNo));
+                [b, a] = butter(2, [1/16000 10/16000]);
+                RawData = filtfilt(b, a, RawData);
+                RawData = RawData * 100;
+                [RawSong,Fs] = SSAReadOKrankData(DirectoryName, RecFileDirectoryName, [DirFileInfo.FileNames{FileIndex}], num2str(SongChanNo));
+                RawSong = RawSong * 10;
+            end
+        end
+
+        Time = 0:1/Fs:length(RawData)/Fs;
+        Indices = find((Time > (DirFileInfo.Syllables.Start(i,1) - PreSongStartDuration)) & (Time < (DirFileInfo.Syllables.End(i,end))));
+        TempMax = max(RawData(Indices)) - min(RawData(Indices));
+        TempMax = TempMax + 0.05 * TempMax;
+        RawData = RawData + MaxRawData;
+        RawSong = RawSong + MaxRawData;
+        MaxRawData = MaxRawData + TempMax;
+
+        plot((Time(Indices) - Time(Indices(1)) - PreSongStartDuration), RawData(Indices),'r');
+        plot((Time(Indices) - Time(Indices(1)) - PreSongStartDuration), RawSong(Indices),'b');
+        
+        if (isfield(DirFileInfo, 'SpikeData'));
+            SpikeIndices = find((DirFileInfo.SpikeData.Times{FileIndex} > (DirFileInfo.Syllables.Start(i,1) - PreSongStartDuration)) & (DirFileInfo.SpikeData.Times{FileIndex} < (DirFileInfo.Syllables.End(i,end))));
+        
+            for j = 1:length(SpikeIndices),
+                SpikeTimeIndices = find((Time <= (DirFileInfo.SpikeData.Times{FileIndex}(SpikeIndices(j)))), 1, 'last');
+                plot((Time((SpikeTimeIndices-8):(SpikeTimeIndices+23)) - Time(Indices(1)) - PreSongStartDuration), RawData((SpikeTimeIndices-8):(SpikeTimeIndices+23)), 'b'); 
+            end
+        end
+    end
+end
+
+if (~isempty(UnDirFileInfo))
+    if (size(UnDirFileInfo.Syllables.Start,1) > NoofExamples)
+        NoofSongs = NoofExamples;
+    else
+        NoofSongs = size(UnDirFileInfo.Syllables.Start,1);
+    end
+        
+    for i = 1:NoofSongs,
+        FileIndex = UnDirFileInfo.Syllables.Index(i);
+
+        if (strfind(FileType, 'obs'))
+            [RawData,Fs] = SSASoundIn(DirectoryName, RecFileDirectoryName, [UnDirFileInfo.FileNames{FileIndex}],['obs',num2str(UnDirFileInfo.NChans{FileIndex} - ChannelNo),'r']);
+            RawData = RawData * 500/32768;
+            [RawSong,Fs] = SSASoundIn(DirectoryName, RecFileDirectoryName, [UnDirFileInfo.FileNames{FileIndex}],['obs',num2str(UnDirFileInfo.NChans{FileIndex} - SongChanNo),'r']);
+            RawSong = RawSong * 50/32768;            
+        else
+            if (strfind(FileType, 'okrank'))
+                [RawData,Fs] = SSAReadOKrankData(DirectoryName, RecFileDirectoryName, [UnDirFileInfo.FileNames{FileIndex}],num2str(ChannelNo));
+                [b, a] = butter(2, [1/16000 10/16000]);
+                RawData = filtfilt(b, a, RawData);
+                RawData = RawData * 100;
+                [RawSong,Fs] = SSAReadOKrankData(DirectoryName, RecFileDirectoryName, [UnDirFileInfo.FileNames{FileIndex}],num2str(SongChanNo));
+                RawSong = RawSong * 10;
+            end
+        end
+
+        Time = 0:1/Fs:length(RawData)/Fs;
+        Indices = find((Time > (UnDirFileInfo.Syllables.Start(i,1) - PreSongStartDuration)) & (Time < (UnDirFileInfo.Syllables.End(i,end))));
+        TempMax = max(RawData(Indices)) - min(RawData(Indices));
+        TempMax = TempMax + 0.05 * TempMax;
+        RawData = RawData + MaxRawData;
+        RawSong = RawSong + MaxRawData;
+        MaxRawData = MaxRawData + TempMax;
+
+        plot((Time(Indices) - Time(Indices(1)) - PreSongStartDuration), RawData(Indices),'k');
+        plot((Time(Indices) - Time(Indices(1)) - PreSongStartDuration), RawSong(Indices),'b');        
+        
+        if (isfield(UnDirFileInfo, 'SpikeData'));
+            SpikeIndices = find((UnDirFileInfo.SpikeData.Times{FileIndex} > (UnDirFileInfo.Syllables.Start(i,1) - PreSongStartDuration)) & (UnDirFileInfo.SpikeData.Times{FileIndex} < (UnDirFileInfo.Syllables.End(i,end))));
+
+            for j = 1:length(SpikeIndices),
+                SpikeTimeIndices = find((Time <= (UnDirFileInfo.SpikeData.Times{FileIndex}(SpikeIndices(j)))), 1, 'last');
+                plot((Time((SpikeTimeIndices-8):(SpikeTimeIndices+23)) - Time(Indices(1)) - PreSongStartDuration), RawData((SpikeTimeIndices-8):(SpikeTimeIndices+23)), 'b'); 
+            end
+        end
+    end
+end
+
+if (~isempty(DirFileInfo))
+    if (strfind(FileType, 'observer'))
+        DotIndex = find(DirFileInfo.FileNames{1} == '.');
+        TitleName = DirFileInfo.FileNames{1}(1:(DotIndex(1) - 1));
+    else
+        if (strfind(FileType, 'okrank'))
+            TitleName = DirFileInfo.FileNames{1}(1:(end - 6));
+        end
+    end
+else
+    if (~isempty(UnDirFileInfo))
+        if (strfind(FileType, 'observer'))
+            DotIndex = find(UnDirFileInfo.FileNames{1} == '.');
+            TitleName = UnDirFileInfo.FileNames{1}(1:(DotIndex(1) - 1));
+        else
+            if (strfind(FileType, 'okrank'))
+                TitleName = UnDirFileInfo.FileNames{1}(1:(end - 6));
+            end
+        end
+    end
+end
+
+axis tight;
+set(gca,'FontSize',14,'FontWeight','bold');
+xlabel('Time (sec)','FontSize',14,'FontWeight','bold');
+ylabel('Amplitude (uV)','FontSize',14,'FontWeight','bold');
+title([TitleName,' - Raw Waveforms'],'FontSize',16,'FontWeight','bold');        
+    

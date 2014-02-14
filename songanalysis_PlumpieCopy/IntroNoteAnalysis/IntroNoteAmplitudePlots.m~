@@ -1,0 +1,69 @@
+function [] = IntroNoteAmplitudePlots(INoteFile)
+
+load(INoteFile);
+TotalBouts = 0;
+for i = 1:length(MotifIntroNoteIndices),
+    Notes = load([NoteFileDir, '/', ANotes.FileName{i}, '.not.mat']);
+    [Song, Fs] = ReadOKrankData(DataDir, ANotes.FileName{i}, 1);
+%     FFTWinSize = 0.008;
+%     WinSize = round(FFTWinSize * Fs);
+%     WinOverlap = round(WinSize * 0.5);
+% 
+%     [S, F, T, P] = spectrogram(Song, hamming(WinSize), WinOverlap, WinSize, Fs);
+%     
+%     Freq = find((F >= 860) & (F <= 8600));
+%     smooth = 10*log10(sum((S(Freq,:).*conj(S(Freq,:)))));
+    
+    if (~isempty(MotifIntroNoteIndices{i}))
+        UniqueBouts = unique(cell2mat(MotifIntroNoteIndices{i}.BoutNo));
+        for k = 1:length(UniqueBouts),
+            BoutIndex = find(cell2mat(MotifIntroNoteIndices{i}.BoutNo) == UniqueBouts(k));
+            BoutIndex = BoutIndex(1);
+            if (MotifIntroNoteIndices{i}.Indices{BoutIndex}(1) == BoutIndices{i}((UniqueBouts(k)-1)*2 + 1))
+                TotalBouts = TotalBouts + 1;
+                MotifOnset = MotifIntroNoteIndices{i}.MotifOnsets{BoutIndex};
+                if (MotifOnset < (ANotes.FileLength{i} + 1))
+                    EndTime = MotifOnset + 1;
+                else
+                    EndTime = ANotes.FileLength{i};
+                end
+
+                FirstINOnset = MotifIntroNoteIndices{i}.Onsets{BoutIndex}(1);
+                if (FirstINOnset > 0.5)
+                    StartTime = FirstINOnset - 0.5;
+                else
+                    StartTime = 0;
+                end
+
+                NewFs = 1000;
+                Time = (0:1/NewFs:ANotes.FileLength{i});
+
+                TempAmplitude = zeros(size(Time));
+                for j = 1:length(Notes.onsets),
+                    TempAmplitude(ceil(Notes.onsets(j) * NewFs/1000):floor(Notes.offsets(j) * NewFs/1000)) = 1;
+                end
+                % Amplitudes{TotalBouts} = [(T((find(T > StartTime, 1, 'first')):(find(T < EndTime, 1, 'last'))) - MotifOnset); smooth((find(T > StartTime, 1, 'first')):(find(T < EndTime, 1, 'last')))];
+                Amplitudes{TotalBouts} = [(Time((find(Time > StartTime, 1, 'first')):(find(Time < EndTime, 1, 'last'))) - MotifOnset); TempAmplitude((find(Time > StartTime, 1, 'first')):(find(Time < EndTime, 1, 'last')))];
+                NoofINs(TotalBouts) = MotifIntroNoteIndices{i}.NoofINs{BoutIndex};
+            end
+        end
+    end
+end
+
+Lengths = cellfun(@length, Amplitudes);
+AllAmps = ones(length(Amplitudes), max(Lengths))*0;
+% AmpTime = 1:-1/(1/(T(2)-T(1))):(-max(Lengths)/(1/(T(2) - T(1))) + 1);
+AmpTime = 1:-1/(NewFs):(-max(Lengths)/NewFs + 1);
+AmpTime = fliplr(AmpTime);
+AmpTime(1) = [];
+
+[SortedINs, SortedIndices] = sort(NoofINs, 'descend');
+
+for i = 1:length(SortedIndices),
+    StartIndex = find(AmpTime > Amplitudes{SortedIndices(i)}(1,1), 1, 'first');
+    AllAmps(i,StartIndex:(StartIndex + length(Amplitudes{SortedIndices(i)}(1,:)) - 1)) = Amplitudes{SortedIndices(i)}(2,:);
+end
+figure
+imagesc(AmpTime, [1:1:size(AllAmps,1)], AllAmps);
+
+disp('Finished Analysis');

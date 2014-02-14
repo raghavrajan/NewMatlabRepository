@@ -1,0 +1,52 @@
+function [MedianMotif] = CalculateMedianMotifLength(DirFileInfo,UnDirFileInfo,Motif,RasterPlotFigure)
+
+MedianMotif = [];
+
+DirSongs = strfind(DirFileInfo.Notes.NoteLabels,Motif);
+for i = 1:length(DirSongs),
+    DirSongLengths(i,:) = DirFileInfo.Notes.NoteOffsets(DirSongs(i) + (length(Motif) - 1)) - DirFileInfo.Notes.NoteOnsets(DirSongs(i));
+end
+
+UnDirSongs = strfind(UnDirFileInfo.Notes.NoteLabels,Motif);
+for i = 1:length(UnDirSongs),
+    UnDirSongLengths(i,:) = UnDirFileInfo.Notes.NoteOffsets(UnDirSongs(i) + (length(Motif) - 1)) - UnDirFileInfo.Notes.NoteOnsets(UnDirSongs(i));
+end
+
+SongLengths = [DirSongLengths; UnDirSongLengths];
+[SortedSongLengths, SortedSongIndices] = sort(SongLengths);
+
+if (mod(length(SongLengths),2) == 0)
+    MedianMotifIndex = SortedSongIndices(length(SortedSongIndices)/2);
+else
+    MedianMotifIndex = SortedSongIndices((length(SortedSongIndices) + 1)/2);
+end
+
+if (MedianMotifIndex > length(DirSongLengths))
+    
+    MedianMotifIndex = MedianMotifIndex - length(DirSongLengths);  
+    
+    FileIndex = find(cumsum(UnDirFileInfo.RecordLengths) < UnDirFileInfo.Syllables.Start(MedianMotifIndex,1),1,'last');
+    MedianMotif.FileName = UnDirFileInfo.FileNames(FileIndex + 1);
+    MedianMotif.StartTime = UndirFileInfo.Syllables.Start(MedianMotifIndex,1) - sum(UnDirFileInfo.RecordLengths(1:FileIndex));
+    
+    for i = 1:length(Motif),
+        MedianMotif.SyllableLengths(i) = UnDirFileInfo.Notes.NoteOffsets(UnDirSongs(MedianMotifIndex) + (i-1)) - UnDirFileInfo.Notes.NoteOnsets(UnDirSongs(MedianMotifIndex) + (i-1));
+        if (i ~= length(Motif))
+            MedianMotif.GapLengths(i) = UnDirFileInfo.Notes.NoteOnsets(UnDirSongs(MedianMotifIndex) + (i)) - UnDirFileInfo.Notes.NoteOffsets(UnDirSongs(MedianMotifIndex) + (i-1));
+        end
+    end
+
+    MedianMotif.Length = UnDirSongLengths(MedianMotifIndex);
+else
+
+    MedianMotif.FileName = DirFileInfo.FileNames(MedianMotifIndex);
+    
+    for i = 1:length(Motif),
+        MedianMotif.SyllableLengths(i) = DirFileInfo.Notes.NoteOffsets(DirSongs(MedianMotifIndex) + (i-1)) - DirFileInfo.Notes.NoteOnsets(DirSongs(MedianMotifIndex) + (i-1));
+        if (i ~= length(Motif))
+            MedianMotif.GapLengths(i) = DirFileInfo.Notes.NoteOnsets(DirSongs(MedianMotifIndex) + (i)) - DirFileInfo.Notes.NoteOffsets(DirSongs(MedianMotifIndex) + (i-1));
+        end
+    end
+
+    MedianMotif.Length = DirSongLengths(MedianMotifIndex);
+end

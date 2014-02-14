@@ -1,0 +1,8 @@
+Duration
+MeanFrequency
+Entropy
+LogAmplitude
+PitchGoodness
+FrequencyModulation
+AmplitudeModulation
+EntropyVariance

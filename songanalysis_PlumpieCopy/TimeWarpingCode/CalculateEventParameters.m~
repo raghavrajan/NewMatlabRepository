@@ -1,0 +1,51 @@
+function [EventParameters] = CalculateEventParameters(FileInfo, MedianMotif, BinSize, Latency, FileInfo2)
+
+Edges = -0.2:BinSize:(MedianMotif.Length + 0.2);
+
+if (isfield(FileInfo2,'EventParameters'))
+    EventParameters = FileInfo2.EventParameters;
+    clear EventParameters.Jitter;
+    clear EventParameters.NoofSpikes;
+    clear EventParameters.ISIs;
+else
+    EventParameters.EventThreshold = mean(mean(FileInfo.PST)) + (4 * std(mean(FileInfo.PST)));
+    
+    TempEventIndices = find(mean(FileInfo.PST) > EventParameters.EventThreshold);
+    if (length(TempEventIndices) > 0)
+        EventIndices(:,1) = TempEventIndices;
+        if ((size(EventIndices,1) == 1) && (size(EventIndices,2) > 1))
+            EventIndices = EventIndices';
+        end
+    
+        EventParameters.AllEventIndices = EventIndices;
+        EventParameters.EventIndices = [EventIndices(1); EventIndices(find(diff(EventIndices) > 1) + 1)];
+        EventParameters.ActualIndices = [0; (find(diff(EventIndices) > 1)); length(EventIndices)];
+    end
+end
+
+if (isfield(EventParameters,'EventIndices'))
+    for i = 1:length(EventParameters.EventIndices),
+        EventParameters.EventTimes(i) = mean(Edges(EventParameters.AllEventIndices((EventParameters.ActualIndices(i) + 1):(EventParameters.ActualIndices(i+1)))));
+    end
+
+    for i = 1:length(FileInfo.SpikeTrain),
+        for j = 1:length(EventParameters.EventTimes),
+            SpikeTrain = [FileInfo.SpikeTrain{i} - Latency];
+            EventSpikeIndices = find((SpikeTrain > (EventParameters.EventTimes(j) - 0.05)) & (SpikeTrain < (EventParameters.EventTimes(j) + 0.05)));
+            if (length(EventSpikeIndices) > 0)
+                EventSpikeTimes = SpikeTrain(EventSpikeIndices);
+                EventParameters.Jitter(i,j) = EventSpikeTimes(1) - EventParameters.EventTimes(j);
+                EventParameters.NoofSpikes(i,j) = length(EventSpikeTimes);
+                EventParameters.ISIs{i,j} = diff(EventSpikeTimes);
+                EventParameters.EventSpikeTimes{i,j} = EventSpikeTimes;
+            end
+        end
+    end
+    EventSpikeTimes = [];
+    for i = 1:length(EventParameters.EventTimes),
+        for j = 1:size(EventParameters.EventSpikeTimes,1),
+            EventSpikeTimes = [EventSpikeTimes [EventParameters.EventSpikeTimes{j,i}(1)]'];
+        end
+    end
+    
+end

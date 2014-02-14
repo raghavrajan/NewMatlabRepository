@@ -1,0 +1,96 @@
+ 
+==================================================
+ Batch run: 27-Jan-2009 10:48:38
+==================================================
+ 
+ 
+==================================================
+ Creating FeatureData files: 
+==================================================
+ 
+Loaded file
+Loaded file
+ 
+Loading 2 blocks.
+Packing memory...
+Warning: PACK can only be used from the MATLAB command line.
+> In <a href="error:/home/raghav/Work/analysis/matlab_m_files/MClust-3.4/MClust/Write_fd_file.m,165,1">Write_fd_file at 165</a>
+  In <a href="error:/home/raghav/Work/analysis/matlab_m_files/MClust-3.4/Batch/RunClustBatch.m,123,1">RunClustBatch at 123</a>
+ 
+Processing block 1 of 2 : round 1 of 1
+Loaded file
+  Calculating Energy
+  Calculating Peak
+  Calculating Valley
+  Calculating Peak
+  Calculating Valley
+ 
+Processing block 2 of 2 : round 1 of 1
+Loaded file
+  Calculating Energy
+ Wrote /home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin_Energy.fd as a .mat formatted file
+  Calculating Peak
+ Wrote /home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin_Peak.fd as a .mat formatted file
+  Calculating Valley
+ Wrote /home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin_Valley.fd as a .mat formatted file
+  Calculating Peak
+ Wrote /home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin_Peak.fd as a .mat formatted file
+  Calculating Valley
+ Wrote /home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin_Valley.fd as a .mat formatted file
+ 
+==================================================
+ Splitting FeatureData files: 
+==================================================
+ 
+ 
+==================================================
+ Creating FeatureData files for KlustaKwik: 
+==================================================
+ 
+ Wrote /home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin.fd as a .mat formatted file
+ 
+==================================================
+ run KlustaKwik on FeatureData files: 
+==================================================
+ 
+KlustaKwikPath undefined, using /mynah1/raghav/downloaded_and_compiled_source_codes/KlustaKwik/KlustaKwik
+ 
+/home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin
+Number of spikes: 41951
+FileBase	/home/raghav/Work/analysis/matlab_m_files/song_analysis/SpikeSorter/./b01w01-05272008.536_617.cbin
+ElecNo	1
+MinClusters	10
+MaxClusters	15
+MaxPossibleClusters	15
+nStarts	1
+RandomSeed	1
+Debug	0
+Verbose	1
+UseFeatures	111
+PenaltyMix	0.000000
+DistDump	0
+DistThresh	6.907755
+FullStepEvery	10
+ChangedThresh	0.050000
+Log	1
+Screen	1
+MaxIter	500
+StartCluFile	
+fSaveModel	1
+SplitEvery	50
+help	0
+nFeatures=3
+Loaded 41951 data points of dimension 3.
+SThat took 72.589996 seconds.
+
+ 
+del: Command not found.
+del: Command not found.
+ 
+ 
+==================================================
+ End of Batch run: 27-Jan-2009 10:49:57
+ Run Duration: 0.022014
+ Time for KlustaKwik run: 0.020726
+==================================================
+ 

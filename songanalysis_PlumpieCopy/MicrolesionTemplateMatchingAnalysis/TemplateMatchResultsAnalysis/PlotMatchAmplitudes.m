@@ -1,0 +1,165 @@
+function [] = PlotMatchAmplitudes(handles, Syllable, varargin)
+
+% File to plot the distribution of template match values for each of the
+% days
+
+% Pre and post match time to plot
+
+FFTWinLen = 16; % in ms
+FFTWinOverlap = 0.5;
+
+if (nargin > 2)
+    InputData = varargin{1};
+end
+
+Temp = inputdlg('Enter the threshold above which peaks should be considered (0.5 is a good place to start)', 'Peak detection threshold');
+
+MPH = str2double(Temp{1});
+
+Colours = 'rgbcmky';
+
+PlotFigure(1) = figure;
+set(PlotFigure(1), 'Position', [427 170 675 525]);
+
+PlotFigure(2) = figure;
+set(PlotFigure(2), 'Position', [427 170 675 525]);
+
+SyllIndex = intersect(find(cellfun(@length, strfind([handles(1).Labels], Syllable))), find(cellfun(@length, handles(1).Labels) == length(Syllable)));
+
+if (~isempty(strfind(InputData.MotifTemplate.MotifTemplate(1).Label, Syllable)) && (length(Syllable) == length(InputData.MotifTemplate.MotifTemplate(1).Label)))
+    ZeroIndex = find(([InputData.MotifTemplate.MotifTemplate.TimeStretch] == 0) & ([InputData.MotifTemplate.MotifTemplate.FreqStretch] == 0));
+    TemplateLen = size(InputData.MotifTemplate.MotifTemplate(ZeroIndex).MotifTemplate, 2)/250;
+else
+    for i = 1:length(InputData.SyllTemplates.SyllableTemplates),
+        if (~isempty(find(InputData.SyllTemplates.SyllableTemplates{i}{1}.MotifTemplate(1).Label == Syllable)))
+            ZeroIndex = find(([InputData.SyllTemplates.SyllableTemplates{i}{1}.MotifTemplate.TimeStretch] == 0) & ([InputData.SyllTemplates.SyllableTemplates{i}{1}.MotifTemplate.FreqStretch] == 0));
+            TemplateLen = size(InputData.SyllTemplates.SyllableTemplates{i}{1}.MotifTemplate(ZeroIndex).MotifTemplate, 2)/250;
+        end
+    end
+end
+
+AmplitudeFs = 1000; % 1 KHz for the amplitude waveforms
+AmplitudeTime = -0.2:1/AmplitudeFs:(TemplateLen + 0.2);
+
+if (strfind(InputData.FileType, 'obs'))
+    SongChanNo = 'obs0r';
+else
+    SongChanNo = 1;
+end
+
+for i = 1:length(handles),
+    Legend{i} = ['Day #', num2str(i)];
+ 
+    % First analyse the output data from directed songs
+
+    if (isfield(handles(i), 'DirPeaks'))
+        MotifPeakIndices = find(handles(i).DirPeaks{SyllIndex}(:,1) >= MPH);
+        DirAmplitudes = ones(length(MotifPeakIndices), length(AmplitudeTime));
+        for j = 1:length(MotifPeakIndices),
+            [RawData, Fs] = ASSLGetRawData([InputData.DataDirectories{i}, '/'], handles(i).DirSongFiles{handles(i).DirPeaks{SyllIndex}(MotifPeakIndices(j),3)}, InputData.FileType, SongChanNo);
+
+            Time = (1:1:length(RawData))/Fs;
+
+            MatchTime = handles(i).DirPeaks{SyllIndex}(MotifPeakIndices(j),2);
+            MotifIndices = find((Time >= (MatchTime - 0.5)) & (Time <= (MatchTime + TemplateLen + 0.5)));
+            Time = Time(MotifIndices);
+            RawData = RawData(MotifIndices);
+            
+            [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, FFTWinLen, FFTWinOverlap);
+            TempAmplitudeTime = AmplitudeTime + MatchTime;
+            
+            DirAmplitudes(j,:) = spline(Time, LogAmplitude, TempAmplitudeTime);
+        end
+        figure(PlotFigure(1));
+        subplot(2, 1, 1);
+        errorbar(AmplitudeTime, mean(DirAmplitudes), std(DirAmplitudes)/sqrt(size(DirAmplitudes, 1)), Colours(i));
+        hold on;
+        
+        figure(PlotFigure(2));
+        subplot(length(handles), 1, i);
+        errorbar(AmplitudeTime, mean(DirAmplitudes), std(DirAmplitudes)/sqrt(size(DirAmplitudes, 1)), 'r');
+        hold on;
+    end
+    
+    % Next analyse the output data from undirected songs
+    if (isfield(handles(i), 'UnDirPeaks'))
+        MotifPeakIndices = find(handles(i).UnDirPeaks{SyllIndex}(:,1) >= MPH);
+        UnDirAmplitudes = ones(length(MotifPeakIndices), length(AmplitudeTime));
+        for j = 1:length(MotifPeakIndices),
+            [RawData, Fs] = ASSLGetRawData([InputData.DataDirectories{i}, '/'], handles(i).UnDirSongFiles{handles(i).UnDirPeaks{SyllIndex}(MotifPeakIndices(j),3)}, InputData.FileType, SongChanNo);
+
+            Time = (1:1:length(RawData))/Fs;
+            
+            MatchTime = handles(i).UnDirPeaks{SyllIndex}(MotifPeakIndices(j),2);
+            MotifIndices = find((Time >= (MatchTime - 0.5)) & (Time <= (MatchTime + TemplateLen + 0.5)));
+            Time = Time(MotifIndices);
+            RawData = RawData(MotifIndices);
+            
+            [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, FFTWinLen, FFTWinOverlap);
+            TempAmplitudeTime = AmplitudeTime + MatchTime;
+            UnDirAmplitudes(j,:) = spline(Time, LogAmplitude, TempAmplitudeTime);
+        end
+        figure(PlotFigure(1));
+        subplot(2, 1, 2);
+        errorbar(AmplitudeTime, mean(UnDirAmplitudes), std(UnDirAmplitudes)/sqrt(size(UnDirAmplitudes, 1)), Colours(i));
+        hold on;
+        
+        figure(PlotFigure(2));
+        subplot(length(handles), 1, i);
+        errorbar(AmplitudeTime, mean(UnDirAmplitudes), std(UnDirAmplitudes)/sqrt(size(UnDirAmplitudes, 1)), 'b');
+        hold on;
+        
+    end
+end
+
+figure(PlotFigure(1));
+set(gcf, 'Color', 'w');
+subplot(2,1,1);
+axis tight;
+TempAxis(1,:) = axis;
+    
+subplot(2,1,2);
+axis tight;
+TempAxis(2,:) = axis;
+
+subplot(2,1,1);
+set(gca, 'Box', 'off');
+axis([-0.2 max(TempAxis(:,2)) min(TempAxis(:,3))*0.99 0]);
+if (length(Syllable) > 1)
+    title(['Directed motif ', Syllable], 'FontSize', 12, 'FontWeight', 'bold');
+else
+    title(['Directed syllable ', Syllable], 'FontSize', 12, 'FontWeight', 'bold');
+end
+ylabel('%', 'FontSize', 12, 'FontWeight', 'bold');
+legend(Legend);
+set(gca, 'FontSize', 12);
+
+subplot(2,1,2);
+set(gca, 'Box', 'off');
+axis([-0.2 max(TempAxis(:,2)) min(TempAxis(:,3))*0.99 0]);
+if (length(Syllable) > 1)
+    title(['UnDirected motif ', Syllable], 'FontSize', 12, 'FontWeight', 'bold');
+else
+    title(['UnDirected syllable ', Syllable], 'FontSize', 12, 'FontWeight', 'bold');
+end
+xlabel('Template match value', 'FontSize', 12, 'FontWeight', 'bold');
+ylabel('%', 'FontSize', 12, 'FontWeight', 'bold');
+set(gca, 'FontSize', 12);
+
+figure(PlotFigure(2));
+set(gcf, 'Color', 'w');
+
+for i = 1:length(handles),
+    subplot(length(handles),1,i);
+    set(gca, 'Box', 'off');
+    axis([-0.2 max(TempAxis(:,2)) min(TempAxis(:,3))*0.99 0]);
+    title(['Day #', num2str(i)], 'FontSize', 12, 'FontWeight', 'bold');
+    if (i == 1)
+        ylabel('Log amplitude (dB)', 'FontSize', 12, 'FontWeight', 'bold');
+    end
+    legend('Directed', 'Undirected');
+    set(gca, 'FontSize', 12);
+    xlabel('Time from start of match (sec)', 'FontSize', 12, 'FontWeight', 'bold');
+end
+
+disp('Finished analysis');

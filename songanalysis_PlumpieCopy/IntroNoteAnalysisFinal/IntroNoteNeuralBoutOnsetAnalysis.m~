@@ -1,0 +1,75 @@
+function [] = IntroNoteNeuralBoutOnsetAnalysis(Neural_INR, Colour, FillColour, Colour2, FillColour2)
+
+FFWindow = 0.05;
+BinSize = 0.01;
+PlotEdges = -1.5:BinSize:0.1;
+TransPoint = find(PlotEdges <= -1, 1, 'last');
+
+MaxINs = 0;
+for i = 1:length(Neural_INR),
+    MaxINs = max([MaxINs; max(Neural_INR{i}.NoofINs)]);
+	for j = 1:length(Neural_INR{i}.BoutDetails),
+        Edges = Neural_INR{i}.BoutDetails(j).onsets(1) + PlotEdges;
+        PST{i}(j,:) = histc(Neural_INR{i}.BoutDetails(j).SpikeTimes, Edges);
+    end
+    MeanPST(i,:) = mean(PST{i})/BinSize;
+    MeanNormPST(i,:) = mean(PST{i})/BinSize - mean(mean(PST{i}(:,1:TransPoint))/BinSize);
+end
+MeanPST(:,end) = [];
+MeanNormPST(:,end) = [];
+
+for i = 1:MaxINs,
+    RowNo = 0;
+    for j = 1:length(PST),
+        Indices = find(Neural_INR{i}.NoofINs == i);
+        if (~isempty(Indices))
+            MeanINPST{i}(RowNo,:) = PST{i}
+
+Index = 0;
+for i = 1:length(Neural_INR),
+    if ((length(Neural_INR{i}.AllBoutDetails) - length(Neural_INR{i}.BoutDetails)) > 2)
+        Index = Index + 1;
+        for j = 1:length(Neural_INR{i}.BoutDetails),
+            Edges = PlotEdges + Neural_INR{i}.BoutDetails(j).onsets(1);
+            MatchedSongPST{Index}(j,:) = histc(Neural_INR{i}.BoutDetails(j).SpikeTimes, Edges);
+        end
+        MeanMatchedSongPST(Index,:) = mean(MatchedSongPST{Index})/BinSize;
+        MeanNormMatchedSongPST(Index,:) = mean(MatchedSongPST{Index})/BinSize - mean(mean(MatchedSongPST{Index}(:,1:TransPoint))/BinSize);
+        
+        Indices = find([Neural_INR{i}.AllBoutDetails.Motif] == 0);
+        TrialNo = 0;
+        for j = Indices,
+            TrialNo = TrialNo + 1;
+            Edges = PlotEdges + Neural_INR{i}.AllBoutDetails(j).onsets(1);
+            MatchedNonSongPST{Index}(TrialNo,:) = histc(Neural_INR{i}.AllBoutDetails(j).SpikeTimes, Edges);
+        end
+        MeanMatchedNonSongPST(Index,:) = mean(MatchedNonSongPST{Index})/BinSize;
+        MeanNormMatchedNonSongPST(Index,:) = mean(MatchedNonSongPST{Index})/BinSize - mean(mean(MatchedNonSongPST{Index}(:,1:TransPoint))/BinSize);
+    end
+end
+MeanNormMatchedSongPST(:,end) = [];
+MeanNormMatchedNonSongPST(:,end) = [];
+PlotEdges(end) = [];
+
+figure;
+hold on;
+fill([PlotEdges fliplr(PlotEdges)], [(mean(MeanNormPST) - std(MeanNormPST)/sqrt(size(MeanNormPST,1))) fliplr((mean(MeanNormPST) + std(MeanNormPST)/sqrt(size(MeanNormPST,1))))], FillColour, 'EdgeColor', FillColour, 'FaceAlpha', 0.6)
+plot(PlotEdges, mean(MeanNormPST), Colour);
+
+plot([PlotEdges(1) PlotEdges(end)], [(mean(mean(MeanNormPST(:,1:TransPoint))) + 2*std(mean(MeanNormPST(:,1:TransPoint)))) (mean(mean(MeanNormPST(:,1:TransPoint))) + 2*std(mean(MeanNormPST(:,1:TransPoint))))], 'k--', 'LineWidth', 2);
+plot([PlotEdges(1) PlotEdges(end)], [(mean(mean(MeanNormPST(:,1:TransPoint))) - 2*std(mean(MeanNormPST(:,1:TransPoint)))) (mean(mean(MeanNormPST(:,1:TransPoint))) - 2*std(mean(MeanNormPST(:,1:TransPoint))))], 'k--', 'LineWidth', 2);
+
+figure;
+hold on;
+fill([PlotEdges fliplr(PlotEdges)], [(mean(MeanNormMatchedSongPST) - std(MeanNormMatchedSongPST)/sqrt(size(MeanNormMatchedSongPST,1))) fliplr((mean(MeanNormMatchedSongPST) + std(MeanNormMatchedSongPST)/sqrt(size(MeanNormMatchedSongPST,1))))], Colour, 'EdgeColor', Colour, 'FaceAlpha', 0.8)
+plot(PlotEdges, mean(MeanNormMatchedSongPST), Colour);
+
+fill([PlotEdges fliplr(PlotEdges)], [(mean(MeanNormMatchedNonSongPST) - std(MeanNormMatchedNonSongPST)/sqrt(size(MeanNormMatchedNonSongPST,1))) fliplr((mean(MeanNormMatchedNonSongPST) + std(MeanNormMatchedNonSongPST)/sqrt(size(MeanNormMatchedNonSongPST,1))))], Colour2, 'EdgeColor', Colour2, 'FaceAlpha', 0.8)
+plot(PlotEdges, mean(MeanNormMatchedNonSongPST), Colour2);
+
+plot([PlotEdges(1) PlotEdges(end)], [(mean(mean(MeanNormMatchedSongPST(:,1:TransPoint))) + 2*std(mean(MeanNormMatchedSongPST(:,1:TransPoint)))) (mean(mean(MeanNormPST(:,1:TransPoint))) + 2*std(mean(MeanNormPST(:,1:TransPoint))))], 'k--', 'LineWidth', 2);
+plot([PlotEdges(1) PlotEdges(end)], [(mean(mean(MeanNormMatchedSongPST(:,1:TransPoint))) - 2*std(mean(MeanNormMatchedSongPST(:,1:TransPoint)))) (mean(mean(MeanNormPST(:,1:TransPoint))) - 2*std(mean(MeanNormPST(:,1:TransPoint))))], 'k--', 'LineWidth', 2);
+
+figure;
+plot([-1.5:0.001:-FFWindow], mean(VarPST));
+disp('Finished Analysis');

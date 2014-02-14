@@ -1,0 +1,204 @@
+function [BoutStats] = AnalyseIntroNotes(RawDataDir, FileType, NoteDirName, NoteFiles, Motif, Motif2, IntroSyllables, ContinuousOrNot)
+
+InterBoutInterval = 0.5; % in seconds
+
+if ispc
+    if (RawDataDir(end) ~= '\')
+        RawDataDir(end+1) = '\';
+    end
+else
+    if (RawDataDir(end) ~= '/')
+        RawDataDir(end+1) = '/';
+    end
+end
+      
+BoutNo = 1;
+
+cd(NoteDirName);
+
+MotifNo = 1;
+
+PrevFTime = 0;
+
+for NoteFileNo = 1:length(NoteFiles),
+    Notes = load(NoteFiles(NoteFileNo).name);
+    disp(NoteFiles(NoteFileNo).name);
+    Notes.onsets = Notes.onsets/1000;
+    Notes.offsets = Notes.offsets/1000;
+    
+    Index = strfind(NoteFiles(NoteFileNo).name, '.not.mat');
+    SongFile = NoteFiles(NoteFileNo).name(1:Index-1);
+    
+    if (strfind(FileType, 'okrank'))
+        [Song, Fs] = ReadOKrankData(RawDataDir, SongFile, 1);
+    else
+        if (strfind(FileType, 'wav'))
+            cd(RawDataDir);
+            [Song, Fs] = wavread(SongFile);
+            cd(NoteDirName);
+        else
+            if (strfind(FileType, 'obs'));
+                [Song, Fs] = soundin_copy(RawDataDir, SongFile, 'obs0r');
+                Song = Song * 5/32768;
+            end
+        end
+    end
+    
+    Time = (0:1:(length(Song)-1))/Fs;
+    [m_spec_deriv , m_AM, m_FM ,m_Entropy , m_amplitude , m_Freq, m_PitchGoodness , m_Pitch , Pitch_chose , Pitch_weight] = deriv(Song, Fs);
+    T = linspace(Time(1), Time(end), length(m_Entropy));
+
+    if (strfind(ContinuousOrNot, 'continuous'))
+       FTime = PrevFTime + length(Song)/Fs;
+       PrevFTime = FTime;
+    else
+       FTime = -1000;
+    end
+    
+    if (isempty(Notes.offsets))
+        continue;
+    end
+    
+    Motifs = union(strfind(Notes.labels, Motif), strfind(Notes.labels, Motif2));
+    if (~isempty(Motifs))
+        if (Motifs(1) == 1)
+            if (Notes.onsets(1) > 0.5)
+                BoutStats.AIntroNotes.NoINs(MotifNo) = 0;
+                BoutStats.AIntroNotes.PrevSyllable(MotifNo) = 'Q';
+                if (NoteFileNo == 1)
+                    BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(1) + 10000;
+                else
+                    if (FTime > 0)
+                        BoutStats.AIntroNotes.BoutInterval(MotifNo) = FTime + Notes.onsets(1) - PrevOffsetTime;
+                    else
+                        BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(1) - Time(1);
+                    end
+                end
+                BoutStats.AIntroNotes.Durations(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Intervals(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.PG(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Entropy(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Amplitude(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.FM(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Pitch(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.MeanFreq(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.AM(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.FileName{MotifNo} = SongFile;
+                MotifNo = MotifNo + 1;
+            end
+        else
+            IntroNoteIndices = [];
+            for SyllNo = 1:length(IntroSyllables),
+                IntroNoteIndices = [IntroNoteIndices find(Notes.labels(1:Motifs(1)) == IntroSyllables(SyllNo))];
+            end
+                        
+            if (~isempty(IntroNoteIndices))
+                IntroNoteIndices = sort(IntroNoteIndices);
+                if (length(IntroNoteIndices) > 1)
+                    Intervals = Notes.onsets(IntroNoteIndices(2:end)) - Notes.offsets(IntroNoteIndices(1:end-1));
+                    LongIntervals = find(Intervals > InterBoutInterval);
+                    if (~isempty(LongIntervals))
+                        IntroNoteIndices = IntroNoteIndices((LongIntervals(end) + 1):end);
+                    end
+                end
+                BoutStats.AIntroNotes.NoINs(MotifNo) = length(IntroNoteIndices);
+                if (IntroNoteIndices(1) == 1)
+                    if (NoteFileNo == 1)
+                        BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(1) + 5;
+                    else
+                        if (FTime > 0)
+                            BoutStats.AIntroNotes.BoutInterval(MotifNo) = FTime + Notes.onsets(1) - PrevOffsetTime;
+                        else
+                            BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(1) - Time(1);
+                        end
+                    end
+                    BoutStats.AIntroNotes.PrevSyllable(MotifNo) = 'Q';
+                else
+                    BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(IntroNoteIndices(1)) - Notes.offsets(IntroNoteIndices(1) - 1);
+                    BoutStats.AIntroNotes.PrevSyllable(MotifNo) = Notes.labels(IntroNoteIndices(1) - 1);
+                end
+                IntroNoteIndices = sort(IntroNoteIndices, 'descend');
+                BoutStats.AIntroNotes.Durations(MotifNo, 1:length(IntroNoteIndices)) = Notes.offsets(IntroNoteIndices) - Notes.onsets(IntroNoteIndices);
+                BoutStats.AIntroNotes.Intervals(MotifNo, 1:length(IntroNoteIndices)) = Notes.onsets(IntroNoteIndices + 1) - Notes.offsets(IntroNoteIndices);
+                for j = 1:length(IntroNoteIndices),
+                    StartIndex = find(T >= Notes.onsets(IntroNoteIndices(j)), 1, 'first');
+                    EndIndex = find(T >= Notes.offsets(IntroNoteIndices(j)), 1, 'first');
+                    BoutStats.AIntroNotes.PG(MotifNo, j) = mean(m_PitchGoodness(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.Entropy(MotifNo, j) = mean(m_Entropy(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.Amplitude(MotifNo, j) = mean(m_amplitude(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.FM(MotifNo, j) = mean(m_FM(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.Pitch(MotifNo, j) = mean(Pitch_chose(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.MeanFreq(MotifNo, j) = mean(m_Freq(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.AM(MotifNo, j) = mean(m_AM(StartIndex:EndIndex));
+                end
+            else
+                BoutStats.AIntroNotes.NoINs(MotifNo) = 0;
+                BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(Motifs(1)) - Notes.offsets(Motifs(1) - 1);
+                BoutStats.AIntroNotes.PrevSyllable(MotifNo) = Notes.labels(Motifs(1) - 1);
+                BoutStats.AIntroNotes.Durations(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Intervals(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.PG(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Entropy(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Amplitude(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.FM(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Pitch(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.MeanFreq(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.AM(MotifNo, 1) = 0;
+            end
+            BoutStats.AIntroNotes.FileName{MotifNo} = SongFile;
+            MotifNo = MotifNo + 1;
+        end
+        for i = 2:length(Motifs),
+            IntroNoteIndices = [];
+            for SyllNo = 1:length(IntroSyllables),
+                IntroNoteIndices = [IntroNoteIndices find(Notes.labels(Motifs(i-1):Motifs(i)) == IntroSyllables(SyllNo))];
+            end
+            if (isempty(IntroNoteIndices))
+                BoutStats.AIntroNotes.NoINs(MotifNo) = 0;
+                BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(Motifs(i)) - Notes.offsets(Motifs(i)-1);
+                BoutStats.AIntroNotes.PrevSyllable(MotifNo) = Notes.labels(Motifs(i) - 1);
+                BoutStats.AIntroNotes.Durations(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Intervals(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.PG(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Entropy(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Amplitude(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.FM(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.Pitch(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.MeanFreq(MotifNo, 1) = 0;
+                BoutStats.AIntroNotes.AM(MotifNo, 1) = 0;
+            else
+                IntroNoteIndices = sort(IntroNoteIndices);
+                IntroNoteIndices = IntroNoteIndices + Motifs(i-1) - 1;
+                if (length(IntroNoteIndices) > 1)
+                    Intervals = Notes.onsets(IntroNoteIndices(2:end)) - Notes.offsets(IntroNoteIndices(1:end-1));
+                    LongIntervals = find(Intervals > InterBoutInterval);
+                    if (~isempty(LongIntervals))
+                        IntroNoteIndices = IntroNoteIndices((LongIntervals(end) + 1):end);
+                    end
+                end
+                BoutStats.AIntroNotes.NoINs(MotifNo) = length(IntroNoteIndices);
+                BoutStats.AIntroNotes.BoutInterval(MotifNo) = Notes.onsets(IntroNoteIndices(1)) - Notes.offsets(IntroNoteIndices(1)-1);
+                BoutStats.AIntroNotes.PrevSyllable(MotifNo) = Notes.labels(IntroNoteIndices(1) - 1);
+                IntroNoteIndices = sort(IntroNoteIndices, 'descend');
+                BoutStats.AIntroNotes.Durations(MotifNo, 1:length(IntroNoteIndices)) = Notes.offsets(IntroNoteIndices) - Notes.onsets(IntroNoteIndices);
+                BoutStats.AIntroNotes.Intervals(MotifNo, 1:length(IntroNoteIndices)) = Notes.onsets(IntroNoteIndices + 1) - Notes.offsets(IntroNoteIndices);
+                for j = 1:length(IntroNoteIndices),
+                    StartIndex = find(T >= Notes.onsets(IntroNoteIndices(j)), 1, 'first');
+                    EndIndex = find(T >= Notes.offsets(IntroNoteIndices(j)), 1, 'first');
+                    BoutStats.AIntroNotes.PG(MotifNo, j) = mean(m_PitchGoodness(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.Entropy(MotifNo, j) = mean(m_Entropy(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.Amplitude(MotifNo, j) = mean(m_amplitude(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.FM(MotifNo, j) = mean(m_FM(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.Pitch(MotifNo, j) = mean(Pitch_chose(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.MeanFreq(MotifNo, j) = mean(m_Freq(StartIndex:EndIndex));
+                    BoutStats.AIntroNotes.AM(MotifNo, j) = mean(m_AM(StartIndex:EndIndex));
+                end
+            end
+            BoutStats.AIntroNotes.FileName{MotifNo} = SongFile;
+            MotifNo = MotifNo + 1;
+        end
+    end
+    PrevOffsetTime = Notes.offsets(end) + FTime;
+end    
+
+disp('Finished analysing notes');

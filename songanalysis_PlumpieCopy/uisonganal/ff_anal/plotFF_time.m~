@@ -1,0 +1,79 @@
+function plotFF_time(birdname_date,note);
+
+% This script plots time course of foundamental frequency of a note type. 
+
+% read batch files of recording time
+time_batch = readtextfile('time_combine.batch')
+
+% pull out song names and times
+songs = time_batch(:,7:length(time_batch(1,:)));
+times = time_batch(:,1:5);
+
+% read .mat files of FF for dir songs
+Dir_FFmat = ['FF_',note,'_time.mat']
+load (Dir_FFmat)
+dirFF = ffreq;
+clear ffreq
+
+% read .mat files of FF for undir songs
+load (Undir_FFmat)
+undirFF = ffreq;
+clear ffreq
+
+% sort FF data by time 
+allFF = cell(1,3);
+for n=1:length(songs(:,1))
+    position = strmatch(deblank(songs(n,:)), dirFF(:,1));
+    if length(position)>0
+        dirFF(position,3) = {times(n,:)};
+        allFF = [allFF;dirFF(position,:)];
+    elseif length(position) == 0
+        position = strmatch(deblank(songs(n,:)), undirFF(:,1));
+        undirFF(position,3) = {times(n,:)};
+        allFF = [allFF;undirFF(position,:)];
+     end
+ end
+ allFF(1,:)= [] ;
+ 
+% convert time to hour
+for n= 1:length(allFF)
+    x(1,n) = str2num(allFF{n,3}(1:2)) + str2num(allFF{n,3}(4:5))/60; 
+    allFF{n,3} = x(1,n);
+end
+
+% plot time course of FF with real time axis
+figure; subplot(2,1,1)
+plot(x, [allFF{:,2}], ':k'); hold on
+for n=1:length(allFF)
+     if length(strmatch('dir', allFF(n,1)))>0
+         plot(x(1,n), [allFF{n,2}], 'or'); hold on
+         
+     end
+      if length(strmatch('undir', allFF(n,1)))>0
+         plot(x(1,n), [allFF{n,2}], 'ob'); hold on        
+     end
+ end
+ title(['Fundamental Frequency of  "',note,'",  Red: ', Dir_FFmat,',  Blue: ', Dir_FFmat])
+ xlabel('time'); ylabel('FF (Hz)')
+ 
+ % plot time course of FF with rendition number
+ x2 = [1:length(x)];
+ subplot(2,1,2)
+ plot(x2, [allFF{:,2}], ':k'); hold on
+ for n=1:length(allFF)
+     if length(strmatch('dir', allFF(n,1)))>0
+         plot(x2(1,n), [allFF{n,2}], 'or'); hold on
+     end
+      if length(strmatch('undir', allFF(n,1)))>0
+         plot(x2(1,n), [allFF{n,2}], 'ob'); hold on        
+     end
+ end
+ title(['Fundamental Frequency of  "',note,'",  Red: ', Dir_FFmat,',  Blue: ', Dir_FFmat])
+ xlabel('rendition number (randomly selected)'); ylabel('FF (Hz)')
+ 
+%Save allFF (song name, FF value, time for both dir & undir)
+saved_file_name = ['FF_', note, '_time']
+save(saved_file_name, 'allFF')
+
+fig_name =  ['FF_',note,'_time.fig']
+saveas(gcf,fig_name)

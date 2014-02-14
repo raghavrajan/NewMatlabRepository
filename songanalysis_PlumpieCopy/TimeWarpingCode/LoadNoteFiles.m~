@@ -1,0 +1,23 @@
+function [NoteOnsets, NoteOffsets, NoteLabels] = LoadNoteFiles(DirectoryName, FileNames, RecordLengths)
+
+cd(DirectoryName);
+% Now load up all the information about syllable onsets and offsets from
+% the song bout files
+
+RecTime = 0;
+NoteOnsets = [];
+NoteOffsets = [];
+NoteLabels = [];
+
+for i = 1:length(FileNames),
+    Notes = load([FileNames{i},'.not.mat']);
+    
+%   Note onsets and offsets from uisonganal are in ms, so that has to be
+%   converted to seconds
+    Notes.onsets = Notes.onsets/10
+    NoteOnsets = [NoteOnsets; Notes.onsets/1000]; 
+    NoteOffsets = [NoteOffsets; Notes.offsets/1000];
+    NoteLabels = [NoteLabels [Notes.labels]];
+    clear Notes;
+    
+end

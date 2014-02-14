@@ -1,0 +1,20 @@
+function [FanoFactor] = SSACalculateFanoFactor(SpikeTrain, MedianMotif, WindowWidth, PreSongStartDuration, PreSongEndDuration, ContextString)
+
+PST = [];
+
+for i = 1:length(SpikeTrain),
+    TempSpikeTrain = SpikeTrain{i};
+    Index = 1;
+    for j = -PreSongStartDuration:0.001:(MedianMotif.Length - PreSongEndDuration - WindowWidth),
+        PST(i,Index) = length(find((TempSpikeTrain >= j) & (TempSpikeTrain < (j + WindowWidth))));
+        Index = Index + 1;
+    end
+end
+
+VarPST = var(PST);
+MeanPST = mean(PST);
+
+FanoFactor = VarPST(find(MeanPST))./MeanPST(find(MeanPST));
+
+disp([ContextString, ': The window width is ', num2str(WindowWidth * 1000), ' ms and the mean Fano factor is ', num2str(mean(FanoFactor))]);
+FanoFactor = [WindowWidth mean(FanoFactor)];

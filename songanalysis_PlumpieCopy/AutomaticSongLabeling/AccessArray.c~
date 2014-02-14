@@ -1,0 +1,93 @@
+ /* Calculating the template match
+ * MEX file
+ * 
+ * Raghav 2009
+ * 
+ * inputs: m x n array 
+ *          
+ *       
+ * outputs:outputs
+ *          
+ *         outputs: this is an 1 X (n1 - n + 1) array with indices indicating the matches for each location
+ *          
+ * version 1.0
+ -----------------------------------*/
+
+#include "mex.h"
+#include <math.h>
+#include <matrix.h>
+
+void mexFunction(
+  int nOUT, mxArray *outputs[],
+  int nINP, const mxArray *inputs[])
+{
+  
+      double *Data, *Output;
+      int TempLen, TempRows, TempCols, DataRows, DataCols, i, j, k;
+      double Match, WinMean, WinSTD, Sum;
+      double Window[1000000];
+      double MatchValue[10000];
+      
+      if (nINP < 2) 
+        mexErrMsgTxt("3 inputs required");
+      
+      if (nOUT > 1) 
+        mexErrMsgTxt("Too many output arguments");
+      
+      Data = (double *) mxGetPr(inputs[0]);
+      Cols = mxGetScalar(inputs[1]);
+      Rows = mxGetScalar(inputs[2]);
+      TempLen = mxGetM(inputs[0]) * mxGetN(inputs[0]);
+      TempRows = mxGetM(inputs[0]);
+      TempCols = mxGetN(inputs[0]);
+      
+      DataRows = mxGetM(inputs[1]);
+      DataCols = mxGetN(inputs[1]);
+      
+      printf("Data # of rows and cols is %i, %i, and template # of rows and cols is %i, %i\n", DataRows, DataCols, TempRows, TempCols);
+      for(i = 0; i < (DataCols - TempCols - 10); i++)
+      {
+          Sum = 0;
+          for(k = 0; k < TempCols; k++)
+          {
+              for(j = i; j < (i + TempRows); j++)
+              {
+                  Window[(TempCols * k) + (j - i)] = Data[(TempCo*k) + j];
+                  Sum = Sum + Data[(TempRows * k) + j];
+              }
+          }
+          WinMean = Sum/(TempCols * TempRows);
+          WinSTD = 0;
+          for(k = 0; k < TempRows; k++)
+          {
+              for(j = 0; j < TempCols; j++)
+              {
+                  WinSTD = WinSTD + (Window[(TempRows*k) + j] - WinMean)*(Window[(TempRows*k) + j] - WinMean);
+              }
+          }
+          WinSTD = sqrt(WinSTD/(TempCols * TempRows - 1));
+      
+          /*printf("i is %i and Mean is %g and std is %g\n", i, WinMean, WinSTD);*/
+          Match = 0;
+          for(k = 0; k < TempRows; k++)
+          {
+              for(j = 0; j < TempCols; j++)
+              {
+                  Window[(TempRows*k) + j] = (Window[(TempRows*k) + j] - WinMean)/WinSTD;
+                  Match = Match + abs(Template[(TempRows*k) + j] - Window[(TempRows*k) + j]);
+              }
+          }
+          /*printf("i is %i and Match is %g\n", i, Match);*/
+          MatchValue[i] = 1/Match;
+      }
+      
+
+      outputs[0] = mxCreateDoubleMatrix((DataCols - TempCols), 1, mxREAL);
+      OutputMatchValues = mxGetPr(outputs[0]);
+
+      /* Now set index values for range 1-100 with index indicating number of decibels from maximum */
+      for(i = 0; i < (DataCols - TempCols - 10); i++)
+      {
+          OutputMatchValues[i] = MatchValue[i];
+      }
+}

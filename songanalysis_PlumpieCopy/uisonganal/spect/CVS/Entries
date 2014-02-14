@@ -1,0 +1,23 @@
+/b_spectranal.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/cepstrum.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/comp_scores.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/costrans.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/deltaprods.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/deltaprods2.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/disp_spectra.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/disp_spectra2.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/findmax1.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/old_distchck.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/old_normpdf.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/psd_get_xrange.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/psdupdate.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/sinprods.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/spect_comp.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/spect_length.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/spectranal.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/split_spect.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/temp_plot.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/win_spect.m/1.1.1.1/Wed May  2 00:12:00 2001//
+/psdanal.m/1.2/Wed Oct 23 09:32:37 2002//
+/Makefile/1.2/Sat Jan  8 20:37:32 2005//
+D

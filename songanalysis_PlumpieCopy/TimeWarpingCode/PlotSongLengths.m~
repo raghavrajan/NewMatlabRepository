@@ -1,0 +1,25 @@
+function [] = PlotSongLengths(DirFileInfo, UnDirFileInfo, DetailedAnalysisFigure)
+
+figure(MainFigure);
+
+axes('Position',[0.15 0.15 0.2 0.1]);
+set(gca,'Box','off');
+hold on;
+
+MaxSongLength = 0;
+
+if (isfield(DirFileInfo,'SongLengths'))
+    plot(ones(length(DirFileInfo.SongLengths),1),DirFileInfo.SongLengths,'k+','MarkerSize',2);
+    MaxSongLength = max(max(DirFileInfo.SongLengths),MaxSongLength);
+end
+
+if (isfield(UnDirFileInfo,'SongLengths'))
+    plot((ones(length(UnDirFileInfo.SongLengths),1)*2),UnDirFileInfo.SongLengths,'Marker',,'MarkerSize',2);
+    MaxSongLength = max(max(DirFileInfo.SongLengths),MaxSongLength);
+end
+
+axis([0 3 0 MaxNoofSpikes]);
+set(gca,'FontSize',8,'FontWeight','bold');
+set(gca,'Xtick',[1 2],'XTickLabel',[{'Directed'} {'Undirected'}]);
+ylabel('Mean no of spikes','FontSize',8,'FontWeight','bold');    
+title('No of spikes in motif','FontSize',8,'FontWeight','bold');    

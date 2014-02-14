@@ -1,0 +1,82 @@
+function [] = MatchTemplates(DirectoryName, SongFileName, TemplateFileName, FileType)
+
+load(TemplateFileName);
+
+if (ispc)
+    if (DirectoryName(end) ~= '\')
+        DirectoryName(end + 1) = '\';
+    end
+else
+    if (DirectoryName(end) ~= '/')
+        DirectoryName(end + 1) = '/';
+    end 
+end
+   
+if (strfind(FileType, 'okrank'))
+        [RawData, Fs] = ReadOKrankData(DirectoryName, SongFileName, 0);
+else
+    if (strfind(FileType, 'obs'))
+        [RawData, Fs] = soundin_copy(DirectoryName, SongFileName, FileType);    
+        RawData = RawData/max(RawData);
+        RawData = RawData - mean(RawData);
+    else
+        if (strfind(FileType, 'wav'))
+            [RawData, Fs] = wavread(SongFileName);    
+        end
+    end
+end
+
+% Now using an 8 pole butterworth bandpass filter as default.
+[b,a]=butter(8,[300*2/Fs, 10000*2/Fs]);
+
+FiltSong=filtfilt(b, a, RawData);
+  
+if length(RawData) ~= length(FiltSong) 
+  disp(['warning! bandpass: input and output file lengths do not match!']);
+end
+
+RawData = FiltSong;
+clear FiltSong;
+
+Freq  = Fs/2*linspace(0,1,256/2+1);
+FreqRows = find((Freq >= 1700) & (Freq <= 7100));
+[Y, F, T, P] = spectrogram(RawData, 256, 128, Freq, Fs, 'yaxis');
+Time = (1:1:length(RawData))/Fs;
+
+figure
+% subplot(2,1,2);
+% plot(Time,RawData);
+% axis tight;
+%SpectrogramPlot = subplot(1,1,1);
+%plot_motif_spectrogram(RawData, Fs, gcf, SpectrogramPlot);
+%Colours = ['r' 'g' 'b' 'c' 'm' 'y' 'k'];
+
+for i = 1:length(Templates),
+    Index = 1;
+    clear Correlation TemplateMatchValue;
+    while(Index <= (size(P,2) - size(Templates(i).Template,2))),
+        Temp = P(:,(Index:(Index + size(Templates(i).Template,2) - 1)));
+        Temp = Temp - mean(mean(Temp));
+        Temp = Temp/(sqrt((sum(sum(Temp.*Temp)))/(size(Temp,1) * size(Temp,2))));
+        TemplateMatchValue(Index) = 1/(sum(sum(abs(Templates(i).Template - Temp))));
+        Correlation(Index) = 1/(sum(abs(sum(Templates(i).Template) - sum(Temp))));
+        Index = Index + 1;
+    end
+    TemplateMatch{i}.Value = TemplateMatchValue;
+    [Test, TestIndices] = sort(TemplateMatchValue);
+    Indices = find(TemplateMatchValue > Test(round(0.98 * length(Test))));
+    [pks, locs] = findpeaks(TemplateMatchValue(Indices));
+    %SpectrogramPlot = subplot(1,1,1);
+    MedianMotif.FileName = SongFileName;
+    MedianMotif.Length = Time(end);
+    MedianMotif.StartTime = Time(1);
+
+    PlotMotifSpectrogram(DirectoryName, FileType, MedianMotif, gcf, subplot(length(Templates),1,i));
+
+    %plot_motif_spectrogram(RawData, Fs, gcf, subplot(length(Templates),1, i));
+    Colours = ['r' 'g' 'b' 'c' 'm' 'y' 'k'];
+    hold on;
+    plot(T(1:length(TemplateMatchValue)),TemplateMatchValue/max(TemplateMatchValue) * 5000, Colours(1));
+    plot(T(1:length(TemplateMatchValue)),Correlation/max(Correlation) * 5000, Colours(3));
+    plot(T(Indices(locs)),TemplateMatchValue(Indices(locs))/max(TemplateMatchValue) * 5000, [Colours(7),'s']);
+end

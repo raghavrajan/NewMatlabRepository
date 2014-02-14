@@ -1,0 +1,29 @@
+function [OptimalBinSize] = EstimateOptimalBinSize(SpikeTrain, FileLength)
+
+% =========================================================================
+% EstimateOptimalBinSize is a script to estimate the optimal bin size for a
+% set of data using the method suggested by Shimazaki and Shinomoto 2007
+%
+% Usage: OptimalBinSize = EstimateOptimalBinSize(SpikeTrain, FileLength)
+%
+% Inputs - 1) SpikeTrain is a cell array with each cell having one trial of
+%             spike times
+%          2) FileLength has two values indicating the start and end of the 
+%             period for which spike times are stored in SpikeTrain. It is
+%             assumed that all the entries in SpikeTrain are for periods of
+%             equal length.
+% Outputs - OptimalBinSize in sec
+% 
+% Raghav - 20th September 2011
+% =========================================================================
+
+SpikeTimes = [];
+for j = 1:length(SpikeTrain),
+    SpikeTimes = [SpikeTimes; SpikeTrain{j}];
+end
+
+for BinSize = 0.001:0.001:0.05,
+    Edges = FileLength(1):BinSize:FileLength(2);
+    PST = histc(SpikeTimes, Edges);
+    k = mean(PST);
+    v = sum((PST - k).*(PST - k))/le

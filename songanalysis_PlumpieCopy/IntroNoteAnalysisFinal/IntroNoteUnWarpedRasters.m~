@@ -1,0 +1,260 @@
+function [] = IntroNoteUnWarpedRasters(Neural_INR, BinSize, MinNumber, MinPlotNumber)
+
+FFWindow = 0.03;
+FFAdvance = 0.001;
+
+Width = 0.0025;
+GaussianLen = 2;
+IFRFs = 1/BinSize;
+XGauss = 1:1:(1 + round(2 * GaussianLen * Width * (IFRFs)));
+XGauss = XGauss - (length(XGauss) + 1)/2;
+GaussWin = (1/((Width * IFRFs) * sqrt(2 * pi))) * exp(-(XGauss.*XGauss)/(2 * (Width * IFRFs) * (Width * IFRFs)));
+
+PreTime = 0.07;
+PostTime = 0.075;
+
+GapPreMotorLag = 0.045;
+
+IFRFs = 2000;
+
+Width = 0.005;
+GaussianLen = 2;
+XGauss = 1:1:(1 + round(2 * GaussianLen * Width * (IFRFs)));
+XGauss = XGauss - (length(XGauss) + 1)/2;
+GaussWin = (1/((Width * IFRFs) * sqrt(2 * pi))) * exp(-(XGauss.*XGauss)/(2 * (Width * IFRFs) * (Width * IFRFs)));
+
+INIndex = 0;
+for i = 1:length(Neural_INR.NoofINs),
+    if (Neural_INR.NoofINs(i) > 0)
+        BoutSpikeTimes = Neural_INR.BoutDetails(i).SpikeTimes;
+        INs = Neural_INR.INs{i};
+        for j = 1:length(INs),
+            INIndex = INIndex + 1;
+            Position(INIndex,1) = j - length(INs) - 1;
+            Position(INIndex,2) = j;
+            NoofINs(INIndex,1) = length(INs);
+            
+            INOnset = Neural_INR.BoutDetails(i).onsets(INs(j));
+            INOffset = Neural_INR.BoutDetails(i).offsets(INs(j));
+            GapOnset = INOffset;
+            GapOffset = Neural_INR.BoutDetails(i).onsets(INs(j)+1);
+            
+            RasterSpikeIndices = find((BoutSpikeTimes >= (INOnset - PreTime)) & (BoutSpikeTimes < (INOnset + PostTime)));
+            TempSpikeTimes = BoutSpikeTimes(RasterSpikeIndices) - INOnset;
+            TempSpikeTimes = TempSpikeTimes(:);
+            RasterSpikeTimes{INIndex} = TempSpikeTimes;
+            
+            GapSpikeIndices = find((BoutSpikeTimes >= (INOnset - PreTime)) & (BoutSpikeTimes < (GapOffset - GapPreMotorLag)));
+            TempSpikeTimes = BoutSpikeTimes(GapSpikeIndices) - INOnset;
+            TempSpikeTimes = TempSpikeTimes(:);
+            GapSpikeTimes{INIndex} = TempSpikeTimes;
+            
+            INGapSpikeIndices = find((BoutSpikeTimes >= (INOnset - GapPreMotorLag)) & (BoutSpikeTimes < (GapOffset - GapPreMotorLag)));
+            INGapFR(INIndex) = length(INGapSpikeIndices)/(GapOffset - INOnset);
+            INGapNumSpike(INIndex) = length(INGapSpikeIndices);
+            
+            INDur(INIndex) = INOffset - INOnset;
+            INGapDur(INIndex) = GapOffset - INOnset;
+           
+            INGapIFRIndices = find((Neural_INR.BoutDetails(i).IFR(1,:) >= (INOnset - PreTime)) & (Neural_INR.BoutDetails(i).IFR(1,:) <= (GapOffset - GapPreMotorLag)));
+            GapEdges = -PreTime:1/IFRFs:(GapOffset - INOnset - GapPreMotorLag);
+            GapWiderEdges = [(GapEdges(1) - 1/IFRFs) GapEdges (GapEdges(end) + 1/IFRFs)];
+            TempIFR = spline(Neural_INR.BoutDetails(i).IFR(1, INGapIFRIndices), Neural_INR.BoutDetails(i).IFR(2, INGapIFRIndices), GapWiderEdges + INOnset);            
+            TempIFR = conv(TempIFR, GaussWin, 'same');
+            GapIFR{INIndex} = [GapEdges; TempIFR(2:end-1)];
+        end
+    end
+end
+
+for i = 1:size(Neural_INR.WithinBoutNoofINs, 1),
+    if (Neural_INR.WithinBoutNoofINs(i,1) > 0)
+        BoutSpikeTimes = Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).SpikeTimes;
+        INs = Neural_INR.WithinBoutINs{i};
+        for j = 1:length(INs),
+            INIndex = INIndex + 1;
+            Position(INIndex,1) = j - length(INs) - 1;
+            Position(INIndex,2) = j;
+            NoofINs(INIndex,1) = length(INs);
+            
+            INOnset = Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).onsets(INs(j));
+            INOffset = Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).offsets(INs(j));
+            GapOnset = INOffset;
+            GapOffset = Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).onsets(INs(j)+1);
+
+            RasterSpikeIndices = find((BoutSpikeTimes >= (INOnset - PreTime)) & (BoutSpikeTimes < (INOnset + PostTime)));
+            TempSpikeTimes = BoutSpikeTimes(RasterSpikeIndices) - INOnset;
+            TempSpikeTimes = TempSpikeTimes(:);
+            RasterSpikeTimes{INIndex} = TempSpikeTimes;
+            
+            GapSpikeIndices = find((BoutSpikeTimes >= (INOnset - PreTime)) & (BoutSpikeTimes < (GapOffset - GapPreMotorLag)));
+            TempSpikeTimes = BoutSpikeTimes(GapSpikeIndices) - INOnset;
+            TempSpikeTimes = TempSpikeTimes(:);
+            GapSpikeTimes{INIndex} = TempSpikeTimes;
+        
+            INGapSpikeIndices = find((BoutSpikeTimes >= (INOnset - GapPreMotorLag)) & (BoutSpikeTimes < (GapOffset - GapPreMotorLag)));
+            INGapFR(INIndex) = length(INGapSpikeIndices)/(GapOffset - INOnset);
+            INGapNumSpike(INIndex) = length(INGapSpikeIndices);
+            
+            INDur(INIndex) = INOffset - INOnset;
+            INGapDur(INIndex) = GapOffset - INOnset;
+            
+            INGapIFRIndices = find((Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).IFR(1,:) >= (INOnset - PreTime)) & (Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).IFR(1,:) <= (GapOffset - GapPreMotorLag)));
+            GapEdges = -PreTime:1/IFRFs:(GapOffset - INOnset - GapPreMotorLag);
+            GapWiderEdges = [(GapEdges(1) - 1/IFRFs) GapEdges (GapEdges(end) + 1/IFRFs)];
+            TempIFR = spline(Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).IFR(1, INGapIFRIndices), Neural_INR.BoutDetails(Neural_INR.WithinBoutINBoutIndices(i)).IFR(2, INGapIFRIndices), GapWiderEdges + INOnset);            
+            TempIFR = conv(TempIFR, GaussWin, 'same');
+            GapIFR{INIndex} = [GapEdges; TempIFR(2:end-1)];            
+        end
+    end
+end
+
+MaxINs = max([max(Neural_INR.NoofINs) max(Neural_INR.WithinBoutNoofINs(:,1))]);
+
+for i = 1:MaxINs,
+    TrialNos(i) = length(find(NoofINs == i))/i;
+    if (TrialNos(i) < MinNumber)
+        continue;
+    end
+    
+    for j = 1:i,
+        INGapRaster{i}{j} = [];
+        
+        SpecificINs = find((NoofINs == i) & (Position(:,1) == (j - i - 1)));
+        TrialGapDurs = INGapDur(SpecificINs);
+        [SortedGapDurs, SortedIndices] = sort(TrialGapDurs);
+        SpecificINs = SpecificINs(SortedIndices);
+        INDurs{i}{j} = INDur(SpecificINs);           
+        INGapDurs{i}{j} = INGapDur(SpecificINs);
+        INGapFRs{i}{j} = INGapFR(SpecificINs);
+        INGapNumSpikes{i}{j} = INGapNumSpike(SpecificINs);
+        
+        TempPST = [];
+        for k = 1:length(SpecificINs),
+           FFEdges = (-PreTime + FFWindow/2):FFAdvance:(TrialGapDurs(SortedIndices(end-MinNumber+1)) - FFWindow/2);           
+           INGapRaster{i}{j} = [INGapRaster{i}{j}; [RasterSpikeTimes{SpecificINs(k)} ones(size(RasterSpikeTimes{SpecificINs(k)}))*k]];
+           for FFWinIndex = 1:length(FFEdges),
+               if (INGapDur(SpecificINs(k)) >= (FFEdges(FFWinIndex) + FFWindow/2))
+                   TempPST(k, FFWinIndex) = length(find((GapSpikeTimes{SpecificINs(k)} >= (FFEdges(FFWinIndex) - FFWindow/2)) & (GapSpikeTimes{SpecificINs(k)} < (FFEdges(FFWinIndex) + FFWindow/2))));
+               else
+                   TempPST(k, FFWinIndex) = NaN;
+               end
+           end
+        end
+        for k = 1:size(TempPST,2),
+            INGapFF{i}{j}(k,:) = [FFEdges(k) var(TempPST(find(~isnan(TempPST(:,k))), k))/mean(TempPST(find(~isnan(TempPST(:,k))), k))];
+        end
+        
+        TempMeanGapIFR = [];
+        Lens = cellfun(@length, GapIFR);
+        for k = 1:max(Lens),
+            Indices = find(Lens(SpecificINs) >= k);
+            if (length(Indices) >= 3)
+                Indices = find(Lens >= k);
+                TempPST = [];
+                for TempIndex = 1:length(Indices),
+                    if (~isempty(find(SpecificINs == Indices(TempIndex))))
+                        TempPST = [TempPST; GapIFR{Indices(TempIndex)}(2,k)];
+                    end
+                end
+                TempMeanGapIFR(1,k) = mean(TempPST);
+            end
+        end
+
+        [Row, Col] = max(Lens);
+        INGapIFR{i}{j} = [GapIFR{Col}(1,1:length(TempMeanGapIFR)); TempMeanGapIFR];
+    end
+end
+
+MaxPlots = find(TrialNos >= MinPlotNumber);
+MaxPlots = MaxPlots(end);
+
+figure;
+Rows = length(find(TrialNos >= MinPlotNumber));
+
+Colours = ['rgbcmk'];
+Index = MaxPlots;
+RowIndex = Rows + 1;
+
+Index = 0;
+MaxINGapDurs = ones(Rows, MaxPlots)*NaN;
+
+for i = 1:MaxINs,
+    if (TrialNos(i) >= MinPlotNumber)
+        Index = Index + 1;
+        for j = 1:i,
+            MaxINGapDurs(Index, MaxPlots - (i - j)) = INGapDurs{i}{j}(MinPlotNumber);
+        end
+    end
+end
+
+LastINGapIFRLen = [];
+for i = 1:MaxINs,
+    if (length(INGapIFR) < i)
+        continue;
+    else
+        if (~isempty(INGapIFR{i}))
+            LastINGapIFRLen = [LastINGapIFRLen; size(INGapIFR{i}{end},2)];
+        end
+    end
+end
+Index = 0;
+for i = 1:MaxINs,
+    if (length(INGapIFR) < i)
+        continue;
+    end
+    if (~isempty(INGapIFR{i}))
+        Index = Index + 1;
+        LastINGapIFR(Index,:) = INGapIFR{i}{end}(2,1:min(LastINGapIFRLen));
+    end
+end
+
+
+Index = 0;
+for i = 1:MaxINs,
+    PlotHGap = 0.03;
+    PlotWGap = 0.075;
+
+    PlotHt = 0.92/Rows - PlotHGap;
+
+    PlotWidth = 0.96/MaxPlots - PlotWGap;
+
+    if (TrialNos(i) >= MinPlotNumber)
+        Index = Index + 1;
+        RowIndex = RowIndex - 1;
+        TempFR = zeros(i,2);
+        TempNumSpikes = zeros(i,2);
+        for j = 1:i,
+            TempFR(j,:) = [mean(INGapFRs{i}{j}) std(INGapFRs{i}{j})];
+            TempNumSpikes(j,:) = [mean(INGapNumSpikes{i}{j}) std(INGapNumSpikes{i}{j})];
+
+            subplot('Position', [(1 - (i - j + 1)*(PlotWidth + PlotWGap)) (1 - (Index)*(PlotHt + PlotHGap)) PlotWidth PlotHt]);
+            PlotRaster(INGapRaster{i}{j}, Colours(mod(Index-1, length(Colours)) + 1), 0.5, 0, MinPlotNumber);
+            hold on;
+            fill([ones(1, MinPlotNumber)*0 fliplr(INDurs{i}{j}(1:MinPlotNumber))], [(1:1:MinPlotNumber) fliplr(1:1:MinPlotNumber)], 'k', 'FaceColor', 'r', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+            fill([INDurs{i}{j}(1:MinPlotNumber) fliplr(INGapDurs{i}{j}(1:MinPlotNumber))], [(1:1:MinPlotNumber) fliplr(1:1:MinPlotNumber)], 'k', 'FaceColor', 'b', 'FaceAlpha', 0.3, 'EdgeColor', 'none');
+            axis([-PreTime PostTime 0 MinPlotNumber]);
+        end
+    end
+end
+%             plot(INGapDurs{i}{j}-GapPreMotorLag, (1:1:length(INGapDurs{i}{j})), 'k^');
+%             axis([-PreTime (min(MaxINGapDurs(:, MaxPlots - (i - j))) - GapPreMotorLag) 0 MinPlotNumber]);
+%             %plot(INGapIFR{i}{j}(1,:), INGapIFR{i}{j}(2,:)/max(INGapIFR{i}{j}(2,:)) * (MinPlotNumber-2), 'k');
+%             %plot(INGapIFR{i}{end}(1,1:min(LastINGapIFRLen)), mean(LastINGapIFR)/max(INGapIFR{i}{j}(2,:)) * (MinPlotNumber-2), 'k--');
+% 
+%             %            subplot(Rows+1, MaxPlots+1, (Rows+1)*(MaxPlots + 1) - (i - j) - 1);
+%             hold on;
+%            plot(INGapIFR{i}{j}(1,:), INGapIFR{i}{j}(2,:), Colours(mod(Index-1, length(Colours)) + 1));
+%            axis tight;
+%            temp = axis;
+%            axis([-PreTime (min(MaxINGapDurs(:, MaxPlots - (i - j))) - GapPreMotorLag) 0 temp(4)*1.05]);
+%            plot(INGapIFR{i}{end}(1,1:min(LastINGapIFRLen)), mean(LastINGapIFR), 'Color', [0.5 0.5 0.5], 'LineWidth', 1.5);
+%         end
+%         
+%         subplot(Rows+1, MaxPlots+1, (RowIndex)*(MaxPlots+1));
+%         errorbar(-(i:-1:1), TempFR(:,1), TempFR(:,2), [Colours(mod(Index-1, length(Colours)) + 1), 'o']);
+%         hold on;
+%         errorbar(-0.8, mean(INGapFR(find(Position(:,1) == -1))), std(INGapFR(find(Position(:,1) == -1))), 'ks', 'Color', [0.5 0.5 0.5], 'MarkerFaceColor', [0.5 0.5 0.5]);
+%     end
+% end
+
+disp('Finished');
