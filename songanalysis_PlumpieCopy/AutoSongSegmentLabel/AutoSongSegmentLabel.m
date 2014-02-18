@@ -1115,8 +1115,10 @@ function SegementSongsAronovFeeButton_Callback(hObject, eventdata, handles)
 
 for i = 1:length(handles.ASSL.FileName),
     if (isfield(handles.ASSL, 'SyllLabels'))
-        if (~isempty(handles.ASSL.SyllLabels{i}))
-            handles.ASSL.SyllLabels(i) = [];
+        if (length(handles.ASSL.SyllLabels) >= i)
+            if (~isempty(handles.ASSL.SyllLabels{i}))
+                handles.ASSL.SyllLabels(i) = [];
+            end
         end
     end
     
@@ -1177,4 +1179,13 @@ function LabelSongsButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 ASSLLabelSongs(handles.ASSL);
+guidata(hObject, handles);
+
+% --- Executes on button press in AnalyzeSyllablesButton.
+function AnalyzeSyllablesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to AnalyzeSyllablesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ASSLAnalyzeSyllables(handles.ASSL);
 guidata(hObject, handles);
