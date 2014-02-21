@@ -1,12 +1,17 @@
-function [SyllTransitionProb] = CalculateSyllTransitionProbabilities(NoteFileList, InterBoutInterval)
+function [SyllTransitionProb, AllLabels] = CalculateSyllTransitionProbabilities(NoteFileList, NoteFileDir, InterBoutInterval)
 
 Fid = fopen(NoteFileList, 'r');
 Files = textscan(Fid, '%s', 'DeLimiter', '\n');
 Files = Files{1};
 
+FileSep = filesep;
+if (NoteFileDir(end) ~= FileSep)
+    NoteFileDir(end+1) = FileSep;
+end
+
 AllLabels = [];
 for i = 1:length(Files),
-    Notes{i} = load([Files{i}, '.not.mat']);
+    Notes{i} = load([NoteFileDir, Files{i}, '.not.mat']);
     
     InterSyllIntervals = (Notes{i}.onsets(2:end) - Notes{i}.offsets(1:end-1))/1000;
     

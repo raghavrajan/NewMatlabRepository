@@ -22,7 +22,7 @@ function varargout = ASSLAnalyzeSyllables(varargin)
 
 % Edit the above text to modify the response to help ASSLAnalyzeSyllables
 
-% Last Modified by GUIDE v2.5 17-Feb-2014 23:44:22
+% Last Modified by GUIDE v2.5 22-Feb-2014 00:28:53
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -79,10 +79,10 @@ handles.ASSLAS.UniqueSyllSymbols = ceil((1:1:length(handles.ASSLAS.UniqueSylls))
 
 for i = 1:length(handles.ASSLAS.UniqueSylls),
     axes(handles.ASSLASLegendAxis);
-    text(1, (length(handles.ASSLAS.UniqueSylls) - i + 1), [handles.ASSLAS.UniqueSylls(i), ' - ', handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(i))], 'Color', handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(i)), 'FontSize', 16, 'FontWeight', 'bold');
+    text(1, (length(handles.ASSLAS.UniqueSylls) - i + 1), [handles.ASSLAS.UniqueSylls(i), ' - ', handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(i)), ' - ', num2str(length(find(handles.DataStruct.SyllIndexLabels == handles.ASSLAS.UniqueSylls(i))))], 'Color', handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(i)), 'FontSize', 16, 'FontWeight', 'bold');
     hold on;
 end
-axis([0.9 1.35 0 length(handles.ASSLAS.UniqueSylls)+1]);
+axis([0.9 1.4 0 length(handles.ASSLAS.UniqueSylls)+1]);
 
 set(handles.SyllableListBox, 'String', [{'All'}; handles.ASSLAS.UniqueSylls]);
 set(handles.SyllableListBox, 'Max', length(handles.ASSLAS.UniqueSylls) + 1);
@@ -111,6 +111,14 @@ for i = 1:length(PrevNextSyll),
     end
     ASSLASPlotData(handles, 1, handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))), handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(PrevNext(i))), 4, handles.ASSLNextSyllAxis, ClearAxis, Indices);
 end
+
+handles.ASSLAS.BoutDefinitions = [{'Treat each new file as a bout'}; {'Use specified inter-bout interval'}];
+handles.ASSLAS.BoutDefinitionChoice = 1;
+set(handles.BoutDefinitionMenu, 'String', handles.ASSLAS.BoutDefinitions);
+set(handles.BoutDefinitionMenu, 'Value', handles.ASSLAS.BoutDefinitionChoice);
+
+handles.ASSLAS.InterBoutInterval = 2;
+set(handles.InterBoutIntervalEdit, 'String', num2str(handles.ASSLAS.InterBoutInterval));
 
 guidata(hObject, handles);
 
@@ -434,6 +442,106 @@ function PrevNextSyllMenu_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in CalSyllTransProbButton.
+function CalSyllTransProbButton_Callback(hObject, eventdata, handles)
+% hObject    handle to CalSyllTransProbButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+AllLabels = [];
+if (strfind(handles.ASSLAS.BoutDefinitions{handles.ASSLAS.BoutDefinitionChoice}, 'Treat each new file as a bout'))
+    for i = 1:length(handles.DataStruct.SyllLabels),
+        AllLabels = [AllLabels 'Q', handles.DataStruct.SyllLabels{i}, 'q'];
+    end
+else
+    if (strfind(handles.ASSLAS.BoutDefinitions{handles.ASSLAS.BoutDefinitionChoice}, 'Use specified inter-bout interval'))
+        [TempSyllTransitionProb, AllLabels] = CalculateSyllTransitionProbabilities(handles.DataStruct.FileListName, handles.DataStruct.NoteFileDirName, handles.ASSLAS.InterBoutInterval);
+    end
+end
+
+UniqueLabels = unique(AllLabels);
+
+Index = 0;
+for i = 1:length(UniqueLabels),
+    ColNames{i} = UniqueLabels(i);
+    if (UniqueLabels(i) ~= 'q')
+        Index = Index + 1;
+        RowNames{Index} = UniqueLabels(i);
+        Matches = find(AllLabels == UniqueLabels(i));
+        for j = 1:length(UniqueLabels),
+            SyllTransitionProb(Index, j) = length(find(AllLabels(Matches + 1) == UniqueLabels(j)))/length(Matches);
+        end
+    end
+end
+
+SyllTransitionProb(find(SyllTransitionProb < 0.001)) = 0;
+
+handles.ASSLAS.SyllTransitionProb = SyllTransitionProb;
+handles.ASSLAS.AllLabels = AllLabels;
+
+ColWidth = {50};
+SyllTransProbFigure = figure('Position', [200 200 (ColWidth{1}*length(UniqueLabels) + 100) (15*(length(UniqueLabels)-1) + 100)]);
+SyllTransTable = uitable('Parent', SyllTransProbFigure, 'Data', SyllTransitionProb, 'ColumnName', ColNames, 'RowName', RowNames, 'Position', [20 20 (ColWidth{1}*length(UniqueLabels) + 60) (15*(length(UniqueLabels) - 1) + 60)]); 
+set(SyllTransTable, 'ColumnWidth', ColWidth);
+title('Syllable transition probabilities', 'FontWeight', 'bold', 'FontSize', 12);
+set(gca, 'XTick', []);
+guidata(hObject, handles);
+
+% --- Executes on button press in LocateSyllOutliersButton.
+function LocateSyllOutliersButton_Callback(hObject, eventdata, handles)
+% hObject    handle to LocateSyllOutliersButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on selection change in BoutDefinitionMenu.
+function BoutDefinitionMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to BoutDefinitionMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns BoutDefinitionMenu contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from BoutDefinitionMenu
+handles.ASSLAS.BoutDefinitionChoice = get(hObject, 'Value');
+guidata(hObject, handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function BoutDefinitionMenu_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to BoutDefinitionMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function InterBoutIntervalEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to InterBoutIntervalEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of InterBoutIntervalEdit as text
+%        str2double(get(hObject,'String')) returns contents of InterBoutIntervalEdit as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function InterBoutIntervalEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to InterBoutIntervalEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
