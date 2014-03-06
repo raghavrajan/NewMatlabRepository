@@ -310,7 +310,73 @@ function SplitSyllButton_Callback(hObject, eventdata, handles)
 % hObject    handle to SplitSyllButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+handles.ASSLReviewTMResults.PrevSyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOnsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex};
 
+Flag = 1;
+
+set(handles.InstructionsTextLabel, 'String', 'Instructions: First click within the syllable that needs to be split and then enter the threshold that has to be used to split the syllable. Type q to quit');
+axes(handles.ReviewSpecAxis);
+[x, y, button] = ginput(1);
+x(1) = x(1) * 1000;
+
+NewThreshold = inputdlg('Enter the amplitude threshold for splitting the syllable', 'Syllable threshold');
+NewThreshold = str2double(NewThreshold{1});
+
+if (button ~= 113)
+    
+    SyllableStart = find(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} <= x(1), 1, 'last');
+    if (x(1) > handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart))
+        msgbox('Click inside a syllable');
+    else
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        Time = (1:1:length(RawData))/Fs;
+        [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+
+        SyllStart = round(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart) * Fs/1000);
+        SyllEnd = round(handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart) * Fs/1000);
+        [TempOnsets, TempOffsets] = ASSLSegmentData(LogAmplitude(SyllStart:SyllEnd), Fs, 0, 0, NewThreshold);
+        
+        TempOnsets = TempOnsets + handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart);
+        TempOffsets = TempOffsets + handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart);
+        
+        handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart) = TempOffsets(1);
+        
+        for i = 2:length(TempOnsets),
+            handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(end + 1) = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(SyllableStart);
+            handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(end + 1) = TempOnsets(i);
+            handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(end + 1) = TempOffsets(i);
+
+            [SortedVals, SortedIndices] = sort(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex});
+            handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
+            handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
+            handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
+        end
+        
+        if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
+            if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
+                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
+            else
+                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
+            end
+        else
+            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
+        end
+
+        axes(handles.ReviewSpecAxis);
+        axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
+
+        axes(handles.ReviewLabelAxis);
+        axis(handles.ASSLReviewTMResults.ZoomLabelAxisLimits);
+
+        axes(handles.ReviewAmplitudeAxis);
+        axis(handles.ASSLReviewTMResults.ZoomAmpAxisLimits);
+    end
+end
+    
+set(handles.InstructionsTextLabel, 'String', 'Instructions:');
+guidata(hObject, handles);
 
 % --- Executes on button press in EditSyllLabelButton.
 function EditSyllLabelButton_Callback(hObject, eventdata, handles)
