@@ -276,6 +276,7 @@ PrevNext = get(handles.PrevNextSyllMenu, 'Value');
 for i = 1:length(PrevNextSyll),
     if (PrevNext == 1)
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
+        Indices = Indices + 1;
     else
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(CurrSyll), handles.ASSLAS.UniqueSylls(PrevNextSyll(i))]);
     end
@@ -347,6 +348,7 @@ PrevNext = get(handles.PrevNextSyllMenu, 'Value');
 for i = 1:length(PrevNextSyll),
     if (PrevNext == 1)
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
+        Indices = Indices + 1;
     else
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(CurrSyll), handles.ASSLAS.UniqueSylls(PrevNextSyll(i))]);
     end

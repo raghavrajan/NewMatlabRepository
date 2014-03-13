@@ -344,7 +344,7 @@ for i = 1:Parameters.NoPreDays,
     % of cell arrays of the same length - so the previous three lines
     % convert file type, data dir and output dir - common parameters for
     % all of the files into cell arrays
-    %cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PreDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, 'UniformOutput', 0);
+    cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PreDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, 'UniformOutput', 0);
     
     % next undirected songs
     disp(['   Pre Day #', num2str(i), ' - undirected song ...']); 
@@ -363,7 +363,7 @@ for i = 1:Parameters.NoPreDays,
     % of cell arrays of the same length - so the previous three lines
     % convert file type, data dir and output dir - common parameters for
     % all of the files into cell arrays
-    %cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PreUnDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, 'UniformOutput', 0);
+    cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PreUnDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, 'UniformOutput', 0);
 end
 
 % Next for post song
@@ -384,7 +384,7 @@ for i = 1:Parameters.NoPostDays,
     % of cell arrays of the same length - so the previous three lines
     % convert file type, data dir and output dir - common parameters for
     % all of the files into cell arrays
-    %cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PostDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  'UniformOutput', 0);
+    cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PostDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  'UniformOutput', 0);
     
     % next undirected songs
     disp(['   Post Day #', num2str(i), ' - undirected song ...']); 
@@ -403,7 +403,7 @@ for i = 1:Parameters.NoPostDays,
     % of cell arrays of the same length - so the previous three lines
     % convert file type, data dir and output dir - common parameters for
     % all of the files into cell arrays
-    %cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PostUnDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  'UniformOutput', 0);
+    cellfun(@MA_TemplateMatch, RawDataDirCellArray, Parameters.PostUnDirSongFileNames{i}, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  'UniformOutput', 0);
 end
 %==========================================================================
 
