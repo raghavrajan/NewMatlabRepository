@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 22-Nov-2013 11:00:42
+% Last Modified by GUIDE v2.5 13-Mar-2014 23:17:43
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -477,6 +477,34 @@ handles.ASSL.FeatValues = [];
 handles.ASSL.SyllIndices = [];
 handles.ASSL.SyllIndexLabels = [];
 
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.ToBeUsedFeatures),
+    if (handles.ASSL.NoteFileDirName(end) == Filesep)
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        else
+            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        end
+    else
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        else
+            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        end
+    end
+    if (exist(OutputFileName, 'file'))
+        load(OutputFileName);
+        eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{1}, ' = Temp']);
+        Flag(i) = 1;
+    end
+end
+
+if (sum(Flag) == length(handles.ASSL.ToBeUsedFeatures))
+    disp('Loaded calculated feature values from existing files');
+    guidata(hObject, handles);
+    return;
+end
 SyllNo = 0;
 fprintf('\n');
 for i = 1:length(handles.ASSL.FileName),
@@ -1188,4 +1216,32 @@ function AnalyzeSyllablesButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 ASSLAnalyzeSyllables(handles.ASSL);
+guidata(hObject, handles);
+
+
+% --- Executes on button press in SaveFeatValsButton.
+function SaveFeatValsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveFeatValsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.ToBeUsedFeatures),
+    if (handles.ASSL.NoteFileDirName(end) == Filesep)
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        else
+            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        end
+    else
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        else
+            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+        end
+    end
+    Temp = eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{1}]);
+    save(OutputFileName, 'Temp');
+end
+disp('Finished saving feature value files');
 guidata(hObject, handles);
