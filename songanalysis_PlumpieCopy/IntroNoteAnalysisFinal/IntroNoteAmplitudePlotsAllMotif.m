@@ -1,4 +1,4 @@
-function [] = IntroNoteAmplitudePlotsAllMotif(Dir, IntroNoteResults, FileType, AlignmentPoint, PreTime, PostTime, ColorScale, BoutType, RepresentationType, ScaleForIntroNotes)
+function [] = IntroNoteAmplitudePlotsAllMotif(Dir, IntroNoteResults, FileType, AlignmentPoint, PreTime, PostTime, ColorScale, BoutType, RepresentationType, ScaleForIntroNotes, varargin)
 
 % Alignment Point is a number specifying the point where different bouts
 % have to be aligned.
@@ -15,6 +15,10 @@ function [] = IntroNoteAmplitudePlotsAllMotif(Dir, IntroNoteResults, FileType, A
 % 'secondlast' and a bout has only one intro note then it will be excluded
 
 % ======================================================================= %
+
+if (nargin > 10)
+    IntroNoteSylls = varargin{1};
+end
 
 switch (BoutType)
     
@@ -68,7 +72,14 @@ switch (BoutType)
                 INStartIndex = find(AmplitudeTime <= (IntroNoteResults.BoutDetails(i).onsets(j)), 1, 'last');
                 INEndIndex = find(AmplitudeTime <= (IntroNoteResults.BoutDetails(i).offsets(j)), 1, 'last');
                 if (~isempty(strfind(RepresentationType, 'Syllable')))
-                    if (IntroNoteResults.BoutDetails(i).labels(j) == 'i')
+                    INFlag = 0;
+                    for IN = 1:length(IntroNoteSylls),
+                        if (IntroNoteResults.BoutDetails(i).labels(j) == IntroNoteSylls(IN))
+                            INFlag = 1;
+                            break;
+                        end
+                    end
+                    if (INFlag == 1)
                         Amplitude(INStartIndex:INEndIndex) = 1;
                     else
                         Amplitude(INStartIndex:INEndIndex) = 0.5;
@@ -186,7 +197,14 @@ switch (BoutType)
                 INStartIndex = find(AmplitudeTime <= (IntroNoteResults.BoutDetails(i).onsets(j)), 1, 'last');
                 INEndIndex = find(AmplitudeTime <= (IntroNoteResults.BoutDetails(i).offsets(j)), 1, 'last');
                 if (~isempty(strfind(RepresentationType, 'Syllable')))
-                    if (IntroNoteResults.BoutDetails(i).labels(j) == 'i')
+                    INFlag = 0;
+                    for IN = 1:length(IntroNoteSylls),
+                        if (IntroNoteResults.BoutDetails(i).labels(j) == IntroNoteSylls(IN))
+                            INFlag = 1;
+                            break;
+                        end
+                    end
+                    if (INFlag == 1)
                         Amplitude(INStartIndex:INEndIndex) = 1;
                     else
                         Amplitude(INStartIndex:INEndIndex) = 0.5;
@@ -206,9 +224,20 @@ switch (BoutType)
             AlignmentTime = IntroNoteResults.BoutDetails(i).onsets(IntroNoteResults.MotifStartIndex(i));
             AlignmentIndex = find(AmplitudeTime <= AlignmentTime, 1, 'last');
             StartIndex = AlignmentIndex - (ZeroIndex - 1);
+            if (StartIndex <= 0)
+                PointsToBeAdded = abs(StartIndex) + 1;
+                StartIndex = 1;
+            else
+                PointsToBeAdded = 0;
+            end
             EndIndex = AlignmentIndex + (length(AmpTime) - ZeroIndex);
 
-            BoutAmplitudes{TotalBouts} = [(AmplitudeTime(StartIndex:EndIndex) - AlignmentTime) Amplitude(StartIndex:EndIndex)];
+            if (PointsToBeAdded == 0)
+                BoutAmplitudes{TotalBouts} = [(AmplitudeTime(StartIndex:EndIndex) - AlignmentTime) Amplitude(StartIndex:EndIndex)];
+            else
+                AmplitudeTimeFs = 1/(AmplitudeTime(StartIndex + 1) - AmplitudeTime(StartIndex));
+                BoutAmplitudes{TotalBouts} = [[((AmplitudeTime(StartIndex) - (1:1:PointsToBeAdded)'/AmplitudeTimeFs) - AlignmentTime); (AmplitudeTime(StartIndex:EndIndex) - AlignmentTime)] [zeros(PointsToBeAdded, 1); Amplitude(StartIndex:EndIndex)]];
+            end
             waitbar(i/length(IntroNoteResults.NoofINs), ProgressBar, ['Bout beginning : ', IntroNoteResults.BoutDetails(i).SongFile]);
         end
 
@@ -293,7 +322,14 @@ switch (BoutType)
                 INStartIndex = find(AmplitudeTime <= (IntroNoteResults.BoutDetails(i).onsets(j)), 1, 'last');
                 INEndIndex = find(AmplitudeTime <= (IntroNoteResults.BoutDetails(i).offsets(j)), 1, 'last');
                 if (~isempty(strfind(RepresentationType, 'Syllable')))
-                    if (IntroNoteResults.BoutDetails(i).labels(j) == 'i')
+                    INFlag = 0;
+                    for IN = 1:length(IntroNoteSylls),
+                        if (IntroNoteResults.BoutDetails(i).labels(j) == IntroNoteSylls(IN))
+                            INFlag = 1;
+                            break;
+                        end
+                    end
+                    if (INFlag == 1)
                         Amplitude(INStartIndex:INEndIndex) = 1;
                     else
                         Amplitude(INStartIndex:INEndIndex) = 0.5;
