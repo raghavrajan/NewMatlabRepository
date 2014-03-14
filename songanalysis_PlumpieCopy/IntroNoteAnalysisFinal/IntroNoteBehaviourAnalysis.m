@@ -6,7 +6,11 @@ if (nargin > 10)
     ContinuousFiles = varargin{1};
     [BoutDetails, AllBoutDetails] = ScreenBouts(DataDir, RecFileDir, FileType, NoteFileDir, SongFileList, InterBoutInterval, MotifSylls, ContinuousOrDiscrete, ContinuousFileTime, ContinuousFiles);
 else
-    [BoutDetails, AllBoutDetails] = ScreenBouts(DataDir, RecFileDir, FileType, NoteFileDir, SongFileList, InterBoutInterval, MotifSylls, ContinuousOrDiscrete, ContinuousFileTime);
+    if (~isempty(strfind(InterBoutInterval, 'NewFile')))
+        [BoutDetails, AllBoutDetails] = ScreenBoutsNewFile(DataDir, RecFileDir, FileType, NoteFileDir, SongFileList, InterBoutInterval, MotifSylls, ContinuousOrDiscrete, ContinuousFileTime);
+    else
+        [BoutDetails, AllBoutDetails] = ScreenBouts(DataDir, RecFileDir, FileType, NoteFileDir, SongFileList, InterBoutInterval, MotifSylls, ContinuousOrDiscrete, ContinuousFileTime);
+    end
 end
 
 if (nargin > 11)
@@ -163,11 +167,11 @@ IntroNoteResults.MeanIN_INBouts = mean(IntroNoteResults.NoofINs(INBouts));
 IntroNoteResults.STDIN_INBouts = std(IntroNoteResults.NoofINs(INBouts));
 IntroNoteResults.No_INBouts = length(IntroNoteResults.NoofINs(INBouts));
 
-NotINBouts = setdiff((1:1:length(IntroNoteResults.NoofINs)), IN_Bouts);
+NotINBouts = setdiff((1:1:length(IntroNoteResults.NoofINs)), INBouts);
 
-IntroNoteResults.MeanIN_NotINBouts = mean(IntroNoteResults.NoofINs(NotIN_Bouts));
-IntroNoteResults.STDIN_NotINBouts = std(IntroNoteResults.NoofINs(NotIN_Bouts));
-IntroNoteResults.No_NotINBouts = length(IntroNoteResults.NoofINs(NotIN_Bouts));
+IntroNoteResults.MeanIN_NotINBouts = mean(IntroNoteResults.NoofINs(NotINBouts));
+IntroNoteResults.STDIN_NotINBouts = std(IntroNoteResults.NoofINs(NotINBouts));
+IntroNoteResults.No_NotINBouts = length(IntroNoteResults.NoofINs(NotINBouts));
 
 IntroNoteResults.MeanIN_WithinBouts = mean(IntroNoteResults.WithinBoutNoofINs(find(IntroNoteResults.WithinBoutNoofINs(:,1) > 0),1));
 IntroNoteResults.STDIN_WithinBouts = std(IntroNoteResults.WithinBoutNoofINs(find(IntroNoteResults.WithinBoutNoofINs(:,1) > 0),1));
