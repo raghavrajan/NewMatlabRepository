@@ -497,6 +497,8 @@ for i = 1:length(handles.ASSL.ToBeUsedFeatures),
         load(OutputFileName);
         eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{1}, ' = Temp']);
         Flag(i) = 1;
+    else
+        Flag(i) = 0;
     end
 end
 
