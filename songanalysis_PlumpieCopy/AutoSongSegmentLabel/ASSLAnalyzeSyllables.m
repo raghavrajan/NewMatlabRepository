@@ -22,7 +22,7 @@ function varargout = ASSLAnalyzeSyllables(varargin)
 
 % Edit the above text to modify the response to help ASSLAnalyzeSyllables
 
-% Last Modified by GUIDE v2.5 22-Feb-2014 00:28:53
+% Last Modified by GUIDE v2.5 18-Mar-2014 10:50:05
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -117,10 +117,13 @@ handles.ASSLAS.BoutDefinitionChoice = 1;
 set(handles.BoutDefinitionMenu, 'String', handles.ASSLAS.BoutDefinitions);
 set(handles.BoutDefinitionMenu, 'Value', handles.ASSLAS.BoutDefinitionChoice);
 
+handles.ASSLAS.IndividualFeatPlotOptions = [{'Plot individual traces'}; {'Plot mean + std.dev'}; {'Plot mean + std. error'}];
+handles.ASSLAS.IndividualFeatPlotChoice = 1;
+set(handles.IndividualFeatPlotChoiceMenu, 'String', handles.ASSLAS.IndividualFeatPlotOptions);
+set(handles.IndividualFeatPlotChoiceMenu, 'Value', handles.ASSLAS.IndividualFeatPlotChoice);
+
 handles.ASSLAS.InterBoutInterval = 2;
 set(handles.InterBoutIntervalEdit, 'String', num2str(handles.ASSLAS.InterBoutInterval));
-
-guidata(hObject, handles);
 
 % Update handles structure
 guidata(hObject, handles);
@@ -173,6 +176,7 @@ PrevNext = get(handles.PrevNextSyllMenu, 'Value');
 for i = 1:length(PrevNextSyll),
     if (PrevNext == 1)
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
+        Indices = Indices + 1;
     else
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(CurrSyll), handles.ASSLAS.UniqueSylls(PrevNextSyll(i))]);
     end
@@ -234,6 +238,7 @@ PrevNext = get(handles.PrevNextSyllMenu, 'Value');
 for i = 1:length(PrevNextSyll),
     if (PrevNext == 1)
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
+        Indices = Indices + 1;
     else
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(CurrSyll), handles.ASSLAS.UniqueSylls(PrevNextSyll(i))]);
     end
@@ -273,6 +278,11 @@ CurrSyll = get(handles.CurrSyllListBox, 'Value');
 PrevNextSyll = get(handles.PrevNextSyllListBox, 'Value');
 PrevNext = get(handles.PrevNextSyllMenu, 'Value');
 
+cla(handles.XFeatSyllStart);
+cla(handles.XFeatSyllEnd);
+cla(handles.YFeatSyllStart);
+cla(handles.YFeatSyllEnd);
+
 for i = 1:length(PrevNextSyll),
     if (PrevNext == 1)
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
@@ -287,7 +297,47 @@ for i = 1:length(PrevNextSyll),
         ClearAxis = 0;
     end
     ASSLASPlotData(handles, 1, handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))), handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(PrevNextSyll(i))), 4, handles.ASSLNextSyllAxis, ClearAxis, Indices);
+    
+    XFeat = handles.ASSLAS.FeatNames{handles.ASSLAS.XVal};
+    if (((isempty(strfind(XFeat, 'Duration')))) && ((isempty(strfind(XFeat, 'EntropyVariance')))))
+        for j = 1:length(Indices),
+            axes(handles.XFeatSyllStart);
+            hold on;
+            plot([handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.XVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
+            
+            axes(handles.XFeatSyllEnd);
+            hold on;
+            DataLen = length(handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.XVal-1});
+            plot((1:1:DataLen) - DataLen, [handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.XVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
+        end
+    end
+
+    YFeat = handles.ASSLAS.FeatNames{handles.ASSLAS.YVal};
+    if (((isempty(strfind(YFeat, 'Duration')))) && ((isempty(strfind(YFeat, 'EntropyVariance')))))
+        for j = 1:length(Indices),
+            axes(handles.YFeatSyllStart);
+            hold on;
+            plot([handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.YVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
+        
+            axes(handles.YFeatSyllEnd);
+            hold on;
+            DataLen = length(handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.YVal-1});
+            plot((1:1:DataLen) - DataLen, [handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.YVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
+        end
+    end
 end
+
+axes(handles.XFeatSyllStart);
+axis tight;
+
+axes(handles.XFeatSyllEnd);
+axis tight;
+
+axes(handles.YFeatSyllStart);
+axis tight;
+
+axes(handles.YFeatSyllEnd);
+axis tight;
 
 guidata(hObject, handles);
 
@@ -544,6 +594,112 @@ function InterBoutIntervalEdit_CreateFcn(hObject, eventdata, handles)
 % handles    empty - handles not created until after all CreateFcns called
 
 % Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in pushbutton9.
+function pushbutton9_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton9 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in pushbutton10.
+function pushbutton10_Callback(hObject, eventdata, handles)
+% hObject    handle to pushbutton10 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function edit3_Callback(hObject, eventdata, handles)
+% hObject    handle to edit3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit3 as text
+%        str2double(get(hObject,'String')) returns contents of edit3 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit3_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit4_Callback(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit4 as text
+%        str2double(get(hObject,'String')) returns contents of edit4 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit4_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit4 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+
+function edit5_Callback(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of edit5 as text
+%        str2double(get(hObject,'String')) returns contents of edit5 as a double
+
+
+% --- Executes during object creation, after setting all properties.
+function edit5_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to edit5 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on selection change in IndividualFeatPlotChoiceMenu.
+function IndividualFeatPlotChoiceMenu_Callback(hObject, eventdata, handles)
+% hObject    handle to IndividualFeatPlotChoiceMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns IndividualFeatPlotChoiceMenu contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from IndividualFeatPlotChoiceMenu
+
+
+% --- Executes during object creation, after setting all properties.
+function IndividualFeatPlotChoiceMenu_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to IndividualFeatPlotChoiceMenu (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: popupmenu controls usually have a white background on Windows.
 %       See ISPC and COMPUTER.
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');

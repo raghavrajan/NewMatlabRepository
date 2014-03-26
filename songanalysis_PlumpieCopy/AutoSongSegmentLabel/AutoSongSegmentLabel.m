@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 13-Mar-2014 23:17:43
+% Last Modified by GUIDE v2.5 26-Mar-2014 22:35:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -360,6 +360,10 @@ for i = 1:length(handles.ASSL.FileName),
             handles.ASSL.Threshold{i} = -30;
         end
         disp(['Loaded syllable data from ', handles.ASSL.FileName{i}, '.not.mat']);
+        if (~isfield(Temp, 'FileLength'))
+            [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+            handles.ASSL.FileDur{i} = length(RawData)/Fs;
+        end
         continue;
     end
     [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
@@ -474,6 +478,7 @@ function CalculateFeaturesButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 handles.ASSL.FeatValues = [];
+handles.ASSL.RawFeatValues = [];
 handles.ASSL.SyllIndices = [];
 handles.ASSL.SyllIndexLabels = [];
 
@@ -482,21 +487,57 @@ Filesep = filesep;
 for i = 1:length(handles.ASSL.ToBeUsedFeatures),
     if (handles.ASSL.NoteFileDirName(end) == Filesep)
         if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
         else
-            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
         end
     else
         if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
         else
-            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
         end
     end
+    
+    FeatValuesFileName = [RootOutputFileName, '.FeatValues.mat'];
+    RawFeatValuesFileName = [RootOutputFileName, '.RawFeatValues.mat'];
+    SyllIndicesFileName = [RootOutputFileName, '.SyllIndices.mat'];
+    SyllIndexLabelsFileName = [RootOutputFileName, '.SyllIndexLabels.mat'];
+    RawOutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.raw.mat'];
+    OutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+    
     if (exist(OutputFileName, 'file'))
         load(OutputFileName);
-        eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{1}, ' = Temp']);
-        Flag(i) = 1;
+        eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{i}, ' = Temp;']);
+        if (((isempty(strfind(handles.ASSL.ToBeUsedFeatures{i}, 'Duration')))) && ((isempty(strfind(handles.ASSL.ToBeUsedFeatures{i}, 'EntropyVariance')))))
+            if (exist(RawOutputFileName, 'file'))
+                load(RawOutputFileName);
+                eval(['handles.ASSL.Raw.', handles.ASSL.ToBeUsedFeatures{i}, ' = Temp;']);
+                Flag(i) = 1;
+            else
+                Flag(i) = 0;
+            end
+        else
+            if (exist(FeatValuesFileName, 'file'))
+                load(FeatValuesFileName);
+                eval(['handles.ASSL.FeatValues = Temp;']);
+                Flag(i) = 1;
+            else
+                Flag(i) = 0;
+            end
+            if (exist(RawFeatValuesFileName, 'file'))
+                load(RawFeatValuesFileName);
+                eval(['handles.ASSL.RawFeatValues = Temp;']);
+            end
+            if (exist(SyllIndicesFileName, 'file'))
+                load(SyllIndicesFileName);
+                eval(['handles.ASSL.SyllIndices = Temp;']);
+            end
+            if (exist(SyllIndexLabelsFileName, 'file'))
+                load(SyllIndexLabelsFileName);
+                eval(['handles.ASSL.SyllIndexLabels = Temp;']);
+            end
+        end
     else
         Flag(i) = 0;
     end
@@ -504,6 +545,7 @@ end
 
 if (sum(Flag) == length(handles.ASSL.ToBeUsedFeatures))
     disp('Loaded calculated feature values from existing files');
+    set(handles.SaveDataButton, 'enable', 'on');
     guidata(hObject, handles);
     return;
 end
@@ -514,19 +556,25 @@ for i = 1:length(handles.ASSL.FileName),
         fprintf('>');
     end
     TempFeats = [];
+    TempRawFeats = [];
     [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
     Time = (1:1:length(RawData))/Fs;
     
-    [Feats] = ASSLCalculateSAPFeatsWithOnsets(RawData, Time, Fs, handles.ASSL.SyllOnsets{i}/1000, handles.ASSL.SyllOffsets{i}/1000);
+    [Feats, RawFeats] = ASSLCalculateSAPFeatsWithOnsets(RawData, Time, Fs, handles.ASSL.SyllOnsets{i}/1000, handles.ASSL.SyllOffsets{i}/1000);
     
     for j = 1:length(handles.ASSL.ToBeUsedFeatures),
         FeatFields = fieldnames(Feats);
         FeatureIndex = find(strcmp(FeatFields, handles.ASSL.ToBeUsedFeatures{j}));
         eval(['handles.ASSL.', FeatFields{FeatureIndex}, '{', num2str(i), '} = Feats.', FeatFields{FeatureIndex}, ';']);
         TempFeats = [TempFeats eval(['Feats.', FeatFields{FeatureIndex}])'];
+        if (isfield(RawFeats, handles.ASSL.ToBeUsedFeatures{j}))
+            eval(['handles.ASSL.Raw.', FeatFields{FeatureIndex}, '{', num2str(i), '} = RawFeats.', FeatFields{FeatureIndex}, ';']);
+            TempRawFeats = [TempRawFeats eval(['RawFeats.', FeatFields{FeatureIndex}])'];
+        end
     end
     handles.ASSL.FeatValues = [handles.ASSL.FeatValues; TempFeats];
+    handles.ASSL.RawFeatValues = [handles.ASSL.RawFeatValues; TempRawFeats];
     handles.ASSL.SyllIndices = [handles.ASSL.SyllIndices; ones(length(handles.ASSL.SyllOnsets{i}),1)*i [1:1:length(handles.ASSL.SyllOnsets{i})]' ([1:1:length(handles.ASSL.SyllOnsets{i})]' + SyllNo)];
     if (isfield(handles.ASSL, 'SyllLabels'))
         handles.ASSL.SyllIndexLabels = [handles.ASSL.SyllIndexLabels; handles.ASSL.SyllLabels{i}'];
@@ -534,8 +582,63 @@ for i = 1:length(handles.ASSL.FileName),
     SyllNo = SyllNo + length(handles.ASSL.SyllOnsets{i});
 end
 fprintf('\n');
+set(handles.SaveDataButton, 'enable', 'on');
+
 guidata(hObject, handles);
 disp('Finished calculating features');
+
+% --- Executes on button press in SaveFeatValsButton.
+function SaveFeatValsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveFeatValsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.ToBeUsedFeatures),
+    if (handles.ASSL.NoteFileDirName(end) == Filesep)
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
+        else
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
+        end
+    else
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
+        else
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
+        end
+    end
+    
+    if (i == 1)
+        FeatValuesFileName = [RootOutputFileName, '.FeatValues.mat'];
+        Temp = eval(['handles.ASSL.FeatValues']);
+        save(FeatValuesFileName, 'Temp');
+
+        RawFeatValuesFileName = [RootOutputFileName, '.RawFeatValues.mat'];
+        Temp = eval(['handles.ASSL.RawFeatValues']);
+        save(RawFeatValuesFileName, 'Temp');
+
+        SyllIndicesFileName = [RootOutputFileName, '.SyllIndices.mat'];
+        Temp = eval(['handles.ASSL.SyllIndices']);
+        save(SyllIndicesFileName, 'Temp');
+
+        SyllIndexLabelsFileName = [RootOutputFileName, '.SyllIndexLabels.mat'];
+        Temp = eval(['handles.ASSL.SyllIndexLabels']);
+        save(SyllIndexLabelsFileName, 'Temp');
+    end
+    
+    RawOutputFileName = [RootOutputFileName,'.', handles.ASSL.ToBeUsedFeatures{i}, '.raw.mat'];
+    if (((isempty(strfind(handles.ASSL.ToBeUsedFeatures{i}, 'Duration')))) && ((isempty(strfind(handles.ASSL.ToBeUsedFeatures{i}, 'EntropyVariance')))))
+        Temp = eval(['handles.ASSL.Raw.', handles.ASSL.ToBeUsedFeatures{i}]);
+        save(RawOutputFileName, 'Temp');
+    end
+    
+    OutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+    Temp = eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{i}]);
+    save(OutputFileName, 'Temp');
+end
+disp('Finished saving feature value files');
+guidata(hObject, handles);
 
 % --- Executes on button press in PlotFeaturesButton.
 function PlotFeaturesButton_Callback(hObject, eventdata, handles)
@@ -1162,6 +1265,10 @@ for i = 1:length(handles.ASSL.FileName),
         else
             handles.ASSL.Threshold{i} = -30;
         end
+        if (~isfield(Temp, 'FileLength'))
+            [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+            handles.ASSL.FileDur{i} = length(RawData)/Fs;
+        end
         disp(['Loaded syllable data from ', handles.ASSL.FileName{i}, '.not.mat']);
         continue;
     end
@@ -1221,29 +1328,71 @@ ASSLAnalyzeSyllables(handles.ASSL);
 guidata(hObject, handles);
 
 
-% --- Executes on button press in SaveFeatValsButton.
-function SaveFeatValsButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SaveFeatValsButton (see GCBO)
+% --- Executes on button press in SaveDataButton.
+function SaveDataButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveDataButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
 Filesep = filesep;
 
 for i = 1:length(handles.ASSL.ToBeUsedFeatures),
     if (handles.ASSL.NoteFileDirName(end) == Filesep)
         if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
         else
-            OutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
         end
     else
         if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
         else
-            OutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
         end
     end
-    Temp = eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{1}]);
-    save(OutputFileName, 'Temp');
 end
-disp('Finished saving feature value files');
+
+OutputFileName = [RootOutputFileName, '.ASSLData.mat'];
+save(OutputFileName, 'handles');
+disp('Finished saving data');
 guidata(hObject, handles);
+
+
+% --- Executes on button press in SaveExcelButton.
+function SaveExcelButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveExcelButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Filesep = filesep;
+
+if (handles.ASSL.NoteFileDirName(end) == Filesep)
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
+    else
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
+    end
+else
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
+    else
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
+    end
+end
+
+TextOutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.txt'];
+OutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.xls'];
+
+Fid = fopen(TextOutputFileName, 'w');
+RowIndex = 1;
+for i = 1:length(handles.ASSL.SyllOnsets),
+    for j = 1:length(handles.ASSL.SyllOnsets{i}),
+        fprintf(Fid, '%i\t%c\t%g\t%g\n', i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        Temp(RowIndex,:) = {i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j)};
+        RowIndex = RowIndex + 1;
+    end
+end
+fclose(Fid);
+disp(['Wrote data about labels, onsets and offsets to ', TextOutputFileName]); 
+xlswrite(OutputFileName, Temp, 1, 'A1');
+disp(['Wrote data about labels, onsets and offsets to ', OutputFileName]); 
