@@ -2,10 +2,10 @@ function [] = CSAnalyseSyllableAcousticFeatures(CSData)
 
 UniqueLabels = [];
 for i = 1:CSData.NoofDays,
-    UniqueLabels = union(UniqueLabels, unique(CSData.Data{i}.SyllIndexLabels));
+    UniqueLabels = union(UniqueLabels, unique(CSData.AllLabels{i}));
 end
 UniqueLabels = UniqueLabels(:)';
-UniqueLabels(regexp(UniqueLabels, '[A-Z]')) = [];
+UniqueLabels = UniqueLabels(regexp(UniqueLabels, '[a-p r-z]'));
 
 for i = 1:length(CSData.Data{1}.ToBeUsedFeatures),
     figure(i);
@@ -15,10 +15,10 @@ for i = 1:length(CSData.Data{1}.ToBeUsedFeatures),
     SEMFeatData = [];
     for j = 1:length(UniqueLabels),
         for k = 1:CSData.NoofDays,
-            Indices = find(CSData.Data{k}.SyllIndexLabels == UniqueLabels(j));
+            Indices = find(CSData.AllLabels{k} == UniqueLabels(j));
             if (~isempty(Indices))
-                MeanFeatData(j, k) = mean(CSData.Data{k}.FeatValues(Indices, i));
-                STDFeatData(j, k) = std(CSData.Data{k}.FeatValues(Indices, i));
+                MeanFeatData(j, k) = mean(CSData.AllFeats{k}(Indices, i));
+                STDFeatData(j, k) = std(CSData.AllFeats{k}(Indices, i));
                 SEMFeatData(j, k) = STDFeatData(j, k)/sqrt(length(Indices));
             else
                 MeanFeatData(j, k) = NaN;

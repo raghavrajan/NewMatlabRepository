@@ -154,7 +154,7 @@ for i = 1:handles.CS.NoofDays,
     end
     Temp = load([handles.CS.DirName{i}, handles.CS.DataFileName{i}]);
     handles.CS.Data{i} = Temp.handles.ASSL;
-    [handles.CS.Bouts{i}, handles.CS.BoutLens{i}, handles.CS.AllOnsets{i}, handles.CS.AllOffsets{i}, handles.CS.AllLabels{i}, handles.CS.AllRemovalIndices{i}] = CSIdentifyBouts(Temp.handles.ASSL, handles.CS.BoutDefinitions{handles.CS.BoutDefChoice}, handles.CS.InterBoutInterval);
+    [handles.CS.Bouts{i}, handles.CS.BoutLens{i}, handles.CS.AllOnsets{i}, handles.CS.AllOffsets{i}, handles.CS.AllLabels{i}, handles.CS.AllFeats{i}, handles.CS.AllRemovalIndices{i}] = CSIdentifyBouts(Temp.handles.ASSL, handles.CS.BoutDefinitions{handles.CS.BoutDefChoice}, handles.CS.InterBoutInterval);
 end
 disp(['Finished loading data from ', num2str(handles.CS.NoofDays), ' days']);
 guidata(hObject, handles);
