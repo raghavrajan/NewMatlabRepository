@@ -18,7 +18,7 @@ cd /home/raghav/MicrolesionAnalysisResults_MT_Templates/PartShuffledSongComparis
 Folders = dir([BirdName, '*']);
 
 Colors = 'rcy';
-for i = 1:length(Folders),
+for i = 1:min([3 length(Folders)]),
     cd(Folders(i).name);
     Files = dir([RootFileName, '*']);
     load(Files(1).name);

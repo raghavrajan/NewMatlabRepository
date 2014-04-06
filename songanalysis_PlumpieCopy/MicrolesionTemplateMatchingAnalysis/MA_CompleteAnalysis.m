@@ -1,4 +1,4 @@
-function [Results] = MA_CompleteAnalysis(ParameterFile, SimilarityFigure, ConsistencyFigure)
+function [Results] = MA_CompleteAnalysis(ParameterFile, Multiplier)
 
 %==========================================================================
 % Function for analysing the effects of a treatment on song - written in
@@ -482,8 +482,63 @@ for Shuffle = ShufflePercentages,
 end
 %==========================================================================
 
+% %============= Shuffled song comparisons 1-100% for only one file of song ====================
+% ShufflePercentages = [1:1:100];
+% 
+% for Shuffle = ShufflePercentages,
+%     TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/PartShuffledSongComparisons_1_to_100/';
+%     [MotifTemplateDir, MotifTemplateFileName, MotifTemplateExt] = fileparts(Parameters.MotifTemplateFileName);
+% 
+%     TemplateMatchOutputDir = [TemplateMatchOutputDir, MotifTemplateFileName, MotifTemplateExt, '.Shuffle.', num2str(Shuffle), 'percent.TemplateMatchResults', FileSep];
+%     if (~exist(TemplateMatchOutputDir, 'dir'))
+%         mkdir(TemplateMatchOutputDir);
+%     end
+% 
+%     disp(['Doing ', num2str(Shuffle), ' % shuffled song template matching ...']);
+% 
+%     % Only for one pre undir song day
+% 
+%     disp(['   Pre Day #', num2str(i), ' - undirected song ...']); 
+% 
+%     NumberofFiles = min(2, length(Parameters.PreUnDirSongFileNames{1}));
+%     RandomFiles = Parameters.PreUnDirSongFileNames{1}(1:NumberofFiles);
+% 
+%     ShuffleCellArray = num2cell(ones(length(RandomFiles), 1) * Shuffle/100);
+%     FileTypeCellArray = cellstr(char(ones(length(RandomFiles), 1)*double(Parameters.FileType)));
+%     RawDataDirCellArray = cellstr(char(ones(length(RandomFiles), 1)*double(Parameters.PreDataDir{1})));
+%     OutputDirCellArray = cellstr(char(ones(length(RandomFiles), 1)*double(TemplateMatchOutputDir)));
+%     LabelCellArray = cellstr(char(ones(length(RandomFiles), 1)*double('Motif')));
+%     TemplateTypeCellArray = cellstr(char(ones(length(RandomFiles), 1)*double('Spectrogram')));
+%     MotifTemplateCellArray = cell(size(RandomFiles));
+%     for j = 1:length(MotifTemplateCellArray),
+%         MotifTemplateCellArray{j} = Parameters.MotifTemplate;
+%     end
+%     % using cellfun so that i iterate over each element of the cell array.
+%     % To use cellfun, all of the other inputs also have to be in the form
+%     % of cell arrays of the same length - so the previous three lines
+%     % convert file type, data dir and output dir - common parameters for
+%     % all of the files into cell arrays
+%     cellfun(@MA_PartRandomTemplateMatch, RawDataDirCellArray, RandomFiles, FileTypeCellArray, MotifTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, ShuffleCellArray, 'UniformOutput', 0);
+% end
+% %==========================================================================
 
 %============= Load results of template matching ==========================
+% First all the maximum values from normal files
+TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/';
+[MotifTemplateDir, MotifTemplateFileName, MotifTemplateExt] = fileparts(Parameters.MotifTemplateFileName);
+TemplateMatchOutputDir = [TemplateMatchOutputDir, MotifTemplateFileName, MotifTemplateExt, '.TemplateMatchResults', FileSep];
+
+Files = Parameters.PreUnDirSongFileNames{1}(1:end);
+
+LabelCellArray = cellstr(char(ones(length(Files), 1)*double('Motif')));
+OutputDirCellArray = cellstr(char(ones(length(Files), 1)*double(TemplateMatchOutputDir)));
+
+Parameters.NormalSongMatches = cellfun(@MA_LoadNormalSong_TemplateMatchResultsFile, Files, OutputDirCellArray, LabelCellArray, 'UniformOutput', 0);
+Parameters.NormalSongMatches = Parameters.NormalSongMatches(:)';
+Parameters.NormalSongMatches = cell2mat(Parameters.NormalSongMatches);
+Parameters.NormalSongMatches = Parameters.NormalSongMatches(:);
+
+% Next for the 100% shuffled song comparisons
 TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/ShuffledSongComparisons/';
 [MotifTemplateDir, MotifTemplateFileName, MotifTemplateExt] = fileparts(Parameters.MotifTemplateFileName);
 
@@ -502,6 +557,42 @@ Parameters.ShuffledSongMatches = cell2mat(Parameters.ShuffledSongMatches);
 Parameters.ShuffledSongMatches = Parameters.ShuffledSongMatches(:);
 
 Parameters.TemplateMatchThreshold = mean(Parameters.ShuffledSongMatches) + 3*std(Parameters.ShuffledSongMatches);
+
+% ShufflePercentages = [1:1:100];
+% 
+% ShuffleIndex = 0;
+% for Shuffle = ShufflePercentages,
+% 
+%     ShuffleIndex = ShuffleIndex + 1;
+%     
+%     TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/PartShuffledSongComparisons_1_to_100/';
+%     [MotifTemplateDir, MotifTemplateFileName, MotifTemplateExt] = fileparts(Parameters.MotifTemplateFileName);
+% 
+%     TemplateMatchOutputDir = [TemplateMatchOutputDir, MotifTemplateFileName, MotifTemplateExt, '.Shuffle.', num2str(Shuffle), 'percent.TemplateMatchResults', FileSep];
+% 
+%     disp(['Loading results of ', num2str(Shuffle), ' % shuffled song template matching ...']);
+% 
+%     NumberofFiles = min(2, length(Parameters.PreUnDirSongFileNames{1}));
+%     RandomFiles = Parameters.PreUnDirSongFileNames{1}(1:NumberofFiles);
+% 
+%     LabelCellArray = cellstr(char(ones(length(RandomFiles), 1)*double('Motif')));
+%     OutputDirCellArray = cellstr(char(ones(length(RandomFiles), 1)*double(TemplateMatchOutputDir)));
+% 
+%     Parameters.PartShuffledSongMatchesAll{ShuffleIndex} = cellfun(@MA_LoadShuffledSong_TemplateMatchResultsFile, RandomFiles, OutputDirCellArray, LabelCellArray, 'UniformOutput', 0);
+%     Parameters.PartShuffledSongMatchesAll{ShuffleIndex} = Parameters.PartShuffledSongMatchesAll{ShuffleIndex}(:)';
+%     Parameters.PartShuffledSongMatchesAll{ShuffleIndex} = cell2mat(Parameters.PartShuffledSongMatchesAll{ShuffleIndex});
+%     Parameters.PartShuffledSongMatchesAll{ShuffleIndex} = Parameters.PartShuffledSongMatchesAll{ShuffleIndex}(:);
+%     Parameters.PartShuffleTemplateMatchThresholdAll{ShuffleIndex} = mean(Parameters.PartShuffledSongMatchesAll{ShuffleIndex}) + 3*std(Parameters.PartShuffledSongMatchesAll{ShuffleIndex});
+% end
+% 
+% figure(ShuffledMatchesFigure);
+% hold on;
+% TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/';
+% [MotifTemplateDir, MotifTemplateFileName, MotifTemplateExt] = fileparts(Parameters.MotifTemplateFileName);
+% TemplateMatchOutputDir = [TemplateMatchOutputDir, MotifTemplateFileName, MotifTemplateExt, '.TemplateMatchResults', FileSep];
+% TempNormalSongFile = load([TemplateMatchOutputDir, Parameters.PreUnDirSongFileNames{1}{1}, '.Motif.TempMatch.mat']);
+% TempPartShuffledMatches = cell2mat(Parameters.PartShuffledSongMatchesAll);
+% plot(mean(TempPartShuffledMatches(1:2,:)), 'ko-');
 
 ShufflePercentages = [25 50 75];
 
@@ -530,8 +621,11 @@ for Shuffle = ShufflePercentages,
     Parameters.PartShuffleTemplateMatchThreshold{ShuffleIndex} = mean(Parameters.PartShuffledSongMatches{ShuffleIndex}) + 3*std(Parameters.PartShuffledSongMatches{ShuffleIndex});
 end
 
-% Choose one of the thresholds - 75% shuffled song 
-ActualTemplateMatchThreshold = Parameters.PartShuffleTemplateMatchThreshold{3};
+% Choose one of the thresholds - calculated as min + 0.1*(max(from normal)
+% - min (from completely shuffled))
+
+ActualTemplateMatchThreshold = mean(Parameters.ShuffledSongMatches) + (mean(Parameters.NormalSongMatches) - mean(Parameters.ShuffledSongMatches))*Multiplier;
+Results.ActualTemplateMatchThreshold = ActualTemplateMatchThreshold;
 
 TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/';
 [MotifTemplateDir, MotifTemplateFileName, MotifTemplateExt] = fileparts(Parameters.MotifTemplateFileName);
@@ -605,99 +699,143 @@ end
 disp('Plotting match results ...');
 figure;
 
+Index = 1;
 for i = 1:length(Parameters.PreDirResults),
     DirAllMatches{i} = cell2mat(Parameters.PreDirResults{i});
     DirTotalSongTime{i} = cell2mat(Parameters.PreDirLens{i});
     
     if (~isempty(DirAllMatches{i}))
-        subplot(2,1,1);
-        errorbar(i, mean(DirAllMatches{i}(:,1)), std(DirAllMatches{i}(:,1)), 'ro');
-        hold on;
-
-        subplot(2,1,2);
-        plot(i, size(DirAllMatches{i},1)*1000/sum(DirTotalSongTime{i}), 'ro');
-        hold on;
+        Results.DirAllMatches(Index,:) = [i mean(DirAllMatches{i}(:,1)) std(DirAllMatches{i}(:,1))];
+        Results.DirNumMatchesPerSec(Index,:) = [i size(DirAllMatches{i},1)*1000/sum(DirTotalSongTime{i})];
+        
+%         subplot(2,1,1);
+%         errorbar(i, mean(DirAllMatches{i}(:,1)), std(DirAllMatches{i}(:,1)), 'ro', 'MarkerSize', 6);
+%         hold on;
+% 
+%         subplot(2,1,2);
+%         plot(i, size(DirAllMatches{i},1)*1000/sum(DirTotalSongTime{i}), 'ro', 'MarkerSize', 6);
+%         hold on;
+    else
+        Results.DirAllMatches(Index,:) = [i NaN NaN];
+        Results.DirNumMatchesPerSec(Index,:) = [i 0];
     end
     
     UnDirAllMatches{i} = cell2mat(Parameters.PreUnDirResults{i});
     UnDirTotalSongTime{i} = cell2mat(Parameters.PreUnDirLens{i});
     
     if (~isempty(UnDirAllMatches{i}))
-        subplot(2,1,1);
-        errorbar(i, mean(UnDirAllMatches{i}(:,1)), std(UnDirAllMatches{i}(:,1)), 'bo');
-        hold on;
-
-        subplot(2,1,2);
-        plot(i, size(UnDirAllMatches{i},1)*1000/sum(UnDirTotalSongTime{i}), 'bo');
-        hold on;
+        Results.UnDirAllMatches(Index,:) = [i mean(UnDirAllMatches{i}(:,1)) std(UnDirAllMatches{i}(:,1))];
+        Results.UnDirNumMatchesPerSec(Index,:) = [i size(UnDirAllMatches{i},1)*1000/sum(UnDirTotalSongTime{i})];
+        
+%         subplot(2,1,1);
+%         errorbar(i, mean(UnDirAllMatches{i}(:,1)), std(UnDirAllMatches{i}(:,1)), 'bo', 'MarkerSize', 6);
+%         hold on;
+% 
+%         subplot(2,1,2);
+%         plot(i, size(UnDirAllMatches{i},1)*1000/sum(UnDirTotalSongTime{i}), 'bo', 'MarkerSize', 6);
+%         hold on;
+    else
+        Results.UnDirAllMatches(Index,:) = [i NaN NaN];
+        Results.UnDirNumMatchesPerSec(Index,:) = [i 0];
     end
+    Index = Index + 1;
 end
-subplot(2,1,1);
-hold on;
-temp = axis;
-plot([i i]+0.5, [0 temp(4)], 'k--', 'LineWidth', 2);
-
-subplot(2,1,2);
-hold on;
-temp = axis;
-plot([i i]+0.5, [0 temp(4)], 'k--', 'LineWidth', 2);
 
 for i = 1:length(Parameters.PostDirResults),
     DirAllMatches{i + length(Parameters.PreDirResults)} = cell2mat(Parameters.PostDirResults{i});
     DirTotalSongTime{i + length(Parameters.PreDirResults)} = cell2mat(Parameters.PostDirLens{i});
     
     if (~isempty(DirAllMatches{i + length(Parameters.PreDirResults)}))
-        subplot(2,1,1);
-        errorbar(i + length(Parameters.PreDirResults), mean(DirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), std(DirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), 'ro');
-        hold on;
+        Results.DirAllMatches(Index,:) = [(i + length(Parameters.PreDirResults)) mean(DirAllMatches{i + length(Parameters.PreDirResults)}(:,1)) std(DirAllMatches{i + length(Parameters.PreDirResults)}(:,1))];
+        Results.DirNumMatchesPerSec(Index,:) = [(i + length(Parameters.PreDirResults)) size(DirAllMatches{i + length(Parameters.PreDirResults)},1)*1000/sum(DirTotalSongTime{i + length(Parameters.PreDirResults)})];
 
-        subplot(2,1,2);
-        plot(i + length(Parameters.PreDirResults), size(DirAllMatches{i + length(Parameters.PreDirResults)},1)*1000/sum(DirTotalSongTime{i + length(Parameters.PreDirResults)}), 'ro');
-        hold on;
+%         subplot(2,1,1);
+%         errorbar(i + length(Parameters.PreDirResults), mean(DirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), std(DirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), 'ro', 'MarkerSize', 6);
+%         hold on;
+% 
+%         subplot(2,1,2);
+%         plot(i + length(Parameters.PreDirResults), size(DirAllMatches{i + length(Parameters.PreDirResults)},1)*1000/sum(DirTotalSongTime{i + length(Parameters.PreDirResults)}), 'ro', 'MarkerSize', 6);
+%         hold on;
+    else
+        Results.DirAllMatches(Index,:) = [(i + length(Parameters.PreDirResults)) NaN NaN];
+        Results.DirNumMatchesPerSec(Index,:) = [(i + length(Parameters.PreDirResults)) 0];
     end
     
     UnDirAllMatches{i + length(Parameters.PreDirResults)} = cell2mat(Parameters.PostUnDirResults{i});
     UnDirTotalSongTime{i + length(Parameters.PreDirResults)} = cell2mat(Parameters.PostUnDirLens{i});
     
     if (~isempty(UnDirAllMatches{i + length(Parameters.PreDirResults)}))
-        subplot(2,1,1);
-        errorbar(i + length(Parameters.PreDirResults), mean(UnDirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), std(UnDirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), 'bo');
-        hold on;
+        Results.UnDirAllMatches(Index,:) = [(i + length(Parameters.PreDirResults)) mean(UnDirAllMatches{i + length(Parameters.PreDirResults)}(:,1)) std(UnDirAllMatches{i + length(Parameters.PreDirResults)}(:,1))];
+        Results.UnDirNumMatchesPerSec(Index,:) = [(i + length(Parameters.PreDirResults)) size(UnDirAllMatches{i + length(Parameters.PreDirResults)},1)*1000/sum(UnDirTotalSongTime{i + length(Parameters.PreDirResults)})];
 
-        subplot(2,1,2);
-        plot(i + length(Parameters.PreDirResults), size(UnDirAllMatches{i + length(Parameters.PreDirResults)},1)*1000/sum(UnDirTotalSongTime{i + length(Parameters.PreDirResults)}), 'bo');
-        hold on;
+%         subplot(2,1,1);
+%         errorbar(i + length(Parameters.PreDirResults), mean(UnDirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), std(UnDirAllMatches{i + length(Parameters.PreDirResults)}(:,1)), 'bo', 'MarkerSize', 6);
+%         hold on;
+% 
+%         subplot(2,1,2);
+%         plot(i + length(Parameters.PreDirResults), size(UnDirAllMatches{i + length(Parameters.PreDirResults)},1)*1000/sum(UnDirTotalSongTime{i + length(Parameters.PreDirResults)}), 'bo', 'MarkerSize', 6);
+%         hold on;
+    else
+        Results.UnDirAllMatches(Index,:) = [(i + length(Parameters.PreDirResults)) NaN NaN];
+        Results.UnDirNumMatchesPerSec(Index,:) = [(i + length(Parameters.PreDirResults)) 0];
     end
+    Index = Index + 1;
 end
 
 subplot(2,1,1);
-temp = axis;
-plot([temp(1) temp(2)], [ActualTemplateMatchThreshold ActualTemplateMatchThreshold], 'k--', 'LineWidth', 2);
-
-PostDay = inputdlg('Choose the post day that you want plotted', 'Post Day');
-PostDay = str2double(PostDay{1}) + length(Parameters.PreDirResults);
-
-figure(SimilarityFigure);
-subplot(1,2,1);
-scatter(mean(DirAllMatches{1}(:,1)), mean(UnDirAllMatches{1}(:,1)), Parameters.PercentTotalHVCremaining, 'k');
+errorbar(Results.DirAllMatches(:,1), Results.DirAllMatches(:,2), Results.DirAllMatches(:,3), 'ro-', 'LineWidth', 2, 'MarkerSize', 8);
 hold on;
-plot([mean(DirAllMatches{1}(:,1)) mean(DirAllMatches{1}(:,1))], [(mean(UnDirAllMatches{1}(:,1)) + std(UnDirAllMatches{1}(:,1))) (mean(UnDirAllMatches{1}(:,1)) - std(UnDirAllMatches{1}(:,1)))], 'k');
-plot([(mean(DirAllMatches{1}(:,1)) + std(DirAllMatches{1}(:,1))) (mean(DirAllMatches{1}(:,1)) - std(DirAllMatches{1}(:,1)))], [(mean(UnDirAllMatches{1}(:,1))) (mean(UnDirAllMatches{1}(:,1)))], 'k');
+errorbar(Results.UnDirAllMatches(:,1), Results.UnDirAllMatches(:,2), Results.UnDirAllMatches(:,3), 'bo-', 'LineWidth', 2, 'MarkerSize', 8);
 
-subplot(1,2,2);
-scatter(mean(DirAllMatches{PostDay}(:,1)), mean(UnDirAllMatches{PostDay}(:,1)), Parameters.PercentTotalHVCremaining, 'k');
-hold on;
-plot([mean(DirAllMatches{PostDay}(:,1)) mean(DirAllMatches{PostDay}(:,1))], [(mean(UnDirAllMatches{PostDay}(:,1)) + std(UnDirAllMatches{PostDay}(:,1))) (mean(UnDirAllMatches{PostDay}(:,1)) - std(UnDirAllMatches{PostDay}(:,1)))], 'k');
-plot([(mean(DirAllMatches{PostDay}(:,1)) + std(DirAllMatches{PostDay}(:,1))) (mean(DirAllMatches{PostDay}(:,1)) - std(DirAllMatches{PostDay}(:,1)))], [(mean(UnDirAllMatches{PostDay}(:,1))) (mean(UnDirAllMatches{PostDay}(:,1)))], 'k');
+axis tight;
+Temp = axis;
+Temp = [0.5 (length(Parameters.PreDirResults) + length(Parameters.PostDirResults) + 0.5) 0 1.05*Temp(4)];
+axis(Temp);
 
-figure(ConsistencyFigure);
-subplot(1,2,1);
-scatter(size(DirAllMatches{1},1)*1000/sum(DirTotalSongTime{1}), size(UnDirAllMatches{1},1)*1000/sum(UnDirTotalSongTime{1}), Parameters.PercentTotalHVCremaining, 'k');
-hold on;
+plot([length(Parameters.PreDirResults) length(Parameters.PreDirResults)]+0.5, [0 Temp(4)], 'w--', 'LineWidth', 2);
+plot([Temp(1) Temp(2)], [ActualTemplateMatchThreshold ActualTemplateMatchThreshold], 'w--', 'LineWidth', 2);
+ylabel('Template match value', 'FontSize', 16);
+text((length(Parameters.PreDirResults) + 0.45), Temp(4)/20, ['Microlesion surgery: ', Parameters.SurgeryDate], 'Rotation', 90, 'Color', 'w', 'FontSize', 10);
+text(0.75, ActualTemplateMatchThreshold + Temp(4)/20, ['Template match threshold'], 'Color', 'w', 'FontSize', 10);
 
-subplot(1,2,2);
-scatter(size(DirAllMatches{PostDay},1)*1000/sum(DirTotalSongTime{PostDay}), size(UnDirAllMatches{PostDay},1)*1000/sum(UnDirTotalSongTime{PostDay}), Parameters.PercentTotalHVCremaining, 'k');
+subplot(2,1,2);
+plot(Results.DirNumMatchesPerSec(:,1), Results.DirNumMatchesPerSec(:,2), 'ro-', 'MarkerSize', 8, 'LineWidth', 2);
 hold on;
+plot(Results.UnDirNumMatchesPerSec(:,1), Results.UnDirNumMatchesPerSec(:,2), 'bo-', 'MarkerSize', 8, 'LineWidth', 2);
+
+axis tight;
+Temp = axis;
+Temp = [0.5 (length(Parameters.PreDirResults) + length(Parameters.PostDirResults) + 0.5) 0 1.05*Temp(4)];
+axis(Temp);
+plot([length(Parameters.PreDirResults) length(Parameters.PreDirResults)]+0.5, [0 Temp(4)], 'w--', 'LineWidth', 2);
+ylabel('No of matches / sec', 'FontSize', 16);
+text((length(Parameters.PreDirResults) + 0.45), Temp(4)/20, ['Microlesion surgery: ', Parameters.SurgeryDate], 'Rotation', 90, 'Color', 'w', 'FontSize', 10);
+
+for i = 1:length(Parameters.PreDirResults),
+    XLabelString{i} = Parameters.PreDate{i};
+end
+
+for i = 1:length(Parameters.PostDirResults),
+    XLabelString{i + length(Parameters.PreDirResults)} = Parameters.PostDate{i};
+end
+
+set(gca, 'XTick', (1:1:(length(Parameters.PostDirResults) + length(Parameters.PreDirResults))), 'XTickLabel', XLabelString);
+set(gcf, 'Color', 'k', 'Position', [400 150 1000 600]);
+annotation('textbox', [0.45 0.95 0.1 0.05], 'String', Parameters.BirdName, 'Color', 'w', 'FontSize', 20)
+
+subplot(2,1,1);
+set(gca, 'XTick', (1:1:(length(Parameters.PostDirResults) + length(Parameters.PreDirResults))), 'XTickLabel', XLabelString);
+
+for i = 1:2,
+    subplot(2, 1, i);
+    set(gca, 'Color', 'k');
+    set(gca, 'XColor', 'w');
+    set(gca, 'YColor', 'w');
+    set(gca, 'FontSize', 14);
+    set(gca, 'Box', 'on');
+    TempLegend(i) = legend('Directed song', 'Undirected song');
+    set(TempLegend(i), 'Location', 'SouthEast', 'TextColor', 'w');
+end
 
 %==========================================================================
 

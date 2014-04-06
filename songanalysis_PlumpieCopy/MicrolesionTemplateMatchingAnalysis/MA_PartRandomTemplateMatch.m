@@ -50,7 +50,7 @@ try
         T = linspace(SongTime(1), SongTime(end), size(S, 2));
     end
 
-    for Repetition = 1:20,
+    for Repetition = 1:2,
         TempS = zeros(size(S));
         RandomColIndices = randperm(size(S,2));
         for j = 1:length(RandomColIndices),

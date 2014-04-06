@@ -20,6 +20,12 @@ Parameters.BirdName = strtrim(Temp{Index}(ColonIndex+1:end));
 Index = find(cellfun(@length, strfind(Temp, 'File Type:')));
 ColonIndex = find(Temp{Index} == ':');
 Parameters.FileType = strtrim(Temp{Index}(ColonIndex+1:end));
+
+% Extract surgery date
+Index = find(cellfun(@length, strfind(Temp, 'Surgery Date:')));
+ColonIndex = find(Temp{Index} == ':');
+Parameters.SurgeryDate = strtrim(Temp{Index}(ColonIndex+1:end));
+
 % First, pre-treatment
 % Read # of pre-treatment days
 Index = find(cellfun(@length, strfind(Temp, 'No of pre-treatment days:')));
@@ -28,6 +34,11 @@ Parameters.NoPreDays = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
 
 % Read data directories and file lists of all pre-treatment days
 for i = 1:Parameters.NoPreDays,
+    % First date
+    Index = find(cellfun(@length, strfind(Temp, ['Pre-treatment Day ', num2str(i), ' X-label:'])));
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.PreDate{i} = strtrim(Temp{Index}(ColonIndex+1:end));
+    
     % First data directory
     Index = find(cellfun(@length, strfind(Temp, ['Pre-treatment Day ', num2str(i), ' raw data directory:'])));
     ColonIndex = find(Temp{Index} == ':');
@@ -52,6 +63,11 @@ Parameters.NoPostDays = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
 
 % Read data directories and file lists of all post-treatment days
 for i = 1:Parameters.NoPostDays,
+    % First date
+    Index = find(cellfun(@length, strfind(Temp, ['Post-treatment Day ', num2str(i), ' X-label:'])));
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.PostDate{i} = strtrim(Temp{Index}(ColonIndex+1:end));
+    
     % First data directory
     Index = find(cellfun(@length, strfind(Temp, ['Post-treatment Day ', num2str(i), ' raw data directory:'])));
     ColonIndex = find(Temp{Index} == ':');
