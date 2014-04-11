@@ -2,6 +2,7 @@ function [] = CSColorPlotBouts(CSData)
 
 for i = 1:length(CSData.AllLabels),
     figure; hold on;
+
     RowIndex = 1;
     
     BoutStarts = find(CSData.AllLabels{i} == 'Q');
