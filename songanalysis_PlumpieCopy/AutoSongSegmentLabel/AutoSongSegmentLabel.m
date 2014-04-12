@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 26-Mar-2014 22:35:20
+% Last Modified by GUIDE v2.5 12-Apr-2014 22:05:14
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,10 +97,7 @@ Fid = fopen([ProgramDir, 'ASSLFeatureList.txt'], 'r');
 TempFeatures = textscan(Fid, '%s', 'DeLimiter', '\n');
 fclose(Fid);
 
-handles.ASSL.AvailableFeatures = TempFeatures{1};
-set(handles.AvailableFeaturesListBox, 'String', handles.ASSL.AvailableFeatures);
-
-handles.ASSL.ToBeUsedFeatures = [];
+handles.ASSL.ToBeUsedFeatures = TempFeatures{1};
 set(handles.ToBeUsedFeaturesListBox, 'String', handles.ASSL.ToBeUsedFeatures);
 
 % Update handles structure
@@ -1114,40 +1111,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on selection change in AvailableFeaturesListBox.
-function AvailableFeaturesListBox_Callback(hObject, eventdata, handles)
-% hObject    handle to AvailableFeaturesListBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns AvailableFeaturesListBox contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from AvailableFeaturesListBox
-SelectedFeatures = get(hObject, 'Value');
-
-handles.ASSL.ToBeUsedFeatures{end+1} = handles.ASSL.AvailableFeatures{SelectedFeatures};
-set(handles.ToBeUsedFeaturesListBox, 'Value', 1);
-set(handles.ToBeUsedFeaturesListBox, 'String', handles.ASSL.ToBeUsedFeatures);
-
-handles.ASSL.AvailableFeatures(SelectedFeatures) = [];
-set(handles.AvailableFeaturesListBox, 'Value', 1);
-set(handles.AvailableFeaturesListBox, 'String', handles.ASSL.AvailableFeatures);
-
-guidata(hObject, handles);
-
-
-% --- Executes during object creation, after setting all properties.
-function AvailableFeaturesListBox_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to AvailableFeaturesListBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on selection change in ToBeUsedFeaturesListBox.
 function ToBeUsedFeaturesListBox_Callback(hObject, eventdata, handles)
 % hObject    handle to ToBeUsedFeaturesListBox (see GCBO)
@@ -1156,17 +1119,6 @@ function ToBeUsedFeaturesListBox_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns ToBeUsedFeaturesListBox contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from ToBeUsedFeaturesListBox
-SelectedFeatures = get(hObject, 'Value');
-
-handles.ASSL.AvailableFeatures{end+1} = handles.ASSL.ToBeUsedFeatures{SelectedFeatures};
-set(handles.AvailableFeaturesListBox, 'Value', 1);
-set(handles.AvailableFeaturesListBox, 'String', handles.ASSL.AvailableFeatures);
-
-handles.ASSL.ToBeUsedFeatures(SelectedFeatures) = [];
-set(handles.ToBeUsedFeaturesListBox, 'Value', 1);
-set(handles.ToBeUsedFeaturesListBox, 'String', handles.ASSL.ToBeUsedFeatures);
-
-guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
