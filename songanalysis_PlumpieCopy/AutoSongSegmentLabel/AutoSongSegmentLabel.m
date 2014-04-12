@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 12-Apr-2014 22:05:14
+% Last Modified by GUIDE v2.5 12-Apr-2014 22:15:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1348,3 +1348,39 @@ fclose(Fid);
 disp(['Wrote data about labels, onsets and offsets to ', TextOutputFileName]); 
 xlswrite(OutputFileName, Temp, 1, 'A1');
 disp(['Wrote data about labels, onsets and offsets to ', OutputFileName]); 
+
+
+% --- Executes on button press in DelFeatValueFilesButton.
+function DelFeatValueFilesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to DelFeatValueFilesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.ToBeUsedFeatures),
+    if (handles.ASSL.NoteFileDirName(end) == Filesep)
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
+        else
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
+        end
+    else
+        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
+        else
+            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
+        end
+    end
+    
+    FeatValuesFileName = [RootOutputFileName, '.FeatValues.mat'];
+    RawFeatValuesFileName = [RootOutputFileName, '.RawFeatValues.mat'];
+    SyllIndicesFileName = [RootOutputFileName, '.SyllIndices.mat'];
+    SyllIndexLabelsFileName = [RootOutputFileName, '.SyllIndexLabels.mat'];
+    RawOutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.raw.mat'];
+    OutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+    
+    delete(OutputFileName, FeatValuesFileName, RawFeatValuesFileName, SyllIndicesFileName, SyllIndexLabelsFileName, RawOutputFileName);
+end
+
+disp('Finished deleting feature value files');
