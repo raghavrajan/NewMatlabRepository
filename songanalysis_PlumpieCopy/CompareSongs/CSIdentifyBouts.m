@@ -12,8 +12,8 @@ if (strfind(BoutDefinition, 'Each new file is a bout'))
             Bouts{i} = [1 length(ASSLData.SyllOnsets{i})]; 
             BoutLens{i} = ASSLData.SyllOffsets{i}(Bouts{i}(end,2)) - ASSLData.SyllOnsets{i}(Bouts{i}(1,1));
             AllLabels = [AllLabels '<Q' ASSLData.SyllLabels{i} 'q>'];
-            AllOnsets = [AllOnsets; 0; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOnsets{i}; ASSLData.SyllOffsets{i}(end); ASSLData.FileDur{i}*1000];
-            AllOffsets = [AllOffsets; 0; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOffsets{i}; ASSLData.SyllOffsets{i}(end); ASSLData.FileDur{i}*1000];
+            AllOnsets = [AllOnsets; 0; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOnsets{i}(:); ASSLData.SyllOffsets{i}(end); ASSLData.FileDur{i}*1000];
+            AllOffsets = [AllOffsets; 0; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOffsets{i}(:); ASSLData.SyllOffsets{i}(end); ASSLData.FileDur{i}*1000];
             TempFeats = [];
             for j = 1:length(ASSLData.ToBeUsedFeatures),
                 eval(['TempFeats = [TempFeats ASSLData.', ASSLData.ToBeUsedFeatures{j}, '{', num2str(i), '}(:)];']);
@@ -32,8 +32,8 @@ else
             Onsets = ASSLData.SyllOffsets{i};
             
             AllLabels = [AllLabels 'Q' ASSLData.SyllLabels{i} 'q'];
-            AllOnsets = [AllOnsets; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOnsets{i}; ASSLData.SyllOffsets{i}(end)];
-            AllOffsets = [AllOffsets; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOffsets{i}; ASSLData.SyllOffsets{i}(end)];
+            AllOnsets = [AllOnsets; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOnsets{i}(:); ASSLData.SyllOffsets{i}(end)];
+            AllOffsets = [AllOffsets; ASSLData.SyllOnsets{i}(1); ASSLData.SyllOffsets{i}(:); ASSLData.SyllOffsets{i}(end)];
 
             Onsets = Onsets(:);
             Offsets = Offsets(:);
@@ -66,19 +66,19 @@ else
                     end
                     if (i == 1)
                         Labels = [Labels '<' ASSLData.SyllLabels{i}];
-                        Onsets = [Onsets; 0; ASSLData.SyllOnsets{i}];
-                        Offsets = [Offsets; 0; ASSLData.SyllOffsets{i}];
+                        Onsets = [Onsets; 0; ASSLData.SyllOnsets{i}(:)];
+                        Offsets = [Offsets; 0; ASSLData.SyllOffsets{i}(:)];
                         Feats = [Feats; zeros(1, size(TempFeats,2)); TempFeats];
                     else
                         if (i == length(ASSLData.SyllOnsets))
                             Labels = [Labels ASSLData.SyllLabels{i} '>'];
-                            Onsets = [Onsets; (ASSLData.SyllOnsets{i} + CumPrevFileDur*1000); CumFileDur*1000];
-                            Offsets = [Offsets; (ASSLData.SyllOffsets{i} + CumPrevFileDur*1000); CumFileDur*1000];
+                            Onsets = [Onsets; (ASSLData.SyllOnsets{i}(:) + CumPrevFileDur*1000); CumFileDur*1000];
+                            Offsets = [Offsets; (ASSLData.SyllOffsets{i}(:) + CumPrevFileDur*1000); CumFileDur*1000];
                             Feats = [Feats; TempFeats; zeros(1, size(TempFeats,2))];
                         else
                             Labels = [Labels ASSLData.SyllLabels{i}];
-                            Onsets = [Onsets; (ASSLData.SyllOnsets{i} + CumPrevFileDur*1000)];
-                            Offsets = [Offsets; (ASSLData.SyllOffsets{i} + CumPrevFileDur*1000)];
+                            Onsets = [Onsets; (ASSLData.SyllOnsets{i}(:) + CumPrevFileDur*1000)];
+                            Offsets = [Offsets; (ASSLData.SyllOffsets{i}(:) + CumPrevFileDur*1000)];
                             Feats = [Feats; TempFeats];
                         end
                     end
