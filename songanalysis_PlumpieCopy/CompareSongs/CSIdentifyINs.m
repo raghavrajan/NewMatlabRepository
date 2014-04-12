@@ -80,6 +80,12 @@ for i = 1:length(Motif.Starts),
         IN.MotifLocations(i, TempLocations(1:Temp(end))) = 0;
     end
     IN.NumINs(i) = length(find(IN.MotifLocations(i,:)));
+ 
+    IN.PosFromFirst(i,:) = IN.MotifLocations(i,:);
+    IN.PosFromFirst(i,find(IN.PosFromFirst(i,:))) = 1:1:IN.NumINs(i);
+    
+    IN.PosFromLast(i,:) = IN.MotifLocations(i,:);
+    IN.PosFromLast(i,find(IN.PosFromLast(i,:))) = -IN.NumINs(i):1:-1;
 end
 
 disp('Finished identifying INs');
