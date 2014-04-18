@@ -56,7 +56,7 @@ for i = 1:length(Indices),
 
     FF(Indices(i)) = mean(TempFF(StartIndex:EndIndex));
 
-    if (i <= 3)
+    if (i <= DataStruct.ASSLCSFFB.NumExamples)
         PlotSpectrogramInAxis_SongVar(Syllable, Time, Fs, DataStruct.axes1)
         axes(DataStruct.axes1);
         hold on;

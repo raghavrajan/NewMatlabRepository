@@ -22,7 +22,7 @@ function varargout = ASSLChooseSyllFFBoundaries(varargin)
 
 % Edit the above text to modify the response to help ASSLChooseSyllFFBoundaries
 
-% Last Modified by GUIDE v2.5 18-Apr-2014 10:30:44
+% Last Modified by GUIDE v2.5 18-Apr-2014 22:51:17
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -72,6 +72,9 @@ set(handles.EndLimitEdit, 'String', num2str(handles.ASSLCSFFB.EndLimit));
 
 handles.ASSLCSFFB.UniqueSyllLabels = unique(handles.DataStruct.SyllIndexLabels);
 handles.ASSLCSFFB.SyllIndex = 1;
+
+handles.ASSLCSFFB.NumExamples = 3;
+set(handles.NumExamplesEdit, 'String', num2str(handles.ASSLCSFFB.NumExamples));
 
 set(handles.SyllableIdentityLabel, 'String', ['Syllable ', handles.ASSLCSFFB.UniqueSyllLabels(handles.ASSLCSFFB.SyllIndex), ': #', num2str(handles.ASSLCSFFB.SyllIndex), ' of ', num2str(length(handles.ASSLCSFFB.UniqueSyllLabels)), ' syllables']);
 
@@ -209,3 +212,28 @@ function ReCalculateButton_Callback(hObject, eventdata, handles)
 
 [handles.ASSLCSFFB.FFSyllBoundaries, handles.DataStruct.FeatValues(:,end)]  = CalculatePlotSyllFFBoundaries(handles);
 guidata(hObject, handles);
+
+
+
+function NumExamplesEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to NumExamplesEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of NumExamplesEdit as text
+%        str2double(get(hObject,'String')) returns contents of NumExamplesEdit as a double
+
+handles.ASSLCSFFB.NumExamples = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function NumExamplesEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to NumExamplesEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
