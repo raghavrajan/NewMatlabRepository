@@ -364,6 +364,7 @@ for i = 1:length(handles.ASSL.FileName),
         continue;
     end
     [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+    handles.ASSL.FileDur{i} = length(RawData)/Fs;
     
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
@@ -1231,7 +1232,8 @@ for i = 1:length(handles.ASSL.FileName),
         continue;
     end
     [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
-
+    handles.ASSL.FileDur{i} = length(RawData)/Fs;
+    
     Time = (1:1:length(RawData))/Fs;
     
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
