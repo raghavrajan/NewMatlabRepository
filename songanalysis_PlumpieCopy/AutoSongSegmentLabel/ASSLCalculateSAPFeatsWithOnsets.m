@@ -4,6 +4,10 @@ function [Feats, RawFeats] = ASSLCalculateSAPFeatsWithOnsets(Song, Time, Fs, Ons
 [m_spec_deriv , m_AM, m_FM ,m_Entropy , m_amplitude ,m_Freq, m_PitchGoodness , m_Pitch , Pitch_chose , Pitch_weight ]=deriv(Song, Fs);
 T = linspace(Time(1), Time(end), length(m_Entropy));
 
+FF = yin(Song, Fs);
+FF_T = linspace(1/Fs, length(Song)/Fs, length(FF.f0));
+FF = 2.^FF.f0 * 440;
+
 if (isempty(Onsets))
     Feats.Duration = []; % Duration 
     Feats.LogAmplitude = []; % Amplitude
@@ -13,14 +17,18 @@ if (isempty(Onsets))
     Feats.PitchGoodness = [];
     Feats.FrequencyModulation = [];
     Feats.EntropyVariance = [];
-
+    Feats.FundamentalFrequency = [];
+    
     RawFeats.LogAmplitude = []; % Amplitude
     RawFeats.Entropy = []; % Entropy 
     RawFeats.MeanFrequency = [];
     RawFeats.AmplitudeModulation = [];
     RawFeats.PitchGoodness = [];
     RawFeats.FrequencyModulation = [];
+    RawFeats.FundamentalFrequency = [];
+    
 end
+
 for i = 1:length(Onsets),
     SyllNo = i;
     StartIndex = find(T <= Onsets(i), 1, 'last');
@@ -48,4 +56,18 @@ for i = 1:length(Onsets),
     RawFeats.AmplitudeModulation{SyllNo} = (m_AM(StartIndex:EndIndex));
     RawFeats.PitchGoodness{SyllNo} = (m_PitchGoodness(StartIndex:EndIndex));
     RawFeats.FrequencyModulation{SyllNo} = (m_FM(StartIndex:EndIndex));
+    
+    StartIndex = find(FF_T <= Onsets(i), 1, 'last');
+    if (isempty(StartIndex))
+        StartIndex = 1;
+    end
+    
+    EndIndex = find(FF_T >= Offsets(i), 1, 'first');
+    if (isempty(EndIndex))
+        EndIndex = length(FF_T);
+    end
+    
+    Feats.FundamentalFrequency(SyllNo) = mean(FF(StartIndex:EndIndex));
+    
+    RawFeats.FundamentalFrequency{SyllNo} = (FF(StartIndex:EndIndex)); % fundamental frequency
 end        

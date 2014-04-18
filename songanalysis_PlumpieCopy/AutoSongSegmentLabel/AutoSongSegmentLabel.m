@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 12-Apr-2014 22:15:17
+% Last Modified by GUIDE v2.5 18-Apr-2014 10:07:40
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -546,6 +546,12 @@ if (sum(Flag) == length(handles.ASSL.ToBeUsedFeatures))
     guidata(hObject, handles);
     return;
 end
+
+handles.ASSL.FeatValues = [];
+handles.ASSL.RawFeatValues = [];
+handles.ASSL.SyllIndices = [];
+handles.ASSL.SyllIndexLabels = [];
+
 SyllNo = 0;
 fprintf('\n');
 for i = 1:length(handles.ASSL.FileName),
@@ -1384,3 +1390,13 @@ for i = 1:length(handles.ASSL.ToBeUsedFeatures),
 end
 
 disp('Finished deleting feature value files');
+
+
+% --- Executes on button press in ChooseSyllFFBoundariesButton.
+function ChooseSyllFFBoundariesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ChooseSyllFFBoundariesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ASSLChooseSyllFFBoundaries(handles.ASSL);
+guidata(hObject, handles);
