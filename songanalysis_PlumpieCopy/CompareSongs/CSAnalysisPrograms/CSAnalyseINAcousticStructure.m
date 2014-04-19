@@ -1,5 +1,6 @@
 function [] = CSAnalyseINAcousticStructure(CSData)
 
+FeatureAxisLabels = [{'MeanFrequency'} {'Mean frequency (Hz)'}; {'LogAmplitude'} {'Amplitude (dB)'}; {'Entropy'} {'Entropy'}; {'FundamentalFrequency'} {'Frequency (Hz)'}; {'MeanFrequency'} {'Mean frequency (Hz)'}];
 % Algorithm
 % For each day and for each bout, first get the first motif syllable. The
 % syllables before this first motif syllable can be counted as Total
