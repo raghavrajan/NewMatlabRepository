@@ -15,8 +15,25 @@ ElapsedTime = 0;
 cla(DataStruct.axes1);
 for i = 1:length(Indices),
     [Syllable, Fs] = ASSLGetRawData(DataStruct.DataStruct.DirName, DataStruct.DataStruct.FileName{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}, DataStruct.DataStruct.FileType, DataStruct.DataStruct.SongChanNo);
-    Syllable = Syllable((ceil(Fs * DataStruct.DataStruct.SyllOnsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000)):(ceil(Fs * DataStruct.DataStruct.SyllOffsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000)));
-    Time = ((1:1:length(Syllable))/Fs) + (1.2 * ElapsedTime);
+    StartTime = (ceil(Fs * DataStruct.DataStruct.SyllOnsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    if (StartTime == 0)
+        StartTime = 1;
+    else
+        if (StartTime >= length(Syllable))
+            StartTime = (length(Syllable) - 1);
+        end
+    end
+    EndTime = (ceil(Fs * DataStruct.DataStruct.SyllOffsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    if (EndTime == 0)
+        EndTime = 2;
+    else
+        if (EndTime >= length(Syllable))
+            EndTime = length(Syllable);
+        end
+    end
+    
+    Syllable = Syllable(StartTime:EndTime);
+    Time = ((1:1:length(Syllable))/Fs) + (ElapsedTime) + 0.04;
     ElapsedTime = Time(end);
     
     if (strfind(DataStruct.ASSLCSFFB.BoundaryChoices{DataStruct.ASSLCSFFB.BoundaryChoice}, 'Specify limits by percent from beginning'))

@@ -143,6 +143,20 @@ function LoadDataButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+if (isfield(handles.CS, 'DataFileName'))
+    handles.CS = rmfield(handles.CS, 'DataFileName');
+end
+
+if (isfield(handles.CS, 'DirName'))
+    handles.CS = rmfield(handles.CS, 'DirName');
+end
+if (isfield(handles.CS, 'Data'))
+    handles.CS = rmfield(handles.CS, 'Data');
+end
+if (isfield(handles.CS, 'Bouts'))
+    handles.CS = rmfield(handles.CS, 'Bouts');
+end
+
 FileSep = filesep;
 NoofDays = inputdlg('Enter the number of days that need to be analyzed', 'Number of days');
 handles.CS.NoofDays = str2double(NoofDays{1});

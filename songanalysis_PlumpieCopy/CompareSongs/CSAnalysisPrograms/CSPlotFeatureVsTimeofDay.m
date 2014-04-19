@@ -63,6 +63,7 @@ for i = 1:FeatureValueMatrix(end, 3),
     plot(FeatureValueMatrix(Indices, 1), FeatureValueMatrix(Indices, 2), [Colors(mod(i-1, length(Colors)) + 1), Symbols(ceil(i/length(Colors)))]);
     hold on;
     Indices = Indices(find(~isnan(FeatureValueMatrix(Indices, 2))));
+    
     errorbar(FeatureValueMatrix(Indices(end), 1) + 1, mean(FeatureValueMatrix(Indices, 2)), std(FeatureValueMatrix(Indices, 2)), [Colors(mod(i-1, length(Colors)) + 1), Symbols(ceil(i/length(Colors)))], 'MarkerSize', 9, 'LineWidth', 2);
 end
 
