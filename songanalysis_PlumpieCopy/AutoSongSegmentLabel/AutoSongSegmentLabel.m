@@ -295,10 +295,12 @@ handles.ASSL.XOffset = get(handles.XOffsetSlider, 'Value');
 handles.ASSL.XZoom = get(handles.XZoomSlider, 'Value');
 
 
-if (~ispc)
-    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, '/ASSLNoteFiles/'];
+FileSep = filesep;
+
+if (handles.ASSL.DirName(end) ~= FileSep)
+    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, FileSep, 'ASSLNoteFiles', FileSep];
 else
-    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, '\ASSLNoteFiles\'];
+    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, 'ASSLNoteFiles', FileSep];
 end
 
 if (~exist(handles.ASSL.NoteFileDirName, 'dir'))
