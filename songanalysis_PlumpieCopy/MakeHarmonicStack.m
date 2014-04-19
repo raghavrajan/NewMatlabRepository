@@ -1,4 +1,4 @@
-function [] = MakeHarmonicStack(Freq, Fs, Dur, TotalDur)
+function [Stack] = MakeHarmonicStack(Freq, Fs, Dur, TotalDur)
 
 t = (1:round(Dur*Fs))/Fs;
 HarmonicIndex = 1;
@@ -15,4 +15,4 @@ Stack = [zeros(1,(round(TotalDur*Fs) - length(t))/2) Stack zeros(1,(round(TotalD
 Stack = Stack + rand(size(Stack))/1000;
 Stack = Stack/(max(Stack)*1.1);
 wavwrite(Stack, Fs, 16, [num2str(Freq), 'Hz_stack.wav']);
-PlotSpectrogram(pwd, [num2str(Freq), 'Hz_stack.wav'], 'wav');
+PlotSpectrogram(pwd, [num2str(Freq), 'Hz_stack.wav'], 'wav', 'hot');
