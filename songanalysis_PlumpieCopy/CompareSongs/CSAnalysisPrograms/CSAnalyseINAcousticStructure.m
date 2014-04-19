@@ -45,4 +45,35 @@ for i = 1:CSData.NoofDays,
     PlotConfidenceEllipse(CSData.AllFeats{i}(INs{i}.Indices(Indices), [XFeatureIndex YFeatureIndex]), Colors(mod(i-1, length(Colors)) + 1), 1);
 end
 
+% Now calculate mean distances of various INs to the last IN on that particular day for all days 
+figure;
+hold on;
+
+Colors = 'rgbcmk';
+Symbols = 'o+d';
+
+DistanceFeatures = [{'LogAmplitude'}; {'Duration'}; {'Entropy'}; {'MeanFrequency'}];
+
+for i = 1:CSData.NoofDays,
+    XFeatureIndex = strmatch(XFeature{1}, CSData.Data{i}.ToBeUsedFeatures, 'exact');
+    YFeatureIndex = strmatch(YFeature{1}, CSData.Data{i}.ToBeUsedFeatures, 'exact');
+    
+    for j = 1:length(DistanceFeatures),
+        DistanceFeatureIndex(j) = strmatch(DistanceFeatures{j}, CSData.Data{i}.ToBeUsedFeatures, 'exact');
+    end
+    
+    PosFromLast = sum(INs{i}.PosFromLast);
+    
+    LastINIndices = find(PosFromLast == -1);
+    LastINFeats = CSData.AllFeats{i}(INs{i}.Indices(LastINIndices), DistanceFeatureIndex);
+    
+    CSData.DistanceFromLast{i} = [];
+    for j = MinINPos:1:-1,
+        Indices = find(PosFromLast == j);
+        Distances = pdist2(CSData.AllFeats{i}(INs{i}.Indices(Indices), DistanceFeatureIndex), mean(LastINFeats), 'mahalanobis', cov(LastINFeats));
+        CSData.DistanceFromLast{i}(end+1,:) = [j mean(Distances) std(Distances)];
+    end
+    plot(CSData.DistanceFromLast{i}(:,1), CSData.DistanceFromLast{i}(:,2), [Colors(mod(i-1, length(Colors)) + 1), Symbols(ceil(i/length(Colors))), '-']);
+end
+
 disp('Finished analysing data');
