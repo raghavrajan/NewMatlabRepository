@@ -71,7 +71,11 @@ for i = 1:length(Indices),
         EndIndex = length(TempFF_x);
     end
 
-    FF(Indices(i)) = mean(TempFF(StartIndex:EndIndex));
+    if (~isempty(Temp_FF))
+        FF(Indices(i)) = mean(TempFF(StartIndex:EndIndex));
+    else
+        FF(Indices(i)) = NaN;
+    end
 
     if (i <= DataStruct.ASSLCSFFB.NumExamples)
         PlotSpectrogramInAxis_SongVar(Syllable, Time, Fs, DataStruct.axes1)

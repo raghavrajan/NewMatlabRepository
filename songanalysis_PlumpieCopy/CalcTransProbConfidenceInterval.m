@@ -9,12 +9,11 @@ for i = 1:NumRepetitions,
     TransProb(i) = length(find(cellfun(@length, strfind(TrialLabels, 'bb'))));
 end
 
-TransProb = TransProb;
 TransProb = sort(TransProb);
 
-CI = [TransProb(round(Alpha/2*NumRepetitions)) TransProb(round((1-Alpha/2)*NumRepetitions))];
+CI = [TransProb(round(Alpha/2*NumRepetitions)) TransProb(round((1-Alpha/2)*NumRepetitions))]/NumberofSamples;
 
 figure;
-plot([0:0.01:1], histc(TransProb, [0:1:100])/sum(histc(TransProb, [0:1:100])), 'k');
+plot([0:1:NumberofSamples]/NumberofSamples, histc(TransProb, [0:1:NumberofSamples])/sum(histc(TransProb, [0:1:NumberofSamples])), 'k');
 xlabel('Transition Probability', 'FontSize', 16);
 ylabel('Fraction of trials', 'FontSize', 16);

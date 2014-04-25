@@ -76,4 +76,21 @@ for i = 1:CSData.NoofDays,
     plot(CSData.DistanceFromLast{i}(:,1), CSData.DistanceFromLast{i}(:,2), [Colors(mod(i-1, length(Colors)) + 1), Symbols(ceil(i/length(Colors))), '-']);
 end
 
+% Check the position of the first IN on different days
+figure;
+hold on;
+
+Colors = 'rgbcmk';
+Symbols = 'o+d';
+
+for i = 1:CSData.NoofDays,
+    XFeatureIndex = strmatch(XFeature{1}, CSData.Data{i}.ToBeUsedFeatures, 'exact');
+    YFeatureIndex = strmatch(YFeature{1}, CSData.Data{i}.ToBeUsedFeatures, 'exact');
+    
+    PosFromFirst = sum(INs{i}.PosFromFirst);
+    Indices = find(PosFromFirst == 1);
+    plot(CSData.AllFeats{i}(INs{i}.Indices(Indices), XFeatureIndex), CSData.AllFeats{i}(INs{i}.Indices(Indices), YFeatureIndex), [Colors(mod(i-1, length(Colors)) + 1), Symbols(ceil(i/length(Colors)))]);
+    PlotConfidenceEllipse(CSData.AllFeats{i}(INs{i}.Indices(Indices), [XFeatureIndex YFeatureIndex]), Colors(mod(i-1, length(Colors)) + 1), 1);
+end
+
 disp('Finished analysing data');
