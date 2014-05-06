@@ -71,7 +71,7 @@ for i = 1:length(Indices),
         EndIndex = length(TempFF_x);
     end
 
-    if (~isempty(Temp_FF))
+    if (~isempty(TempFF))
         FF(Indices(i)) = mean(TempFF(StartIndex:EndIndex));
     else
         FF(Indices(i)) = NaN;

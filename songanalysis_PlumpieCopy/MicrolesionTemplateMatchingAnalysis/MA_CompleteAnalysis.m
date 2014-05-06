@@ -1,4 +1,4 @@
-function [Results] = MA_CompleteAnalysis(ParameterFile, Multiplier)
+function [Results, Parameters] = MA_CompleteAnalysis(ParameterFile, Multiplier)
 
 %==========================================================================
 % Function for analysing the effects of a treatment on song - written in

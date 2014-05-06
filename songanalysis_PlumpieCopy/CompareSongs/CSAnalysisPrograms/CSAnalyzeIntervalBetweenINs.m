@@ -35,6 +35,7 @@ for i = 1:CSData.NoofDays,
         IQRInterval((j + abs(MinINPos) + 1), i) = iqr(Intervals);
         Percentile_25((j + abs(MinINPos) + 1), i) = prctile(Intervals, 25);
         Percentile_75((j + abs(MinINPos) + 1), i) = prctile(Intervals, 75);
+        NumIntervals{j + abs(MinINPos) + 1,i} = ['(', num2str(length(Indices)), ')'];
     end
 end
 BarPlotHandle = bar(MedianInterval);
@@ -42,7 +43,8 @@ hold on;
 colormap('gray');
 for j = 1:size(MedianInterval, 2),
     XVal = get(get(BarPlotHandle(j), 'children'), 'xData');
-    errorbar(mean(XVal,1), MedianInterval(:,j), Percentile_75(:,j) - MedianInterval(:,j), MedianInterval(:,j) - Percentile_25(:,j), 'k.', 'MarkerSize', 2);
+    errorbar(mean(XVal,1), MedianInterval(:,j), MedianInterval(:,j) - Percentile_25(:,j), Percentile_75(:,j) - MedianInterval(:,j), 'k.', 'MarkerSize', 2);
+    text(XVal(1,:), Percentile_75(:,j)*1.05, NumIntervals(:,j), 'FontSize', 8);
 end
 axis tight;
 Temp = axis;

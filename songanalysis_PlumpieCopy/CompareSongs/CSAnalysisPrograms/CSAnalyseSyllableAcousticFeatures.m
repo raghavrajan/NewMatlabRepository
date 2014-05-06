@@ -5,7 +5,7 @@ for i = 1:CSData.NoofDays,
     UniqueLabels = union(UniqueLabels, unique(CSData.AllLabels{i}));
 end
 UniqueLabels = UniqueLabels(:)';
-UniqueLabels = UniqueLabels(regexp(UniqueLabels, '[a-p r-z]'));
+UniqueLabels = UniqueLabels(regexp(UniqueLabels, '[a-p 0 r-z]'));
 
 for i = 1:length(CSData.Data{1}.ToBeUsedFeatures),
     figure(i);

@@ -22,7 +22,7 @@ function varargout = CompareSongs(varargin)
 
 % Edit the above text to modify the response to help CompareSongs
 
-% Last Modified by GUIDE v2.5 28-Mar-2014 00:04:25
+% Last Modified by GUIDE v2.5 02-May-2014 13:33:13
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -345,3 +345,56 @@ function MotifInitiationSyllLabelsEdit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in CombineASSLDataFilesButton.
+function CombineASSLDataFilesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to CombineASSLDataFilesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+FileSep = filesep;
+NoofFiles = inputdlg('Enter the number of files that need to be combined', 'Number of files');
+NoofFiles = str2double(NoofFiles{1});
+
+OutputFileName = [];
+
+for i = 1:NoofFiles,
+    [DataFileName{i}, DirName{i}] = uigetfile('*.ASSLData.mat', ['Choose data file for Day #', num2str(i)]);
+    if (DirName{i}(end) ~= FileSep)
+        DirName{i}(end+1) = FileSep;
+    end
+    Temp = load([DirName{i}, DataFileName{i}]);
+    if (i == 1)
+        ASSL.SyllOnsets = [];
+        ASSL.SyllOffsets = [];
+        ASSL.SyllLabels = [];
+        ASSL.FileDur = [];
+        for j = 1:length(Temp.handles.ASSL.ToBeUsedFeatures),
+            eval(['ASSL.', Temp.handles.ASSL.ToBeUsedFeatures{j}, ' = [];']);
+        end
+        ASSL.ToBeUsedFeatures = Temp.handles.ASSL.ToBeUsedFeatures;
+    end
+    ASSL.SyllOnsets = [ASSL.SyllOnsets Temp.handles.ASSL.SyllOnsets];
+    ASSL.SyllOffsets = [ASSL.SyllOffsets Temp.handles.ASSL.SyllOffsets];
+    ASSL.SyllLabels = [ASSL.SyllLabels Temp.handles.ASSL.SyllLabels];
+    ASSL.FileDur = [ASSL.FileDur Temp.handles.ASSL.FileDur];
+    
+    for j = 1:length(Temp.handles.ASSL.ToBeUsedFeatures),
+        eval(['ASSL.', Temp.handles.ASSL.ToBeUsedFeatures{j}, ' = [ASSL.', Temp.handles.ASSL.ToBeUsedFeatures{j}, ' Temp.handles.ASSL.', Temp.handles.ASSL.ToBeUsedFeatures{j}, '];']);
+    end
+    
+    OutputFileName = [OutputFileName, DataFileName{i}(1:(strfind(DataFileName{i}, '.ASSLData.mat') - 1)), '.'];
+end
+
+OutputFileName = [OutputFileName, 'ASSLData.mat'];
+clear Temp;
+handles.ASSL = ASSL;
+
+OutputDir = uigetdir(pwd, 'Choose the directory for the combined file');
+if (OutputDir(end) ~= FileSep)
+    OutputDir(end+1) = FileSep;
+end
+
+save([OutputDir, OutputFileName], 'handles');
+disp(['Finished combining data from ', num2str(NoofFiles), ' files']);

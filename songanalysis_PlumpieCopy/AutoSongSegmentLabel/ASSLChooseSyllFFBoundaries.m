@@ -79,6 +79,7 @@ set(handles.NumExamplesEdit, 'String', num2str(handles.ASSLCSFFB.NumExamples));
 set(handles.SyllableIdentityLabel, 'String', ['Syllable ', handles.ASSLCSFFB.UniqueSyllLabels(handles.ASSLCSFFB.SyllIndex), ': #', num2str(handles.ASSLCSFFB.SyllIndex), ' of ', num2str(length(handles.ASSLCSFFB.UniqueSyllLabels)), ' syllables']);
 
 [handles.ASSLCSFFB.FFSyllBoundaries, handles.DataStruct.FeatValues(:,end)]  = CalculatePlotSyllFFBoundaries(handles);
+handles.ASSLCSFFB.FFBoundaryLimits(handles.ASSLCSFFB.SyllIndex, :) = [handles.ASSLCSFFB.StartLimit handles.ASSLCSFFB.EndLimit];
 
 % Update handles structure
 guidata(hObject, handles);
@@ -211,6 +212,7 @@ function ReCalculateButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [handles.ASSLCSFFB.FFSyllBoundaries, handles.DataStruct.FeatValues(:,end)]  = CalculatePlotSyllFFBoundaries(handles);
+handles.ASSLCSFFB.FFBoundaryLimits(handles.ASSLCSFFB.SyllIndex, :) = [handles.ASSLCSFFB.StartLimit handles.ASSLCSFFB.EndLimit];
 guidata(hObject, handles);
 
 
