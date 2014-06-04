@@ -13,24 +13,32 @@ fclose(Fid);
 
 % Extract bird name
 Index = find(cellfun(@length, strfind(Temp, 'Bird Name:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.BirdName = strtrim(Temp{Index}(ColonIndex+1:end));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.BirdName = strtrim(Temp{Index}(ColonIndex+1:end));
+end
 
 % Extract file type
 Index = find(cellfun(@length, strfind(Temp, 'File Type:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.FileType = strtrim(Temp{Index}(ColonIndex+1:end));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.FileType = strtrim(Temp{Index}(ColonIndex+1:end));
+end
 
 % Extract surgery date
 Index = find(cellfun(@length, strfind(Temp, 'Surgery Date:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.SurgeryDate = strtrim(Temp{Index}(ColonIndex+1:end));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.SurgeryDate = strtrim(Temp{Index}(ColonIndex+1:end));
+end
 
 % First, pre-treatment
 % Read # of pre-treatment days
 Index = find(cellfun(@length, strfind(Temp, 'No of pre-treatment days:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.NoPreDays = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.NoPreDays = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+end
 
 % Read data directories and file lists of all pre-treatment days
 for i = 1:Parameters.NoPreDays,
@@ -58,8 +66,10 @@ end
 % Next post treatment
 % Read # of post-treatment days
 Index = find(cellfun(@length, strfind(Temp, 'No of post-treatment days:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.NoPostDays = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.NoPostDays = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+end
 
 % Read data directories and file lists of all post-treatment days
 for i = 1:Parameters.NoPostDays,
@@ -88,36 +98,73 @@ end
 % Extract % remaining HVC
 % total
 Index = find(cellfun(@length, strfind(Temp, '% total HVC remaining:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.PercentTotalHVCremaining = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
-    
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.PercentTotalHVCremaining = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+end
+
 % left
 Index = find(cellfun(@length, strfind(Temp, '% left HVC remaining:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.PercentLeftHVCremaining = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.PercentLeftHVCremaining = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+end
 
 % right
 Index = find(cellfun(@length, strfind(Temp, '% right HVC remaining:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.PercentRightHVCremaining = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.PercentRightHVCremaining = str2double(strtrim(Temp{Index}(ColonIndex+1:end)));
+end
 %==========================================================================
 
 %==========================================================================
 % Now get the template files
 % motif template
 Index = find(cellfun(@length, strfind(Temp, 'Motif template file:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.MotifTemplateFileName = strtrim(Temp{Index}(ColonIndex+1:end));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.MotifTemplateFileName = strtrim(Temp{Index}(ColonIndex+1:end));
+end
 
 % syllable templates
 Index = find(cellfun(@length, strfind(Temp, 'Syllable templates file:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.SyllableTemplatesFileName = strtrim(Temp{Index}(ColonIndex+1:end));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.SyllableTemplatesFileName = strtrim(Temp{Index}(ColonIndex+1:end));
+end
 %==========================================================================
 
 %==========================================================================
 % Now get the motif
 Index = find(cellfun(@length, strfind(Temp, 'Motif:')));
-ColonIndex = find(Temp{Index} == ':');
-Parameters.Motif = strtrim(Temp{Index}(ColonIndex+1:end));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    Parameters.Motif = strtrim(Temp{Index}(ColonIndex+1:end));
+end
+%==========================================================================
+
+%==========================================================================
+% Now get the birds that have to be excluded in the other bird comparisons
+% - basically these are related birds in the colony
+Index = find(cellfun(@length, strfind(Temp, 'Birds to be excluded:')));
+if (~isempty(Index))
+    ColonIndex = find(Temp{Index} == ':');
+    String = strtrim(Temp{Index}(ColonIndex+1:end));
+    String(find(isspace(String))) = [];
+    if (isempty(String))
+        Parameters.ExcludeBirds{1} = 'IncludeAllBirds';
+    else
+        CommaIndices = find(String == ',');
+        if (isempty(CommaIndices))
+            Parameters.ExcludeBirds{1} = String;
+        else
+            Parameters.ExcludeBirds{1} = String(1:CommaIndices(1)-1);
+            for i = 1:length(CommaIndices)-1,
+                Parameters.ExcludeBirds{i+1} = String(CommaIndices(i)+1:CommaIndices(i+1)-1);
+            end
+            Parameters.ExcludeBirds{end+1} = String(CommaIndices(end)+1:end);
+        end
+    end
+end
 %==========================================================================
