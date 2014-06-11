@@ -22,7 +22,7 @@ function varargout = ASSLAnalyzeSyllables(varargin)
 
 % Edit the above text to modify the response to help ASSLAnalyzeSyllables
 
-% Last Modified by GUIDE v2.5 18-Mar-2014 10:50:05
+% Last Modified by GUIDE v2.5 10-Jun-2014 15:10:51
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -704,3 +704,43 @@ function IndividualFeatPlotChoiceMenu_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+% --------------------------------------------------------------------
+function uitoggletool1_OnCallback(hObject, eventdata, handles)
+% hObject    handle to uitoggletool1 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+Cursor = datacursormode;
+set(Cursor,'UpdateFcn',{@datatips,Cursor,handles});
+
+
+function output_txt  = datatips(obj,event_obj,Cursor,handles)
+% Display an observation's Y-data and label for a data tip
+% obj          Currently not used (empty)
+% event_obj    Handle to event object
+
+dcs=Cursor.DataCursors;
+pos = get(dcs(1),'Position');   %Position of 1st cursor
+Num=find(handles.DataStruct.FeatValues(:,handles.ASSLAS.XVal)==pos(1) & handles.DataStruct.FeatValues(:,handles.ASSLAS.YVal)==pos(2));
+Filenum=handles.DataStruct.SyllIndices(Num,1);
+Syllnum=handles.DataStruct.SyllIndices(Num,2);
+Filename=handles.DataStruct.FileName{Filenum};
+output_txt{1} = ['X: ', num2str(pos(1))];
+output_txt{2} = ['Y: ', num2str(pos(2))]; %this is the text next to the cursor
+output_txt{3}=['FileNo. ', num2str(Filenum)];
+output_txt{4}=['FileName ', [Filename]];
+output_txt{5}=['SyllNo. ', num2str(Syllnum)];
+
+
+% --------------------------------------------------------------------
+function uitoggletool2_OnCallback(hObject, eventdata, handles)
+% hObject    handle to uitoggletool2 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+% --------------------------------------------------------------------
+function uitoggletool3_OnCallback(hObject, eventdata, handles)
+% hObject    handle to uitoggletool3 (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
