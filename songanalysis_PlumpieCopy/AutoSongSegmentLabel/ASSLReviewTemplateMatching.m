@@ -22,7 +22,7 @@ function varargout = ASSLReviewTemplateMatching(varargin)
 
 % Edit the above text to modify the response to help ASSLReviewTemplateMatching
 
-% Last Modified by GUIDE v2.5 06-Mar-2014 22:36:13
+% Last Modified by GUIDE v2.5 26-Aug-2014 14:36:19
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -58,13 +58,24 @@ handles.output = hObject;
 % Initialise some variables using either default values or values that have
 % been passed while calling the function (RR 07 Jan 2013)
 
+handles.ASSLReviewTMResults.LoResHiRes = 1;
+set(handles.LoResHiResToggle, 'Value', handles.ASSLReviewTMResults.LoResHiRes);
+set(handles.LoResHiResToggle, 'String', 'High Res Spectrogram');
+
 if (nargin >= 1)
     handles.ASSLReviewTMResults = varargin{1};
  
     cla(handles.TemplateSpecAxis);
     axes(handles.TemplateSpecAxis);
-    if (exist('../SyllableTemplates.tif', 'file'))
-        imshow('../SyllableTemplates.tif', 'Border', 'tight');
+    
+    TemplateDir = handles.ASSLReviewTMResults.TemplateDir;
+    FileSep = filesep;
+    
+    if (TemplateDir(end) ~= FileSep)
+        TemplateDir(end+1) = FileSep;
+    end
+    if (exist([TemplateDir, 'SyllableTemplates.png'], 'file'))
+        imshow([TemplateDir, 'SyllableTemplates.png'], 'Border', 'tight');
     end
     
     handles.ASSLReviewTMResults.FileIndex = 1;
@@ -77,17 +88,7 @@ if (nargin >= 1)
     [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
 %    set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}]);
-
-    if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-        if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-        end
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-    end
-
+    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 end
 
 handles.ASSLReviewTMResults.ZoomSpecAxisLimits = handles.ASSLReviewTMResults.SpecAxisLimits;
@@ -144,15 +145,7 @@ if (SyllableChanged == 1)
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-    if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-        if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-        end
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-    end
+    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
     
     axes(handles.ReviewSpecAxis);
     axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -217,15 +210,7 @@ if (SyllableChanged == 1)
     handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
     handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
     
-    if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-        if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-        end
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-    end
+    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
     
     axes(handles.ReviewSpecAxis);
     axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -282,15 +267,7 @@ if (SyllableChanged == 1)
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-    if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-        if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-        end
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-    end
+    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
     
     axes(handles.ReviewSpecAxis);
     axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -354,15 +331,7 @@ if (button ~= 113)
             handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
         end
         
-        if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-            if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-            else
-                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-            end
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-        end
+        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
         axes(handles.ReviewSpecAxis);
         axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -413,15 +382,7 @@ if (SyllableChanged == 1)
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-    if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-        if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-        end
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-    end
+    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
     
     axes(handles.ReviewSpecAxis);
     axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -479,15 +440,7 @@ set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLR
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-    if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-    end
-else
-    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-end
+[handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
 handles.ASSLReviewTMResults.ZoomSpecAxisLimits = handles.ASSLReviewTMResults.SpecAxisLimits;
 handles.ASSLReviewTMResults.ZoomAmpAxisLimits = handles.ASSLReviewTMResults.AmpAxisLimits;
@@ -514,15 +467,7 @@ set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLR
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-    if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-    end
-else
-    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-end
+[handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
 handles.ASSLReviewTMResults.ZoomSpecAxisLimits = handles.ASSLReviewTMResults.SpecAxisLimits;
 handles.ASSLReviewTMResults.ZoomAmpAxisLimits = handles.ASSLReviewTMResults.AmpAxisLimits;
@@ -617,6 +562,10 @@ function TimeStepEdit_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of TimeStepEdit as a double
 
 handles.ASSLReviewTMResults.TimeStep = str2double(get(hObject, 'String'));
+
+set(handles.NextTimeButton, 'String', ['Next ', num2str(handles.ASSLReviewTMResults.TimeStep), ' sec']);
+set(handles.PrevTimeButton, 'String', ['Prev ', num2str(handles.ASSLReviewTMResults.TimeStep), ' sec']);
+
 guidata(hObject, handles);
 
 
@@ -658,16 +607,8 @@ while (Flag == 1)
         Time = (1:1:length(RawData))/Fs;
         [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-        if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-            if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-            else
-                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-            end
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-        end
-
+        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
+        
         axes(handles.ReviewSpecAxis);
         axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
 
@@ -749,15 +690,7 @@ while (Flag == 1)
         handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
         handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
 
-        if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-            if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-            else
-                [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-            end
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-        end
+        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
         axes(handles.ReviewSpecAxis);
         axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -797,15 +730,7 @@ set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLR
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-    if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-    end
-else
-    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-end
+[handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
 handles.ASSLReviewTMResults.ZoomSpecAxisLimits = handles.ASSLReviewTMResults.SpecAxisLimits;
 handles.ASSLReviewTMResults.ZoomAmpAxisLimits = handles.ASSLReviewTMResults.AmpAxisLimits;
@@ -883,15 +808,7 @@ if (SyllableChanged == 1)
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-    if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-        if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-        else
-            [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-        end
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-    end
+    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
     axes(handles.ReviewSpecAxis);
     axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -922,15 +839,7 @@ handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} =
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
-if (isfield(handles.ASSLReviewTMResults, 'SyllOnsets'))
-    if (isfield(handles.ASSLReviewTMResults, 'SyllLabels'))
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
-    else
-        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex});
-    end
-else
-    [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewPlotData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, Time, LogAmplitude, handles.ReviewSpecAxis, handles.ReviewAmplitudeAxis, handles.ReviewLabelAxis);
-end
+[handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
 axes(handles.ReviewSpecAxis);
 axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
@@ -940,4 +849,33 @@ axis(handles.ASSLReviewTMResults.ZoomLabelAxisLimits);
 
 axes(handles.ReviewAmplitudeAxis);
 axis(handles.ASSLReviewTMResults.ZoomAmpAxisLimits);
+guidata(hObject, handles);
+
+
+% --- Executes on button press in PlayFileButton.
+function PlayFileButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PlayFileButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+RawData = RawData(ceil(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs));;
+
+soundsc(RawData, Fs);
+
+
+% --- Executes on button press in LoResHiResToggle.
+function LoResHiResToggle_Callback(hObject, eventdata, handles)
+% hObject    handle to LoResHiResToggle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of LoResHiResToggle
+
+handles.ASSLReviewTMResults.LoResHiRes = get(hObject, 'Value');
+if (handles.ASSLReviewTMResults.LoResHiRes == 1)
+    set(handles.LoResHiResToggle, 'String', 'High Res Spectrogram');
+else
+    set(handles.LoResHiResToggle, 'String', 'Low Res Spectrogram');
+end
 guidata(hObject, handles);
