@@ -692,7 +692,7 @@ for i = 1:length(handles.ASSL.FileName),
     end
     handles.ASSL.SyllableTemplateMatches{i} = [];
 
-    fprintf('%s:', handles.ASSL.FileName{i}); 
+    fprintf('%s:', [num2str(i), ':', handles.ASSL.FileName{i}]); 
     [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
     Time = (1:1:length(RawData))/Fs;
@@ -701,35 +701,58 @@ for i = 1:length(handles.ASSL.FileName),
     WinOverlap = round(handles.ASSL.FFTWinOverlapTempMatch * WinSize);
 
    % [S1, F, T, P] = spectrogram(RawData, hamming(WinSize), WinOverlap, WinSize, Fs);
-    [P, F, S1, T] = CalculateMultiTaperSpectrogram(RawData, Fs, 8, 8/2, 1.5);
-    
-    Freq1 = find((F >= 860) & (F <= 8600));
-    S = log10(abs(S1(Freq1,:)));
+%     [P, F, S1, T] = CalculateMultiTaperSpectrogram(RawData, Fs, 8, 8/2, 1.5);
+%     
+%     Freq1 = find((F >= 860) & (F <= 8600));
+%     S = log10(abs(S1(Freq1,:)));
 
     %Syllables = find(handles.ASSL.SyllIndices(:,1) == i);
     
-    clear TempMatch SyllableMatch MatchLen;
-    for k = 1:length(handles.ASSL.Templates{1}.SyllableTemplates),
-        
-        TempSyllTemplate = handles.ASSL.Templates{1}.SyllableTemplates{k}{min(length(handles.ASSL.Templates{1}.SyllableTemplates{k}),3)};
-        
-        fprintf('>');
-        [TempMatch{k}] = ASSLTemplateMatch(S, TempSyllTemplate.MotifTemplate,  handles.ASSL.StretchValues);
-        MatchLen(k) = length(TempMatch{k});
-    end
-    for k = 1:length(TempMatch),
-        SyllableMatch(k,:) = TempMatch{k}(1:min(MatchLen));
-    end
+%    SyllableMatchFs = 1/(T(2) - T(1));
     
-    SyllableMatchFs = 1/(T(2) - T(1));
-    
+    PreDur = 0.35; % Pre duration before syllable onset in sec;
+    PostDur = 0.35; % Post duration after syllable onset in sec;
     for j = 1:length(handles.ASSL.SyllOnsets{i}),
-        SyllableOnsetTimeIndex = round(handles.ASSL.SyllOnsets{i}(j)/1000 * SyllableMatchFs);
-        SyllableOnsetWindow = [(SyllableOnsetTimeIndex - round(0.015 * SyllableMatchFs)) (SyllableOnsetTimeIndex + round(0.015 * SyllableMatchFs))];
+        SyllableOnsetTimeIndex = round(handles.ASSL.SyllOnsets{i}(j)/1000 * Fs);
+        SyllableOnsetWindow = [(SyllableOnsetTimeIndex - round(PreDur * Fs)) (SyllableOnsetTimeIndex + round(PostDur * Fs))];
         if (SyllableOnsetWindow(1) <= 0)
             SyllableOnsetWindow(1) = 1;
         end
+        if (SyllableOnsetWindow(2) > length(RawData))
+            SyllableOnsetWindow(2) = length(RawData);
+        end
+
+        SyllableRawData = RawData(SyllableOnsetWindow(1):SyllableOnsetWindow(2));
+        [P, F, S1, T] = CalculateMultiTaperSpectrogram(SyllableRawData, Fs, 8, 8/2, 1.5);
+    
+        Freq1 = find((F >= 860) & (F <= 8600));
+        S = log10(abs(S1(Freq1,:)));
         
+        SyllableMatchFs = 1/(T(2) - T(1));
+        
+        clear TempMatch SyllableMatch MatchLen;
+        for k = 1:length(handles.ASSL.Templates{1}.SyllableTemplates),
+
+            TempSyllTemplate = handles.ASSL.Templates{1}.SyllableTemplates{k}{min(length(handles.ASSL.Templates{1}.SyllableTemplates{k}),3)};
+
+            fprintf('>');
+            [TempMatch{k}] = ASSLTemplateMatch(S, TempSyllTemplate.MotifTemplate,  handles.ASSL.StretchValues);
+            MatchLen(k) = length(TempMatch{k});
+        end
+        for k = 1:length(TempMatch),
+            SyllableMatch(k,:) = TempMatch{k}(1:min(MatchLen));
+        end
+
+        ActualPreDur = 0.01; % Pre dur for locating match
+        if ((SyllableOnsetTimeIndex - round(PreDur * Fs)) > 0)
+            SyllableOnsetWindow = [(round((PreDur - ActualPreDur) * SyllableMatchFs)) (round((PreDur + ActualPreDur) * SyllableMatchFs))];
+        else
+            ExtraTime = (SyllableOnsetTimeIndex - round(PreDur * Fs))/Fs;
+            SyllableOnsetWindow = [(round((PreDur - ExtraTime - ActualPreDur) * SyllableMatchFs)) (round((PreDur - ExtraTime + ActualPreDur) * SyllableMatchFs))];
+        end
+        if (SyllableOnsetWindow(1) <= 0)
+            SyllableOnsetWindow(1) = 1;
+        end
         if ((SyllableOnsetWindow(1) > size(SyllableMatch,2)) || (SyllableOnsetWindow(2) > size(SyllableMatch,2)))
             handles.ASSL.SyllLabels{i}(j) = '0';
             handles.ASSL.SyllableTemplateMatches{i}(j,:) = zeros(1, length(handles.ASSL.Templates{1}.SyllableTemplates));
