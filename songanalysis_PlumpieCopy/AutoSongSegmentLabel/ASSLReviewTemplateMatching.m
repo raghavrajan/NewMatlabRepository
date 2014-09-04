@@ -22,7 +22,7 @@ function varargout = ASSLReviewTemplateMatching(varargin)
 
 % Edit the above text to modify the response to help ASSLReviewTemplateMatching
 
-% Last Modified by GUIDE v2.5 26-Aug-2014 14:36:19
+% Last Modified by GUIDE v2.5 03-Sep-2014 14:01:52
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -64,6 +64,8 @@ set(handles.LoResHiResToggle, 'String', 'High Res Spectrogram');
 
 if (nargin >= 1)
     handles.ASSLReviewTMResults = varargin{1};
+    
+    handles.ASSLReviewTMResults.LoResHiRes = 1;
  
     cla(handles.TemplateSpecAxis);
     axes(handles.TemplateSpecAxis);
@@ -194,7 +196,14 @@ if (SyllableChanged == 1)
     
     NewThresholdCrossings = Time(find(LogAmplitude < NewThreshold))*1000;
     NewSyllableStart = NewThresholdCrossings(find(NewThresholdCrossings < x(1), 1, 'last'));
+    if (isempty(NewSyllableStart))
+        NewSyllableStart = 1;
+    end
+    
     NewSyllableEnd = NewThresholdCrossings(find(NewThresholdCrossings > x(1), 1, 'first'));
+    if (isempty(NewSyllableEnd))
+        NewSyllableEnd = Time(end)*1000;
+    end
     
     if (isempty(handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}))
         handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = char(button(2));
@@ -203,6 +212,7 @@ if (SyllableChanged == 1)
     end
 
     handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(end + 1) = NewSyllableStart;
+    
     handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(end + 1) = NewSyllableEnd;
     
     [SortedVals, SortedIndices] = sort(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex});
@@ -859,7 +869,7 @@ function PlayFileButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
-RawData = RawData(ceil(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs));;
+RawData = RawData(ceil(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs));
 
 soundsc(RawData, Fs);
 
@@ -878,4 +888,55 @@ if (handles.ASSLReviewTMResults.LoResHiRes == 1)
 else
     set(handles.LoResHiResToggle, 'String', 'Low Res Spectrogram');
 end
+guidata(hObject, handles);
+
+
+% --- Executes on button press in ResegmentButton.
+function ResegmentButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ResegmentButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.ASSLReviewTMResults.PrevSyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOnsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex};
+
+set(handles.InstructionsTextLabel, 'String', 'Instructions: Enter the new threshold');
+
+NewThreshold = inputdlg('Enter the UPPER amplitude threshold for segmenting new syllable', 'Syllable threshold');
+handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}(1) = str2double(NewThreshold{1});
+
+NewThreshold = inputdlg('Enter the LOWER amplitude threshold for segmenting new syllable', 'Syllable threshold');
+handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex}(2) = str2double(NewThreshold{1});
+
+handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = [];
+handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} = [];
+handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = [];
+
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+Time = (1:1:length(RawData))/Fs;
+[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+
+[handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}] = ASSLSegmentDataAronovFee(LogAmplitude, Fs, handles.ASSLReviewTMResults.MinInt, handles.ASSLReviewTMResults.MinDur, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex});
+
+for i = 1:length(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}),
+    handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(i) = '0';
+end
+
+handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = char(handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex});
+
+disp([' Detected ', num2str(length(handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex})), ' syllables for ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}]);
+
+[handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
+
+axes(handles.ReviewSpecAxis);
+axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
+
+axes(handles.ReviewLabelAxis);
+axis(handles.ASSLReviewTMResults.ZoomLabelAxisLimits);
+
+axes(handles.ReviewAmplitudeAxis);
+axis(handles.ASSLReviewTMResults.ZoomAmpAxisLimits);
+    
+set(handles.InstructionsTextLabel, 'String', 'Instructions:');
 guidata(hObject, handles);

@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 18-Apr-2014 10:07:40
+% Last Modified by GUIDE v2.5 26-Jun-2014 22:59:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -346,6 +346,9 @@ function SegmentSongsButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+if (isfield(handles.ASSL, 'SyllLabels'))
+    handles.ASSL = rmfield(handles.ASSL, 'SyllLabels');
+end
 
 for i = 1:length(handles.ASSL.FileName),
     if (exist([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'file'))
@@ -1255,6 +1258,13 @@ for i = 1:length(handles.ASSL.FileName),
     disp([' Detected ', num2str(length(handles.ASSL.SyllOnsets{i})), ' syllables for ', handles.ASSL.FileName{i}]);
 end
 
+for i = 1:length(handles.ASSL.FileName),
+    SyllDur = handles.ASSL.SyllOffsets{i} - handles.ASSL.SyllOnsets{i};
+    handles.ASSL.SyllOnsets{i}(find(SyllDur >=  1000)) = [];
+    handles.ASSL.SyllOffsets{i}(find(SyllDur >=  1000)) = [];
+    handles.ASSL.SyllLabels{i}(find(SyllDur >=  1000)) = [];
+end
+
 set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
 [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
@@ -1403,4 +1413,13 @@ function ChooseSyllFFBoundariesButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 ASSLChooseSyllFFBoundaries(handles.ASSL);
+guidata(hObject, handles);
+
+
+% --- Executes on button press in PickBoutsButton.
+function PickBoutsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PickBoutsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+ASSLPickBouts(handles.ASSL);
 guidata(hObject, handles);

@@ -15,7 +15,11 @@ ElapsedTime = 0;
 cla(DataStruct.axes1);
 for i = 1:length(Indices),
     [Syllable, Fs] = ASSLGetRawData(DataStruct.DataStruct.DirName, DataStruct.DataStruct.FileName{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}, DataStruct.DataStruct.FileType, DataStruct.DataStruct.SongChanNo);
-    StartTime = (ceil(Fs * DataStruct.DataStruct.SyllOnsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    if (isfield(DataStruct.DataStruct, 'AdjSyllOnsets'))
+        StartTime = (ceil(Fs * DataStruct.DataStruct.AdjSyllOnsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    else
+        StartTime = (ceil(Fs * DataStruct.DataStruct.SyllOnsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    end
     if (StartTime == 0)
         StartTime = 1;
     else
@@ -23,7 +27,12 @@ for i = 1:length(Indices),
             StartTime = (length(Syllable) - 1);
         end
     end
-    EndTime = (ceil(Fs * DataStruct.DataStruct.SyllOffsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    
+    if (isfield(DataStruct.DataStruct, 'AdjSyllOnsets'))
+        EndTime = (ceil(Fs * DataStruct.DataStruct.AdjSyllOffsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    else
+        EndTime = (ceil(Fs * DataStruct.DataStruct.SyllOffsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
+    end
     if (EndTime == 0)
         EndTime = 2;
     else
@@ -89,5 +98,7 @@ for i = 1:length(Indices),
         plot(TempFF_x(StartIndex:EndIndex), FF(Indices(i)), 'g--', 'LineWidth', 2);
     end    
 end
+
+set(DataStruct.SyllableIdentityLabel, 'String', ['Syllable ', DataStruct.ASSLCSFFB.UniqueSyllLabels(DataStruct.ASSLCSFFB.SyllIndex), ': #', num2str(DataStruct.ASSLCSFFB.SyllIndex), ' of ', num2str(length(DataStruct.ASSLCSFFB.UniqueSyllLabels)), ' syllables; Time dur of FF = ', num2str(TempFF_x(EndIndex) - TempFF_x(StartIndex)), ' sec']);
 
 disp('Finished calculating boundaries');

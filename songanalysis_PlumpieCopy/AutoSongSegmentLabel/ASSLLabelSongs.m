@@ -738,6 +738,40 @@ Exclusions = [];
 disp('Writing templates ...');
 
 MakeAllSyllableTemplatesFromFile(handles.ASSLLabelSongs.DirName, handles.ASSLLabelSongs.DirName, handles.ASSLLabelSongs.FileName{handles.ASSLLabelSongs.FileIndex}, handles.ASSLLabelSongs.FileType, OutputDir, 0, TimeStretch, FreqStretch, Exclusions, handles.ASSLLabelSongs.SyllLabels{handles.ASSLLabelSongs.FileIndex}, handles.ASSLLabelSongs.SyllOnsets{handles.ASSLLabelSongs.FileIndex}, handles.ASSLLabelSongs.SyllOffsets{handles.ASSLLabelSongs.FileIndex});
+
+TemplateFigure = figure;
+set(gcf, 'Color', 'w', 'Position', [300 500 325 150], 'PaperPositionMode', 'auto', 'InvertHardcopy', 'off');
+
+[RawData, Fs] = ASSLGetRawData(handles.ASSLLabelSongs.DirName, handles.ASSLLabelSongs.FileName{handles.ASSLLabelSongs.FileIndex}, handles.ASSLLabelSongs.FileType, handles.ASSLLabelSongs.SongChanNo);
+Time = (1:1:length(RawData))/Fs;
+
+UniqueSyllLabels = unique(handles.ASSLLabelSongs.SyllLabels{handles.ASSLLabelSongs.FileIndex});
+
+TemplateRawData = [];
+for i = 1:length(UniqueSyllLabels),
+    Indices = find(handles.ASSLLabelSongs.SyllLabels{handles.ASSLLabelSongs.FileIndex} == UniqueSyllLabels(i));
+    Onset = handles.ASSLLabelSongs.SyllOnsets{handles.ASSLLabelSongs.FileIndex}(Indices(min([3 length(Indices)]))) - 15;
+    Offset = handles.ASSLLabelSongs.SyllOffsets{handles.ASSLLabelSongs.FileIndex}(Indices(min([3 length(Indices)]))) + 15;
+    TempRawData = RawData(round(Onset*Fs/1000):round(Offset*Fs/1000));
+    LabelTimes(i) = length(TempRawData)/5 + length(TemplateRawData);
+    OnsetOffsetTimes(i,:) = [(length(TemplateRawData)/Fs + 0.015) ((length(TemplateRawData) + length(TempRawData))/Fs - 0.015)];
+    TemplateRawData = [TemplateRawData; TempRawData(:)];
+end
+
+TemplateTime = (1:1:length(TemplateRawData))/Fs;
+
+PlotSpectrogramInAxis_SongVar(TemplateRawData, TemplateTime, Fs, gca);
+hold on;
+text(LabelTimes/Fs, ones(size(LabelTimes))*7500, mat2cell(UniqueSyllLabels, 1, ones(1, length(UniqueSyllLabels))), 'Color', 'b', 'FontSize', 16, 'FontWeight', 'bold');
+plot([OnsetOffsetTimes(:,1) OnsetOffsetTimes(:,1) OnsetOffsetTimes(:,2) OnsetOffsetTimes(:,2)]', [repmat([0 7900 7900 0], i, 1)]', 'b', 'LineWidth', 2);
+set(gca, 'Visible', 'off');
+set(gca, 'XTick', []);
+set(gca, 'FontSize', 12);
+set(gca, 'YTick', []);
+set(gca, 'Position', [0.01 0.01 0.98 0.98]);
+FileSep = filesep;
+
+print(TemplateFigure, '-dpng', [OutputDir, FileSep, 'SyllableTemplates.png']);
 guidata(hObject, handles);
 
 % --- Executes on button press in DeleteSyllsWithinLimitsButton.
