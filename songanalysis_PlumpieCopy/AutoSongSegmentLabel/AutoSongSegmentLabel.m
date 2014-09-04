@@ -1356,18 +1356,24 @@ TextOutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.txt'];
 OutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.xls'];
 
 Fid = fopen(TextOutputFileName, 'w');
+fprintf(Fid, 'FileName\tSyll #\tSyll Label\t Syll Onset (ms)\t Syll Offset (ms)\t Syll Duration (sec)\t Mean Frequency (Hz)\t Entropy\tLog Amplitude (dB)\tPitch Goodness\tFrequencyModulation\tAmplitudeModulation\tEntropyVariance\n');
+
 RowIndex = 1;
 for i = 1:length(handles.ASSL.SyllOnsets),
     for j = 1:length(handles.ASSL.SyllOnsets{i}),
-        fprintf(Fid, '%i\t%c\t%g\t%g\n', i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        fprintf(Fid, '%s\t%i\t%c\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        for k = 1:length(handles.ASSL.ToBeUsedFeatures),
+            fprintf(Fid, '%g\t', eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{k}, '{', num2str(i), '}', '(', num2str(j), ')']));
+        end
+        fprintf(Fid, '\n');
         Temp(RowIndex,:) = {i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j)};
         RowIndex = RowIndex + 1;
     end
 end
 fclose(Fid);
 disp(['Wrote data about labels, onsets and offsets to ', TextOutputFileName]); 
-xlswrite(OutputFileName, Temp, 1, 'A1');
-disp(['Wrote data about labels, onsets and offsets to ', OutputFileName]); 
+% xlswrite(OutputFileName, Temp, 1, 'A1');
+% disp(['Wrote data about labels, onsets and offsets to ', OutputFileName]); 
 
 
 % --- Executes on button press in DelFeatValueFilesButton.
