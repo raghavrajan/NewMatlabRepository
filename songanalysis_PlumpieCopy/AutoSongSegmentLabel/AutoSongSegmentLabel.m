@@ -710,8 +710,8 @@ for i = 1:length(handles.ASSL.FileName),
     
 %    SyllableMatchFs = 1/(T(2) - T(1));
     
-    PreDur = 0.35; % Pre duration before syllable onset in sec;
-    PostDur = 0.35; % Post duration after syllable onset in sec;
+    PreDur = 0.5; % Pre duration before syllable onset in sec;
+    PostDur = 0.5; % Post duration after syllable onset in sec;
     for j = 1:length(handles.ASSL.SyllOnsets{i}),
         SyllableOnsetTimeIndex = round(handles.ASSL.SyllOnsets{i}(j)/1000 * Fs);
         SyllableOnsetWindow = [(SyllableOnsetTimeIndex - round(PreDur * Fs)) (SyllableOnsetTimeIndex + round(PostDur * Fs))];
@@ -743,7 +743,7 @@ for i = 1:length(handles.ASSL.FileName),
             SyllableMatch(k,:) = TempMatch{k}(1:min(MatchLen));
         end
 
-        ActualPreDur = 0.01; % Pre dur for locating match
+        ActualPreDur = 0.015; % Pre dur for locating match
         if ((SyllableOnsetTimeIndex - round(PreDur * Fs)) > 0)
             SyllableOnsetWindow = [(round((PreDur - ActualPreDur) * SyllableMatchFs)) (round((PreDur + ActualPreDur) * SyllableMatchFs))];
         else

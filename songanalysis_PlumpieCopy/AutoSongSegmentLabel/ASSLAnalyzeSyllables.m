@@ -22,7 +22,7 @@ function varargout = ASSLAnalyzeSyllables(varargin)
 
 % Edit the above text to modify the response to help ASSLAnalyzeSyllables
 
-% Last Modified by GUIDE v2.5 10-Jun-2014 15:10:51
+% Last Modified by GUIDE v2.5 27-Oct-2014 12:16:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -278,11 +278,6 @@ CurrSyll = get(handles.CurrSyllListBox, 'Value');
 PrevNextSyll = get(handles.PrevNextSyllListBox, 'Value');
 PrevNext = get(handles.PrevNextSyllMenu, 'Value');
 
-cla(handles.XFeatSyllStart);
-cla(handles.XFeatSyllEnd);
-cla(handles.YFeatSyllStart);
-cla(handles.YFeatSyllEnd);
-
 for i = 1:length(PrevNextSyll),
     if (PrevNext == 1)
         Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
@@ -297,40 +292,12 @@ for i = 1:length(PrevNextSyll),
         ClearAxis = 0;
     end
     ASSLASPlotData(handles, 1, handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))), handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(PrevNextSyll(i))), 4, handles.ASSLNextSyllAxis, ClearAxis, Indices);
-    
-    XFeat = handles.ASSLAS.FeatNames{handles.ASSLAS.XVal};
-    if (((isempty(strfind(XFeat, 'Duration')))) && ((isempty(strfind(XFeat, 'EntropyVariance')))))
-        for j = 1:length(Indices),
-            axes(handles.XFeatSyllStart);
-            hold on;
-            plot([handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.XVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
-            
-            axes(handles.XFeatSyllEnd);
-            hold on;
-            DataLen = length(handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.XVal-1});
-            plot((1:1:DataLen) - DataLen, [handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.XVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
-        end
-    end
-
-    YFeat = handles.ASSLAS.FeatNames{handles.ASSLAS.YVal};
-    if (((isempty(strfind(YFeat, 'Duration')))) && ((isempty(strfind(YFeat, 'EntropyVariance')))))
-        for j = 1:length(Indices),
-            axes(handles.YFeatSyllStart);
-            hold on;
-            plot([handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.YVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
-        
-            axes(handles.YFeatSyllEnd);
-            hold on;
-            DataLen = length(handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.YVal-1});
-            plot((1:1:DataLen) - DataLen, [handles.DataStruct.RawFeatValues{Indices(j), handles.ASSLAS.YVal-1}], handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))));
-        end
-    end
 end
 
-axes(handles.XFeatSyllStart);
+axes(handles.SyllAmpWF);
 axis tight;
 
-axes(handles.XFeatSyllEnd);
+axes(handles.SyllSpect);
 axis tight;
 
 axes(handles.YFeatSyllStart);
@@ -719,12 +686,52 @@ function output_txt  = datatips(obj,event_obj,Cursor,handles)
 % obj          Currently not used (empty)
 % event_obj    Handle to event object
 
+
 dcs=Cursor.DataCursors;
 pos = get(dcs(1),'Position');   %Position of 1st cursor
-Num=find(handles.DataStruct.FeatValues(:,handles.ASSLAS.XVal)==pos(1) & handles.DataStruct.FeatValues(:,handles.ASSLAS.YVal)==pos(2));
+
+%Num=find(handles.DataStruct.FeatValues(:,handles.ASSLAS.XVal)==pos(1) & handles.DataStruct.FeatValues(:,handles.ASSLAS.YVal)==pos(2));
+% Changed find to knnsearch for better performance - Raghav 27th October
+% 2014
+Num = knnsearch(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal]), pos(1:2));
+
 Filenum=handles.DataStruct.SyllIndices(Num,1);
 Syllnum=handles.DataStruct.SyllIndices(Num,2);
 Filename=handles.DataStruct.FileName{Filenum};
+
+% Added code to plot log amplitude and spectrogram of chosen syllable
+[RawData, Fs] = ASSLGetRawData(handles.DataStruct.DirName, Filename, handles.DataStruct.FileType, 1);
+SyllOnset = (handles.DataStruct.SyllOnsets{Filenum}(Syllnum) - 10) * Fs/1000; % take 10ms before syll onset and convert to index
+if (SyllOnset < 1)
+    SyllOnset = 1;
+end
+if (SyllOnset > length(RawData))
+    SyllOnset = length(RawData);
+end
+
+SyllOffset = (handles.DataStruct.SyllOffsets{Filenum}(Syllnum) + 10) * Fs/1000; % take 10ms after syll offset and convert to index
+if (SyllOffset < 1)
+    SyllOffset = 1;
+end
+if (SyllOffset > length(RawData))
+    SyllOffset = length(RawData);
+end
+
+if ((SyllOffset - SyllOnset) > (0.01 * Fs))
+    RawData = RawData(SyllOnset:SyllOffset);
+    axes(handles.SyllSpect);
+    PlotSpectrogramInAxis_SongVar(RawData, (1:1:length(RawData))/Fs, Fs, gca);
+    
+    
+    LogAmplitude = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs);
+    axes(handles.SyllAmpWF);
+    plot((1:1:length(RawData))*1000/Fs, LogAmplitude, 'k');
+    axis tight;
+    set(gca, 'FontSize', 10, 'FontWeight', 'bold');
+    xlabel('Time (ms)', 'FontSize', 12, 'FontWeight', 'bold');
+    ylabel('Log Amplitude (dB)', 'FontSize', 12, 'FontWeight', 'bold');
+end
+
 output_txt{1} = ['X: ', num2str(pos(1))];
 output_txt{2} = ['Y: ', num2str(pos(2))]; %this is the text next to the cursor
 output_txt{3}=['FileNo. ', num2str(Filenum)];
@@ -744,3 +751,59 @@ function uitoggletool3_OnCallback(hObject, eventdata, handles)
 % hObject    handle to uitoggletool3 (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
+
+
+% --- Executes on button press in PickSyllableButton.
+function PickSyllableButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PickSyllableButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Get syllable
+axes(handles.ASSLFeaturePlotAxis);
+[x, y, button] = ginput(1);
+Num = knnsearch(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal]), [x y]);
+
+Filenum=handles.DataStruct.SyllIndices(Num,1);
+Syllnum=handles.DataStruct.SyllIndices(Num,2);
+Filename=handles.DataStruct.FileName{Filenum};
+
+% Added code to plot log amplitude and spectrogram of chosen syllable
+[RawData, Fs] = ASSLGetRawData(handles.DataStruct.DirName, Filename, handles.DataStruct.FileType, 1);
+SyllOnset = (handles.DataStruct.SyllOnsets{Filenum}(Syllnum) - 10) * Fs/1000; % take 10ms before syll onset and convert to index
+if (SyllOnset < 1)
+    SyllOnset = 1;
+end
+if (SyllOnset > length(RawData))
+    SyllOnset = length(RawData);
+end
+
+SyllOffset = (handles.DataStruct.SyllOffsets{Filenum}(Syllnum) + 10) * Fs/1000; % take 10ms after syll offset and convert to index
+if (SyllOffset < 1)
+    SyllOffset = 1;
+end
+if (SyllOffset > length(RawData))
+    SyllOffset = length(RawData);
+end
+
+if ((SyllOffset - SyllOnset) > (0.01 * Fs))
+    RawData = RawData(SyllOnset:SyllOffset);
+    axes(handles.SyllSpect);
+    PlotSpectrogramInAxis_SongVar(RawData, (1:1:length(RawData))/Fs, Fs, gca);
+    
+    
+    LogAmplitude = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs);
+    axes(handles.SyllAmpWF);
+    plot((1:1:length(RawData))*1000/Fs, LogAmplitude, 'k');
+    axis tight;
+    set(gca, 'FontSize', 10, 'FontWeight', 'bold');
+    xlabel('Time (ms)', 'FontSize', 12, 'FontWeight', 'bold');
+    ylabel('Log Amplitude (dB)', 'FontSize', 12, 'FontWeight', 'bold');
+end
+
+output_txt{1} = ['X: ', num2str(x)];
+output_txt{2} = ['Y: ', num2str(y)]; %this is the text next to the cursor
+output_txt{3}=['FileNo. ', num2str(Filenum)];
+output_txt{4}=['FileName ', [Filename]];
+output_txt{5}=['SyllNo. ', num2str(Syllnum)];
+set(handles.SyllInfoText, 'String', output_txt);

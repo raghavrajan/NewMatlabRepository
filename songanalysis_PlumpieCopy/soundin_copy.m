@@ -39,7 +39,7 @@ elseif strcmp(filetype,'filt')
 elseif  strcmp(filetype(1:3),'obs')
    if length(filetype)==3
       chan_spec='0r';  %default is to return the last channel of observer file   
-      disp(['no channel specified in filetype; default observer filetype = obs0r (see soundin)'])
+      % disp(['no channel specified in filetype; default observer filetype = obs0r (see soundin)'])
    else chan_spec=filetype(4:length(filetype));   
    end   
    [rawsong, Fs]= get_daqdata_copy([pathname, soundfile],chan_spec);

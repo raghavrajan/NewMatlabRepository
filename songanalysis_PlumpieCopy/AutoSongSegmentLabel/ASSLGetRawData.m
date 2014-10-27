@@ -6,6 +6,11 @@ if (~isempty(SlashIndex))
     FileName = FileName(SlashIndex(end)+1:end);
 end
 
+FileSep = filesep;
+if (DirectoryName(end) ~= FileSep)
+    DirectoryName(end+1) = FileSep;
+end
+
 switch FileType
     case 'okrank'
         [RawData, Fs] = ReadOKrankData(DirectoryName, FileName, SongChanNo);

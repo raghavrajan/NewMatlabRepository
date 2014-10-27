@@ -1,12 +1,17 @@
-function [] = PlotSpectrogram(pathname,filename,FileType,ColourMap, varargin)
+function [] = PlotSpectrogramInAxisLowRes(pathname, filename, FileType, gca, varargin)
 
+PresentDir = pwd;
 
 Slash = find((filename == '/') | (filename == '\'));
 if (~isempty(Slash))
     filename = filename(Slash(end)+1:end);
 end
 
-ChannelNo = 0;
+if (nargin > 4),
+    TimeRange = varargin{1};
+end
+
+ChannelNo = 1;
 
 % Get Song Data from observer file
 if (strfind(FileType,'obs'))
@@ -17,13 +22,12 @@ if (strfind(FileType,'obs'))
     rawsong = rawsong * 5/32768;
 else
     if (strfind(FileType,'wav'));
-        PresentDir = pwd;
         cd(pathname);
         [rawsong, Fs] = wavread(filename);
         cd(PresentDir);
     else 
         if (strfind(FileType, 'okrank'))
-            [rawsong, Fs] = ReadOKrankData(pathname, filename, 0);
+            [rawsong, Fs] = ReadOKrankData(pathname, filename, ChannelNo);
         end
     end
 end
@@ -33,11 +37,9 @@ end
 time = 0:1/Fs:(length(rawsong)/Fs);
 time(end) = [];
 
-if (length(varargin) > 0)
-    start_time = varargin{1};
-    end_time = varargin{2};
-    start_time_index = find(time <= start_time,1,'last');
-    end_time_index = find(time <= end_time,1,'last');
+if (exist('TimeRange', 'var'))
+    start_time_index = find(time <= TimeRange(1), 1, 'last');
+    end_time_index = find(time <= TimeRange(2), 1, 'last');
 else
     start_time_index = 1;
     end_time_index = length(time);
@@ -72,12 +74,11 @@ h = ones(1, Len)/Len;
 nfft=round(Fs*8/1000);
 nfft = 2^nextpow2(nfft);
 spect_win = hanning(nfft);
-noverlap = round(0.95*length(spect_win)); %number of overlapping points       
+noverlap = round(0.5*length(spect_win)); %number of overlapping points       
 
 %now calculate spectrogram
 %     [spect, freq, time_song] = specgram(filtsong, nfft, Fs, spect_win, noverlap);
 [spect, freq, time_song] = spectrogram(filtsong,spect_win,noverlap,nfft,Fs,'yaxis');
-%[PowSpect, freq, spect, time_song] = CalculateMultiTaperSpectrogram(filtsong, Fs, 8, 1, 1.5);
 idx_spect=scale_spect(spect);  %calculate index array for spectrogram
 f_min = freq(1);
 f_max = freq(length(freq));
@@ -89,17 +90,14 @@ t_max = time(end); %convert to ms
 %t_min = t_min + 0.5*nfft/Fs;  
 %t_max = t_max + 0.5*nfft/Fs;  
 time_spect = [t_min, t_max];   
-figure;
-set(gcf, 'Color', 'w');
-set(gcf, 'Position', [153 440 893 269]);
-axes('Position',[0.075 0.2 0.9 0.7]);
-cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -55, ...
-        0, 2, ColourMap, 'classic');
+axes(gca);
+hold off;
+cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -50, ...
+        10, 1.2, 'hot', 'classic');
 axis([t_min t_max 300 8000]);
-set(gca, 'FontSize', 14, 'FontWeight', 'bold');
-xlabel('Time (sec)', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('Frequency (Hz)', 'FontSize', 14, 'FontWeight', 'bold');
-title(filename, 'FontSize', 14, 'FontWeight', 'bold');
+set(gca, 'FontSize', 10);
+set(gca, 'XTick', []);
+ylabel('Frequency (Hz)', 'FontSize', 12);
 zoom xon;
 hold on;
 %plot(time, (filtsong * 1000) + 12000);

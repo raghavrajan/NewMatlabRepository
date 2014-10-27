@@ -22,7 +22,7 @@ function varargout = ASSLPickBouts(varargin)
 
 % Edit the above text to modify the response to help ASSLPickBouts
 
-% Last Modified by GUIDE v2.5 27-Aug-2014 10:53:13
+% Last Modified by GUIDE v2.5 15-Oct-2014 09:51:55
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -97,6 +97,8 @@ handles.ASSLPickBouts.ZoomLabelAxisLimits = handles.ASSLPickBouts.LabelAxisLimit
 
 % Update handles structure
 guidata(hObject, handles);
+
+UpdateBoutNumber(handles);
 
 % UIWAIT makes ASSLPickBouts wait for user response (see UIRESUME)
 % uiwait(handles.figure1);
@@ -198,6 +200,7 @@ while (Flag)
                 axes(handles.ReviewSpecAxis);
                 delete(handles.ASSLPickBouts.BoutPlotLine);
                 handles.ASSLPickBouts.BoutPlotLine = plot([handles.BoutOnsetsOffsets{handles.ASSLPickBouts.FileIndex}]'/1000, ones(size([handles.BoutOnsetsOffsets{handles.ASSLPickBouts.FileIndex}]))'*7500, 'b', 'LineWidth', 3);
+                UpdateBoutNumber(handles);
             end
         
         case 78 % typing N
@@ -254,6 +257,8 @@ handles.ASSLPickBouts.ZoomLabelAxisLimits = handles.ASSLPickBouts.LabelAxisLimit
 setappdata(findobj('Tag', 'ASSLPickBouts'), 'Data', handles.ASSLPickBouts);
 guidata(hObject, handles);
 
+UpdateBoutNumber(handles);
+
 % --- Executes on button press in PrevFileButton.
 function PrevFileButton_Callback(hObject, eventdata, handles)
 % hObject    handle to PrevFileButton (see GCBO)
@@ -287,6 +292,7 @@ handles.ASSLPickBouts.ZoomLabelAxisLimits = handles.ASSLPickBouts.LabelAxisLimit
 setappdata(findobj('Tag', 'ASSLPickBouts'), 'Data', handles.ASSLPickBouts);
 guidata(hObject, handles);
 
+UpdateBoutNumber(handles);
 
 % --- Executes on button press in NextTimeButton.
 function NextTimeButton_Callback(hObject, eventdata, handles)
@@ -404,6 +410,8 @@ handles.ASSLPickBouts.ZoomLabelAxisLimits = handles.ASSLPickBouts.LabelAxisLimit
 setappdata(findobj('Tag', 'ASSLPickBouts'), 'Data', handles.ASSLPickBouts);
 guidata(hObject, handles);
 
+UpdateBoutNumber(handles);
+
 
 % --- Executes on button press in DelAllBoutEdgesButton.
 function DelAllBoutEdgesButton_Callback(hObject, eventdata, handles)
@@ -491,3 +499,52 @@ function PlayFileButton_Callback(hObject, eventdata, handles)
 [RawData, Fs] = ASSLGetRawData(handles.ASSLPickBouts.DirName, handles.ASSLPickBouts.FileName{handles.ASSLPickBouts.FileIndex}, handles.ASSLPickBouts.FileType, handles.ASSLPickBouts.SongChanNo);
 RawData = RawData(ceil(handles.ASSLPickBouts.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLPickBouts.ZoomSpecAxisLimits(2)*Fs));
 soundsc(RawData, Fs);
+
+
+% --- Executes on button press in ReCalcBoutEdgesButton.
+function ReCalcBoutEdgesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ReCalcBoutEdgesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+for i = 1:length(handles.ASSLPickBouts.FileName),
+    [handles.BoutOnsetsOffsets{i}] = ASSLGetBoutEdges(handles.ASSLPickBouts.SyllOnsets{i}, handles.ASSLPickBouts.SyllOffsets{i}, handles.ASSLPickBouts.InterBoutInterval, handles.ASSLPickBouts.BoutPaddingTime, handles.ASSLPickBouts.FileDur{i});
+end
+
+handles.ASSLPickBouts.FileIndex = 1;
+set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLPickBouts.FileName{handles.ASSLPickBouts.FileIndex}, ' : #', num2str(handles.ASSLPickBouts.FileIndex), ' of ', num2str(length(handles.ASSLPickBouts.FileName)), ' files']);
+
+[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBouts.DirName, handles.ASSLPickBouts.FileName{handles.ASSLPickBouts.FileIndex}, handles.ASSLPickBouts.FileType, handles.ASSLPickBouts.SongChanNo);
+
+Time = (1:1:length(RawData))/Fs;
+
+[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLPickBouts.FFTWinSizeSegmenting, handles.ASSLPickBouts.FFTWinOverlapSegmenting);
+
+%    set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSLPickBouts.FileName{handles.ASSLPickBouts.FileIndex}]);
+
+[handles.ASSLPickBouts.SpecAxisLimits, handles.ASSLPickBouts.LabelAxisLimits, handles.ASSLPickBouts.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
+
+if (length(handles.ASSLPickBouts.SyllOnsets{handles.ASSLPickBouts.FileIndex}) > 1)
+    axes(handles.ReviewSpecAxis);
+    handles.ASSLPickBouts.BoutPlotLine = plot([handles.BoutOnsetsOffsets{handles.ASSLPickBouts.FileIndex}]'/1000, ones(size([handles.BoutOnsetsOffsets{handles.ASSLPickBouts.FileIndex}]))'*7500, 'b', 'LineWidth', 3);
+end
+
+handles.ASSLPickBouts.ZoomSpecAxisLimits = handles.ASSLPickBouts.SpecAxisLimits;
+handles.ASSLPickBouts.ZoomAmpAxisLimits = handles.ASSLPickBouts.AmpAxisLimits;
+handles.ASSLPickBouts.ZoomLabelAxisLimits = handles.ASSLPickBouts.LabelAxisLimits;
+
+% Update handles structure
+guidata(hObject, handles);
+
+UpdateBoutNumber(handles);
+
+% Function to update the text string with total number of bouts
+function [] = UpdateBoutNumber(handles)
+
+TotalBoutNum = cell2mat(cellfun(@size, handles.BoutOnsetsOffsets, 'UniformOutput', 0));
+TotalBoutNum = sum(TotalBoutNum(1:2:length(TotalBoutNum)));
+
+TextString = get(handles.SongFileNameTextLabel, 'String');
+TextString = [TextString, '; ', num2str(TotalBoutNum), ' bouts'];
+set(handles.SongFileNameTextLabel, 'String', TextString);

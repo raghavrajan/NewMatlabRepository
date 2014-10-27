@@ -2,6 +2,10 @@ function [Bouts] = ASSLGetBoutEdges(SyllOnsets, SyllOffsets, InterBoutInterval, 
 
 Bouts = [];
 
+if (isempty(SyllOnsets))
+    return;
+end
+
 Intervals = SyllOnsets(2:end) - SyllOffsets(1:end-1);
 LongIntervals = find(Intervals >= InterBoutInterval);
 if (~isempty(LongIntervals))
