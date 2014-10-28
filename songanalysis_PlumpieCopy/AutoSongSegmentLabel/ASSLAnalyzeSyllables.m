@@ -718,6 +718,14 @@ if (SyllOffset > length(RawData))
 end
 
 if ((SyllOffset - SyllOnset) > (0.01 * Fs))
+    axes(handles.ASSLFeaturePlotAxis);
+    hold on;
+    if (isfield(handles, 'SyllOutline'))
+        delete(handles.SyllOutline);
+        handles = rmfield(handles, 'SyllOutline');
+    end
+    handles.SyllOutline = plot(x, y, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+    
     RawData = RawData(SyllOnset:SyllOffset);
     axes(handles.SyllSpect);
     PlotSpectrogramInAxis_SongVar(RawData, (1:1:length(RawData))/Fs, Fs, gca);
@@ -737,6 +745,7 @@ output_txt{2} = ['Y: ', num2str(pos(2))]; %this is the text next to the cursor
 output_txt{3}=['FileNo. ', num2str(Filenum)];
 output_txt{4}=['FileName ', [Filename]];
 output_txt{5}=['SyllNo. ', num2str(Syllnum)];
+guidata(hObject, handles);
 
 
 % --------------------------------------------------------------------
@@ -787,6 +796,14 @@ if (SyllOffset > length(RawData))
 end
 
 if ((SyllOffset - SyllOnset) > (0.01 * Fs))
+    axes(handles.ASSLFeaturePlotAxis);
+    hold on;
+    if (isfield(handles, 'SyllOutline'))
+        delete(handles.SyllOutline);
+        handles = rmfield(handles, 'SyllOutline');
+    end
+    handles.SyllOutline = plot(x, y, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
+    
     RawData = RawData(SyllOnset:SyllOffset);
     axes(handles.SyllSpect);
     PlotSpectrogramInAxis_SongVar(RawData, (1:1:length(RawData))/Fs, Fs, gca);
@@ -807,3 +824,4 @@ output_txt{3}=['FileNo. ', num2str(Filenum)];
 output_txt{4}=['FileName ', [Filename]];
 output_txt{5}=['SyllNo. ', num2str(Syllnum)];
 set(handles.SyllInfoText, 'String', output_txt);
+guidata(hObject, handles);
