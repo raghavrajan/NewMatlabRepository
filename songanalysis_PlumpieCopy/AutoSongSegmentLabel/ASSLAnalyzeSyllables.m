@@ -721,7 +721,9 @@ if ((SyllOffset - SyllOnset) > (0.01 * Fs))
     axes(handles.ASSLFeaturePlotAxis);
     hold on;
     if (isfield(handles, 'SyllOutline'))
-        delete(handles.SyllOutline);
+        if (ishandle(handles.SyllOutline))
+            delete(handles.SyllOutline);
+        end
         handles = rmfield(handles, 'SyllOutline');
     end
     handles.SyllOutline = plot(x, y, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
@@ -799,7 +801,9 @@ if ((SyllOffset - SyllOnset) > (0.01 * Fs))
     axes(handles.ASSLFeaturePlotAxis);
     hold on;
     if (isfield(handles, 'SyllOutline'))
-        delete(handles.SyllOutline);
+        if (ishandle(handles.SyllOutline))
+            delete(handles.SyllOutline);
+        end
         handles = rmfield(handles, 'SyllOutline');
     end
     handles.SyllOutline = plot(x, y, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
