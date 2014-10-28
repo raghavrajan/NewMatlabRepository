@@ -729,14 +729,17 @@ if ((SyllOffset - SyllOnset) > (0.01 * Fs))
     handles.SyllOutline = plot(x, y, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
     
     RawData = RawData(SyllOnset:SyllOffset);
+    cla(handles.SyllSpect);
     axes(handles.SyllSpect);
     PlotSpectrogramInAxis_SongVar(RawData, (1:1:length(RawData))/Fs, Fs, gca);
-    
+    axis([0 0.300 300 8000]);
     
     LogAmplitude = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs);
     axes(handles.SyllAmpWF);
     plot((1:1:length(RawData))*1000/Fs, LogAmplitude, 'k');
     axis tight;
+    Temp = axis;
+    axis([0 300 Temp(3:4)]);
     set(gca, 'FontSize', 10, 'FontWeight', 'bold');
     xlabel('Time (ms)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Log Amplitude (dB)', 'FontSize', 12, 'FontWeight', 'bold');
@@ -809,14 +812,17 @@ if ((SyllOffset - SyllOnset) > (0.01 * Fs))
     handles.SyllOutline = plot(x, y, 'ro', 'MarkerSize', 10, 'LineWidth', 2);
     
     RawData = RawData(SyllOnset:SyllOffset);
+    cla(handles.SyllSpect);
     axes(handles.SyllSpect);
     PlotSpectrogramInAxis_SongVar(RawData, (1:1:length(RawData))/Fs, Fs, gca);
-    
+    axis([0 0.300 300 8000]);
     
     LogAmplitude = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs);
     axes(handles.SyllAmpWF);
     plot((1:1:length(RawData))*1000/Fs, LogAmplitude, 'k');
     axis tight;
+    Temp = axis;
+    axis([0 300 Temp(3:4)]);
     set(gca, 'FontSize', 10, 'FontWeight', 'bold');
     xlabel('Time (ms)', 'FontSize', 12, 'FontWeight', 'bold');
     ylabel('Log Amplitude (dB)', 'FontSize', 12, 'FontWeight', 'bold');
