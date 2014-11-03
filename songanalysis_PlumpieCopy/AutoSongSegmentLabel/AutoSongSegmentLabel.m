@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 26-Jun-2014 22:59:20
+% Last Modified by GUIDE v2.5 03-Nov-2014 15:13:33
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -549,6 +549,7 @@ end
 if (sum(Flag) == length(handles.ASSL.ToBeUsedFeatures))
     disp('Loaded calculated feature values from existing files');
     set(handles.SaveDataButton, 'enable', 'on');
+    set(handles.ClusterKlustakwikButton, 'enable', 'on');
     guidata(hObject, handles);
     return;
 end
@@ -562,7 +563,7 @@ SyllNo = 0;
 fprintf('\n');
 for i = 1:length(handles.ASSL.FileName),
     if (mod(i,5) == 0),
-        fprintf('>');
+        fprintf('%i>', i);
     end
     TempFeats = [];
     TempRawFeats = [];
@@ -592,8 +593,9 @@ for i = 1:length(handles.ASSL.FileName),
 end
 fprintf('\n');
 set(handles.SaveDataButton, 'enable', 'on');
-
+set(handles.ClusterKlustakwikButton, 'enable', 'on');
 guidata(hObject, handles);
+
 disp('Finished calculating features');
 
 % --- Executes on button press in SaveFeatValsButton.
@@ -1432,6 +1434,8 @@ for i = 1:length(handles.ASSL.ToBeUsedFeatures),
     delete(OutputFileName, FeatValuesFileName, RawFeatValuesFileName, SyllIndicesFileName, SyllIndexLabelsFileName, RawOutputFileName);
 end
 
+set(handles.ClusterKlustakwikButton, 'enable', 'off');
+
 disp('Finished deleting feature value files');
 
 
@@ -1452,3 +1456,48 @@ function PickBoutsButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 ASSLPickBouts(handles.ASSL);
 guidata(hObject, handles);
+
+
+% --- Executes on button press in ClusterKlustakwikButton.
+function ClusterKlustakwikButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ClusterKlustakwikButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Fid = fopen([handles.ASSL.FileName{1}, '.fet.1'], 'w');
+fprintf(Fid, '%i\n', size(handles.ASSL.FeatValues(:,1:8), 2));
+for i = 1:size(handles.ASSL.FeatValues(:,1:8), 1),
+    for j = 1:size(handles.ASSL.FeatValues(:,1:8), 2),
+        fprintf(Fid, '%g\t', handles.ASSL.FeatValues(i,j));
+    end
+    fprintf(Fid, '\n');
+end
+fclose(Fid);
+
+if (~isfield(handles.ASSL, 'KlustaKwikFile'))
+    msgbox('You have not chosen the KlustaKwik executable file');
+    return;
+else
+    eval(['!', handles.ASSL.KlustaKwikDir, handles.ASSL.KlustaKwikFile, ' ', handles.ASSL.FileName{1}, ' 1 -UseDistributional 0']);
+    Temp = load([handles.ASSL.FileName{1}, '.clu.1']);
+    % Convert numbers to ascii numbers for A-P and a-p - that is a total of
+    % 30 clusters which is the maximum number of clusters that Klustakwik
+    % will generate
+    Temp(find(Temp < 16)) = Temp(find(Temp < 16)) + 64;
+    Temp(find((Temp > 15) & (Temp < 31))) = Temp(find((Temp > 15) & (Temp < 31))) - 15 + 96;
+    
+    handles.ASSL = rmfield(handles.ASSL, 'SyllIndexLabels');
+    handles.ASSL.SyllIndexLabels = char(Temp(2:end));
+end
+guidata(hObject, handles);
+disp(['Clustered syllables into ', num2str(length(unique(Temp))), ' groups']);
+
+% --- Executes on button press in SetKlustaKwikExecButton.
+function SetKlustaKwikExecButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SetKlustaKwikExecButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[handles.ASSL.KlustaKwikFile, handles.ASSL.KlustaKwikDir] = uigetfile('*', 'Choose the klustakwik executable file');
+    
+guidata(hObject, handles);
+disp('Finished setting location of KlustaKwik executable');

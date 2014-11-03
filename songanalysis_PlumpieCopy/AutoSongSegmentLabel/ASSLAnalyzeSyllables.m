@@ -22,7 +22,7 @@ function varargout = ASSLAnalyzeSyllables(varargin)
 
 % Edit the above text to modify the response to help ASSLAnalyzeSyllables
 
-% Last Modified by GUIDE v2.5 27-Oct-2014 12:16:38
+% Last Modified by GUIDE v2.5 03-Nov-2014 16:33:21
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -55,9 +55,6 @@ function ASSLAnalyzeSyllables_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for ASSLAnalyzeSyllables
 handles.output = hObject;
 
-handles.ASSLAS.Colors = 'rgbmc';
-handles.ASSLAS.Symbols = 'o+s^';
-
 if (length(varargin) > 0)
     handles.DataStruct = varargin{1};
 end
@@ -67,50 +64,7 @@ set(handles.XListBox, 'Value', 1);
 set(handles.YListBox, 'String', handles.DataStruct.ToBeUsedFeatures);
 set(handles.YListBox, 'Value', 1);
 
-handles.ASSLAS.FeatNames = cellstr(get(handles.XListBox, 'String'));
-handles.ASSLAS.XVal = get(handles.XListBox, 'Value');
-handles.ASSLAS.YVal = get(handles.YListBox, 'Value');
-
-ASSLASPlotData(handles, 0, [0.5 0.5 0.5], '.', 3, handles.ASSLFeaturePlotAxis);
-
-handles.ASSLAS.UniqueSylls = unique(handles.DataStruct.SyllIndexLabels);
-handles.ASSLAS.UniqueSyllColors = round(mod(0:1:(length(handles.ASSLAS.UniqueSylls)-1), length(handles.ASSLAS.Colors))) + 1;
-handles.ASSLAS.UniqueSyllSymbols = ceil((1:1:length(handles.ASSLAS.UniqueSylls))/length(handles.ASSLAS.Colors));
-
-for i = 1:length(handles.ASSLAS.UniqueSylls),
-    axes(handles.ASSLASLegendAxis);
-    text(1, (length(handles.ASSLAS.UniqueSylls) - i + 1), [handles.ASSLAS.UniqueSylls(i), ' - ', handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(i)), ' - ', num2str(length(find(handles.DataStruct.SyllIndexLabels == handles.ASSLAS.UniqueSylls(i))))], 'Color', handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(i)), 'FontSize', 16, 'FontWeight', 'bold');
-    hold on;
-end
-axis([0.9 1.4 0 length(handles.ASSLAS.UniqueSylls)+1]);
-
-set(handles.SyllableListBox, 'String', [{'All'}; handles.ASSLAS.UniqueSylls]);
-set(handles.SyllableListBox, 'Max', length(handles.ASSLAS.UniqueSylls) + 1);
-
-set(handles.CurrSyllListBox, 'String', handles.ASSLAS.UniqueSylls);
-
-set(handles.PrevNextSyllListBox, 'String', handles.ASSLAS.UniqueSylls);
-set(handles.PrevNextSyllListBox, 'Max', length(handles.ASSLAS.UniqueSylls));
-
-CurrSyll = get(handles.CurrSyllListBox, 'Value');
-
-PrevNextSyll = get(handles.PrevNextSyllListBox, 'Value');
-PrevNext = get(handles.PrevNextSyllMenu, 'Value');
-
-for i = 1:length(PrevNextSyll),
-    if (PrevNext == 1)
-        Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
-    else
-        Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(CurrSyll), handles.ASSLAS.UniqueSylls(PrevNextSyll(i))]);
-    end
-
-    if (i == 1)
-        ClearAxis = 1;
-    else
-        ClearAxis = 0;
-    end
-    ASSLASPlotData(handles, 1, handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))), handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(PrevNext(i))), 4, handles.ASSLNextSyllAxis, ClearAxis, Indices);
-end
+[handles] = RePlotSyllFeatures(handles);
 
 handles.ASSLAS.BoutDefinitions = [{'Treat each new file as a bout'}; {'Use specified inter-bout interval'}];
 handles.ASSLAS.BoutDefinitionChoice = 1;
@@ -125,6 +79,8 @@ set(handles.IndividualFeatPlotChoiceMenu, 'Value', handles.ASSLAS.IndividualFeat
 handles.ASSLAS.InterBoutInterval = 2;
 set(handles.InterBoutIntervalEdit, 'String', num2str(handles.ASSLAS.InterBoutInterval));
 
+[handles] = ReAssignSyllDetails(handles);
+ 
 % Update handles structure
 guidata(hObject, handles);
 
@@ -293,18 +249,6 @@ for i = 1:length(PrevNextSyll),
     end
     ASSLASPlotData(handles, 1, handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))), handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(PrevNextSyll(i))), 4, handles.ASSLNextSyllAxis, ClearAxis, Indices);
 end
-
-axes(handles.SyllAmpWF);
-axis tight;
-
-axes(handles.SyllSpect);
-axis tight;
-
-axes(handles.YFeatSyllStart);
-axis tight;
-
-axes(handles.YFeatSyllEnd);
-axis tight;
 
 guidata(hObject, handles);
 
@@ -510,6 +454,12 @@ SyllTransTable = uitable('Parent', SyllTransProbFigure, 'Data', SyllTransitionPr
 set(SyllTransTable, 'ColumnWidth', ColWidth);
 title('Syllable transition probabilities', 'FontWeight', 'bold', 'FontSize', 12);
 set(gca, 'XTick', []);
+
+figure;
+imagesc(handles.ASSLAS.SyllTransitionProb);
+set(gca, 'XTick', [1:1:length(UniqueLabels)], 'XTickLabel', num2cell(UniqueLabels));
+set(gca, 'YTick', [1:1:length(UniqueLabels)], 'YTickLabel', num2cell(UniqueLabels));
+colorbar;
 guidata(hObject, handles);
 
 % --- Executes on button press in LocateSyllOutliersButton.
@@ -835,3 +785,130 @@ output_txt{4}=['FileName ', [Filename]];
 output_txt{5}=['SyllNo. ', num2str(Syllnum)];
 set(handles.SyllInfoText, 'String', output_txt);
 guidata(hObject, handles);
+
+
+% --- Executes on button press in MergeSyllsButton.
+function MergeSyllsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to MergeSyllsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+SyllsToMerge = inputdlg('Enter the syllables that need to be merged, separated by commas', 'Syllables to merge');
+SyllsToMerge = cell2mat(textscan(SyllsToMerge{1}, '%c', 'DeLimiter', ','));
+
+SyllIndices = [];
+for i = 1:length(SyllsToMerge),
+    TempIndices = find(handles.DataStruct.SyllIndexLabels == SyllsToMerge(i));
+    SyllIndices = [SyllIndices; TempIndices(:)];
+end
+
+if (~isempty(SyllIndices))
+    handles.DataStruct.SyllIndexLabels(SyllIndices) = SyllsToMerge(1);
+end
+
+[handles] = RePlotSyllFeatures(handles);
+[handles] = ReAssignSyllDetails(handles);
+
+guidata(hObject, handles);
+disp('Finished merging syllables');
+
+% --- Executes on button press in ChangeSyllLabelsButton.
+function ChangeSyllLabelsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ChangeSyllLabelsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+SyllsToChange = inputdlg('Enter the syllable that needs to be changed', 'Syllables to change');
+SyllsToChange = SyllsToChange{1};
+
+NewSyllLabel = inputdlg('Enter the new syllable label', 'New syllable label');
+NewSyllLabel = NewSyllLabel{1};
+
+SyllIndices = find(handles.DataStruct.SyllIndexLabels == SyllsToChange);
+
+if (~isempty(SyllIndices))
+    handles.DataStruct.SyllIndexLabels(SyllIndices) = NewSyllLabel;
+end
+
+[handles] = RePlotSyllFeatures(handles);
+[handles] = ReAssignSyllDetails(handles);
+
+guidata(hObject, handles);
+disp('Finished merging syllables');
+
+% --- Executes on button press in ReturnSyllDataButton.
+function ReturnSyllDataButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ReturnSyllDataButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+ASSLMainWindow = findobj('Name', 'AutoSongSegmentLabel');
+if (length(ASSLMainWindow) > 0)
+    ASSLData = guidata(ASSLMainWindow);
+    ASSLData.ASSL.SyllLabels = handles.DataStruct.SyllLabels;
+    ASSLData.ASSL.SyllOnsets = handles.DataStruct.SyllOnsets;
+    ASSLData.ASSL.SyllOffsets = handles.DataStruct.SyllOffsets;
+    ASSLData.ASSL.SyllIndexLabels = handles.DataStruct.SyllIndexLabels;
+    guidata(ASSLMainWindow, ASSLData);
+    msgbox('Returned edit syllable details to Auto Song Segment Label');
+end
+
+% ========== Common function for committing changes to labels, onsets and offsets of every file ==================
+function [handles] = ReAssignSyllDetails(handles)
+
+for i = 1:length(handles.DataStruct.FileName),
+    Indices = find(handles.DataStruct.SyllIndices(:,1) == i);
+    handles.DataStruct.SyllLabels{i} = handles.DataStruct.SyllIndexLabels(Indices)';
+end
+
+disp('Finished reassigning syllable onset, offset, label information');
+
+% ========== Common function for replotting the two axis ==================
+function [handles] = RePlotSyllFeatures(handles)
+
+handles.ASSLAS.Colors = 'rgbmc';
+handles.ASSLAS.Symbols = 'o+sdp<';
+
+handles.ASSLAS.FeatNames = cellstr(get(handles.XListBox, 'String'));
+handles.ASSLAS.XVal = get(handles.XListBox, 'Value');
+handles.ASSLAS.YVal = get(handles.YListBox, 'Value');
+
+ASSLASPlotData(handles, 0, [0.5 0.5 0.5], '.', 3, handles.ASSLFeaturePlotAxis);
+
+handles.ASSLAS.UniqueSylls = unique(handles.DataStruct.SyllIndexLabels);
+handles.ASSLAS.UniqueSyllColors = round(mod(0:1:(length(handles.ASSLAS.UniqueSylls)-1), length(handles.ASSLAS.Colors))) + 1;
+handles.ASSLAS.UniqueSyllSymbols = ceil((1:1:length(handles.ASSLAS.UniqueSylls))/length(handles.ASSLAS.Colors));
+
+cla(handles.ASSLASLegendAxis);
+for i = 1:length(handles.ASSLAS.UniqueSylls),
+    axes(handles.ASSLASLegendAxis);
+    text(1, (length(handles.ASSLAS.UniqueSylls) - i + 1), [handles.ASSLAS.UniqueSylls(i), ' - ', handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(i)), ' - ', num2str(length(find(handles.DataStruct.SyllIndexLabels == handles.ASSLAS.UniqueSylls(i))))], 'Color', handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(i)), 'FontSize', 16, 'FontWeight', 'bold');
+    hold on;
+end
+axis([0.9 1.4 0 length(handles.ASSLAS.UniqueSylls)+1]);
+
+set(handles.SyllableListBox, 'String', [{'All'}; handles.ASSLAS.UniqueSylls]);
+set(handles.SyllableListBox, 'Max', length(handles.ASSLAS.UniqueSylls) + 1);
+
+set(handles.CurrSyllListBox, 'String', handles.ASSLAS.UniqueSylls);
+
+set(handles.PrevNextSyllListBox, 'String', handles.ASSLAS.UniqueSylls);
+set(handles.PrevNextSyllListBox, 'Max', length(handles.ASSLAS.UniqueSylls));
+
+CurrSyll = get(handles.CurrSyllListBox, 'Value');
+
+PrevNextSyll = get(handles.PrevNextSyllListBox, 'Value');
+PrevNext = get(handles.PrevNextSyllMenu, 'Value');
+
+for i = 1:length(PrevNextSyll),
+    if (PrevNext == 1)
+        Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(PrevNextSyll(i)), handles.ASSLAS.UniqueSylls(CurrSyll)]);
+    else
+        Indices = strfind(handles.DataStruct.SyllIndexLabels', [handles.ASSLAS.UniqueSylls(CurrSyll), handles.ASSLAS.UniqueSylls(PrevNextSyll(i))]);
+    end
+
+    if (i == 1)
+        ClearAxis = 1;
+    else
+        ClearAxis = 0;
+    end
+    ASSLASPlotData(handles, 1, handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(PrevNextSyll(i))), handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(PrevNext(i))), 4, handles.ASSLNextSyllAxis, ClearAxis, Indices);
+end
