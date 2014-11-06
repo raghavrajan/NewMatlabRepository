@@ -726,7 +726,16 @@ function PickSyllableButton_Callback(hObject, eventdata, handles)
 % Get syllable
 axes(handles.ASSLFeaturePlotAxis);
 [x, y, button] = ginput(1);
-Num = knnsearch(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal]), [x y]);
+x = (x - mean(handles.DataStruct.FeatValues(:, handles.ASSLAS.XVal)))/std(handles.DataStruct.FeatValues(:, handles.ASSLAS.XVal));
+y = (y - mean(handles.DataStruct.FeatValues(:, handles.ASSLAS.YVal)))/std(handles.DataStruct.FeatValues(:, handles.ASSLAS.YVal));
+
+%Num = knnsearch(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal]), [x y]);
+TempDistances = pdist2(zscore(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal])), [x y]);
+[MinDist, MinDist_Index] = min(TempDistances);
+Num = MinDist_Index;
+
+x = handles.DataStruct.FeatValues(Num, handles.ASSLAS.XVal);
+y = handles.DataStruct.FeatValues(Num, handles.ASSLAS.YVal);
 
 Filenum=handles.DataStruct.SyllIndices(Num,1);
 Syllnum=handles.DataStruct.SyllIndices(Num,2);
@@ -734,7 +743,7 @@ Filename=handles.DataStruct.FileName{Filenum};
 
 % Added code to plot log amplitude and spectrogram of chosen syllable
 [RawData, Fs] = ASSLGetRawData(handles.DataStruct.DirName, Filename, handles.DataStruct.FileType, 1);
-SyllOnset = (handles.DataStruct.SyllOnsets{Filenum}(Syllnum) - 10) * Fs/1000; % take 10ms before syll onset and convert to index
+SyllOnset = round((handles.DataStruct.SyllOnsets{Filenum}(Syllnum) - 10) * Fs/1000); % take 10ms before syll onset and convert to index
 if (SyllOnset < 1)
     SyllOnset = 1;
 end
@@ -742,7 +751,7 @@ if (SyllOnset > length(RawData))
     SyllOnset = length(RawData);
 end
 
-SyllOffset = (handles.DataStruct.SyllOffsets{Filenum}(Syllnum) + 10) * Fs/1000; % take 10ms after syll offset and convert to index
+SyllOffset = round((handles.DataStruct.SyllOffsets{Filenum}(Syllnum) + 10) * Fs/1000); % take 10ms after syll offset and convert to index
 if (SyllOffset < 1)
     SyllOffset = 1;
 end

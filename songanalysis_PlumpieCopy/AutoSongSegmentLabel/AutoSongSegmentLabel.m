@@ -1466,9 +1466,10 @@ function ClusterKlustakwikButton_Callback(hObject, eventdata, handles)
 
 Fid = fopen([handles.ASSL.FileName{1}, '.fet.1'], 'w');
 fprintf(Fid, '%i\n', size(handles.ASSL.FeatValues(:,1:8), 2));
+TempFeatValues = zscore(handles.ASSL.FeatValues(:,1:8));
 for i = 1:size(handles.ASSL.FeatValues(:,1:8), 1),
     for j = 1:size(handles.ASSL.FeatValues(:,1:8), 2),
-        fprintf(Fid, '%g\t', handles.ASSL.FeatValues(i,j));
+        fprintf(Fid, '%g\t', TempFeatValues(i,j));
     end
     fprintf(Fid, '\n');
 end
