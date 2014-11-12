@@ -23,10 +23,13 @@ figure;
 for i = 1:length(INs),
     MeanNumINs(1,i) = mean(INs{i}.NumINs(Motifs{i}.BoutBeginningMotifs));
     STDNumINs(1,i) = std(INs{i}.NumINs(Motifs{i}.BoutBeginningMotifs));
+    disp(['Day #', num2str(i), ': Bout beginning: Mean - ', num2str(MeanNumINs(1,i)), '; STD - ', STDNumINs(1,i)]);
     
     MeanNumINs(2,i) = mean(INs{i}.NumINs(Motifs{i}.WithinBoutMotifs));
     STDNumINs(2,i) = std(INs{i}.NumINs(Motifs{i}.WithinBoutMotifs));
+    disp(['Day #', num2str(i), ': Within bouts: Mean - ', num2str(MeanNumINs(2,i)), '; STD - ', STDNumINs(2,i)]);
 end
+
 BarPlotHandle = bar(MeanNumINs);
 hold on;
 colormap('gray');

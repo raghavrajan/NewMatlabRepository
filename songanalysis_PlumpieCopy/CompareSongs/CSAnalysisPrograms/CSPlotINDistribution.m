@@ -31,12 +31,16 @@ XVals = 0:1:MaxINs;
 Colors = 'rgbcmk';
 Symbols = 'o+>';
 
+Legend = [];
+
 for i = 1:length(INs),
     BoutBeginningINDist(i,:) = histc(INs{i}.NumINs(Motifs{i}.BoutBeginningMotifs), XVals);
     BoutBeginningINDist(i,:) = BoutBeginningINDist(i,:)/sum(BoutBeginningINDist(i,:));
     figure(BoutBeginningFig);
     hold on;
     plot(XVals, BoutBeginningINDist(i,:)*100, [Colors(mod(i-1, length(Colors)) + 1), Symbols(ceil(i/length(Colors))), '-'], 'LineWidth', 2);
+    Temp = inputdlg(['Enter the legend for Day #', num2str(i)], 'Legend');
+    Legend{end+1} = Temp{1};
     
     WithinBoutINDist(i,:) = histc(INs{i}.NumINs(Motifs{i}.WithinBoutMotifs), XVals);
     WithinBoutINDist(i,:) = WithinBoutINDist(i,:)/sum(WithinBoutINDist(i,:));
@@ -51,6 +55,7 @@ title('Bout beginnning', 'FontSize', 16);
 xlabel('Number of INs', 'FontSize', 16);
 ylabel('% of trials', 'FontSize', 16);
 set(gca, 'FontSize', 16);
+legend(Legend);
 
 figure(WithinBoutFig);
 axis([XVals(1) XVals(end) 0 max(WithinBoutINDist(:))*105]);
@@ -58,5 +63,6 @@ title('Within bouts', 'FontSize', 16);
 xlabel('Number of INs', 'FontSize', 16);
 ylabel('% of trials', 'FontSize', 16);
 set(gca, 'FontSize', 16);
+legend(Legend);
 
 disp('Finished plotting IN frequencies');

@@ -729,10 +729,10 @@ axes(handles.ASSLFeaturePlotAxis);
 x = (x - mean(handles.DataStruct.FeatValues(:, handles.ASSLAS.XVal)))/std(handles.DataStruct.FeatValues(:, handles.ASSLAS.XVal));
 y = (y - mean(handles.DataStruct.FeatValues(:, handles.ASSLAS.YVal)))/std(handles.DataStruct.FeatValues(:, handles.ASSLAS.YVal));
 
-%Num = knnsearch(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal]), [x y]);
-TempDistances = pdist2(zscore(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal])), [x y]);
-[MinDist, MinDist_Index] = min(TempDistances);
-Num = MinDist_Index;
+Num = knnsearch(zscore(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal])), [x y]);
+%TempDistances = pdist2(zscore(handles.DataStruct.FeatValues(:,[handles.ASSLAS.XVal handles.ASSLAS.YVal])), [x y]);
+%[MinDist, MinDist_Index] = min(TempDistances);
+%Num = MinDist_Index;
 
 x = handles.DataStruct.FeatValues(Num, handles.ASSLAS.XVal);
 y = handles.DataStruct.FeatValues(Num, handles.ASSLAS.YVal);
