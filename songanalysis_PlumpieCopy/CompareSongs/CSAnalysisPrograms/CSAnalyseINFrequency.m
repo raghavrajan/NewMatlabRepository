@@ -20,14 +20,25 @@ MotifInitiationSyllArray = cellstr(char(ones(length(CSData.AllLabels), 1)*double
 
 figure;
 
+AllBeginningINs = [];
+AllBeginningINGroups = [];
+
+AllWithinINs = [];
+AllWithinINGroups = [];
 for i = 1:length(INs),
+    AllBeginningINs = [AllBeginningINs; INs{i}.NumINs(Motifs{i}.BoutBeginningMotifs)'];
+    AllBeginningINGroups = [AllBeginningINGroups; ones(length(Motifs{i}.BoutBeginningMotifs), 1)*i];
+    
+    AllWithinINs = [AllWithinINs; INs{i}.NumINs(Motifs{i}.WithinBoutMotifs)'];
+    AllWithinINGroups = [AllWithinINGroups; ones(length(Motifs{i}.WithinBoutMotifs), 1)*i];
+    
     MeanNumINs(1,i) = mean(INs{i}.NumINs(Motifs{i}.BoutBeginningMotifs));
     STDNumINs(1,i) = std(INs{i}.NumINs(Motifs{i}.BoutBeginningMotifs));
-    disp(['Day #', num2str(i), ': Bout beginning: Mean - ', num2str(MeanNumINs(1,i)), '; STD - ', STDNumINs(1,i)]);
+    disp(['Day #', num2str(i), ': Bout beginning: Mean - ', num2str(MeanNumINs(1,i)), '; STD - ', num2str(STDNumINs(1,i))]);
     
     MeanNumINs(2,i) = mean(INs{i}.NumINs(Motifs{i}.WithinBoutMotifs));
     STDNumINs(2,i) = std(INs{i}.NumINs(Motifs{i}.WithinBoutMotifs));
-    disp(['Day #', num2str(i), ': Within bouts: Mean - ', num2str(MeanNumINs(2,i)), '; STD - ', STDNumINs(2,i)]);
+    disp(['Day #', num2str(i), ': Within bouts: Mean - ', num2str(MeanNumINs(2,i)), '; STD - ', num2str(STDNumINs(2,i))]);
 end
 
 BarPlotHandle = bar(MeanNumINs);
@@ -44,4 +55,23 @@ set(gca, 'XTick', [1 2], 'XTickLabel', [{'Bout Beginning'}; {'Within Bouts'}], '
 title('Number of INs', 'FontSize', 16);
 ylabel('Number of INs', 'FontSize', 16);
 
+[p, table, stats] = anova1(AllBeginningINs, AllBeginningINGroups, 'off');
+disp(['Bout beginning INs : p-value = ', num2str(p)]);
+if (max(AllBeginningINGroups) > 2)
+    if (p < 0.05)
+        figure;
+        multcompare(stats);
+        title('Post-hoc comparison of bout beginning IN data');
+    end
+end
+
+[p, table, stats] = anova1(AllWithinINs, AllWithinINGroups, 'off');
+disp(['Within bout INs : p-value = ', num2str(p)]);
+if (max(AllWithinINGroups) > 2)
+    if (p < 0.05)
+        figure;
+        multcompare(stats);
+        title('Post-hoc comparison of within bout IN data');
+    end
+end
 disp('Finished plotting IN frequencies');
