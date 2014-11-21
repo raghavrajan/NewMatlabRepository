@@ -1,0 +1,98 @@
+function [NumSylls] = MA_AnalyseSavedData_NumSyllables(Parameters, TitleString)
+
+%====== Analyse number of syllables ========================
+
+PrePostDays = [1 2; 2 3; 1 2; 1 2; 1 2; 1 2; 1 2; 1 2; 2 5; 1 2; 1 2; 1 2; 1 2; 1 2; 1 2];
+
+for ParameterNo = 1:length(Parameters),
+    for i = 1:Parameters(ParameterNo).NoPreDays,
+        BoutIndex = 1;
+        for j = 1:length(Parameters(ParameterNo).PreDirBoutLens{i}),
+            for k = 1:length(Parameters(ParameterNo).PreDirBoutLens{i}{j}),
+                SyllableIndices = find((Parameters(ParameterNo).PreDirOnsets{i}{j} >= Parameters(ParameterNo).PreDirBoutOnsets{i}{j}(k)) & (Parameters(ParameterNo).PreDirOnsets{i}{j} <= Parameters(ParameterNo).PreDirBoutOffsets{i}{j}(k)));
+                NumSylls(ParameterNo).Dir{i}(BoutIndex) = length(SyllableIndices);
+                BoutIndex = BoutIndex + 1;
+            end
+        end
+
+        BoutIndex = 1;
+        for j = 1:length(Parameters(ParameterNo).PreUnDirBoutLens{i}),
+            for k = 1:length(Parameters(ParameterNo).PreUnDirBoutLens{i}{j}),
+                SyllableIndices = find((Parameters(ParameterNo).PreUnDirOnsets{i}{j} >= Parameters(ParameterNo).PreUnDirBoutOnsets{i}{j}(k)) & (Parameters(ParameterNo).PreUnDirOnsets{i}{j} <= Parameters(ParameterNo).PreUnDirBoutOffsets{i}{j}(k)));
+                NumSylls(ParameterNo).UnDir{i}(BoutIndex) = length(SyllableIndices);
+                BoutIndex = BoutIndex + 1;
+            end
+        end
+    end
+
+
+    for i = 1:Parameters(ParameterNo).NoPostDays,
+        BoutIndex = 1;
+        for j = 1:length(Parameters(ParameterNo).PostDirBoutLens{i}),
+            for k = 1:length(Parameters(ParameterNo).PostDirBoutLens{i}{j}),
+                SyllableIndices = find((Parameters(ParameterNo).PostDirOnsets{i}{j} >= Parameters(ParameterNo).PostDirBoutOnsets{i}{j}(k)) & (Parameters(ParameterNo).PostDirOnsets{i}{j} <= Parameters(ParameterNo).PostDirBoutOffsets{i}{j}(k)));
+                NumSylls(ParameterNo).Dir{i + Parameters(ParameterNo).NoPreDays}(BoutIndex) = length(SyllableIndices);
+                BoutIndex = BoutIndex + 1;
+            end
+        end
+
+        BoutIndex = 1;
+        for j = 1:length(Parameters(ParameterNo).PostUnDirBoutLens{i}),
+            for k = 1:length(Parameters(ParameterNo).PostUnDirBoutLens{i}{j}),
+                SyllableIndices = find((Parameters(ParameterNo).PostUnDirOnsets{i}{j} >= Parameters(ParameterNo).PostUnDirBoutOnsets{i}{j}(k)) & (Parameters(ParameterNo).PostUnDirOnsets{i}{j} <= Parameters(ParameterNo).PostUnDirBoutOffsets{i}{j}(k)));
+                NumSylls(ParameterNo).UnDir{i + Parameters(ParameterNo).NoPreDays}(BoutIndex) = length(SyllableIndices);
+                BoutIndex = BoutIndex + 1;
+            end
+        end
+    end
+end
+
+for i = 1:length(NumSylls),
+    DirMedians(i,1) = NumSylls(i).Dir.Median(PrePostDays(i,1));
+    DirMedians(i,2) = BoutLength(i).Dir.Median(PrePostDays(i,2));
+    
+    UnDirMedians(i,1) = BoutLength(i).UnDir.Median(PrePostDays(i,1));
+    UnDirMedians(i,2) = BoutLength(i).UnDir.Median(PrePostDays(i,2));
+end
+
+RatioFigure = figure;
+set(gcf, 'Color', 'w');
+plot([Parameters(ParameterNo).PercentTotalHVCremaining], DirMedians(:,2)./DirMedians(:,1), 'ro', 'MarkerSize', 7, 'MarkerFaceColor', 'r');
+[Dir_r, Dir_p] = corrcoef([Parameters(ParameterNo).PercentTotalHVCremaining], DirMedians(:,2)./DirMedians(:,1));
+
+hold on;
+plot([Parameters(ParameterNo).PercentTotalHVCremaining], UnDirMedians(:,2)./UnDirMedians(:,1), 'bo', 'MarkerSize', 7, 'MarkerFaceColor', 'b');
+[UnDir_r, UnDir_p] = corrcoef([Parameters(ParameterNo).PercentTotalHVCremaining], UnDirMedians(:,2)./UnDirMedians(:,1));
+
+PlotAxis = [0 (1.05*max([Parameters(ParameterNo).PercentTotalHVCremaining])) 0 max([(DirMedians(:,2)./DirMedians(:,1)); (UnDirMedians(:,2)./UnDirMedians(:,1))])];
+
+SetLabelsForFigure(RatioFigure, 'YLabel', 'Ratio of median Bout Length (Post/Pre)', 'XLabel', 'Percent HVC remaining', 'LineX', '1', 'Legend', 'Directed Undirected', 'SouthEast', 'Axis', num2str(PlotAxis));
+SetLabelsForFigure(RatioFigure, 'Text', ['Dir: r=', num2str(Dir_r(1,2)), '; p=', num2str(Dir_p(1,2))], [num2str(PlotAxis(2)/2), ' ', num2str(0.95*PlotAxis(4))], 'Text', ['Undir: r=', num2str(UnDir_r(1,2)), '; p=', num2str(UnDir_p(1,2))], [num2str(PlotAxis(2)/2), ' ', num2str(0.85*PlotAxis(4))]);
+print(RatioFigure, '-dpng', '-r500', [TitleString, '.BoutLength.PostPreRatios.png']);
+
+BarPlotFigure = figure;
+set(gcf, 'Color', 'w');
+hold on;
+for i = 1:size(DirMedians, 2),
+    DirBar(i) = bar(i, mean(DirMedians(:,i)/1000));
+    set(DirBar(i), 'FaceColor', 'none', 'EdgeColor', 'r');
+    errorbar(i, mean(DirMedians(:,i)/1000), std(DirMedians(:,i)/1000)/sqrt(size(DirMedians, 1)), 'ro');
+end
+plot(repmat([1.2 1.8], 15, 1)', (DirMedians/1000)', 'ro-')
+
+for i = 1:size(UnDirMedians, 2),
+    UnDirBar(i) = bar(i+3, mean(UnDirMedians(:,i)/1000));
+    set(UnDirBar(i), 'FaceColor', 'none', 'EdgeColor', 'b');
+    errorbar(i+3, mean(UnDirMedians(:,i)/1000), std(UnDirMedians(:,i)/1000)/sqrt(size(UnDirMedians, 1)), 'bo');
+end
+plot(repmat([4.2 4.8], 15, 1)', (UnDirMedians/1000)', 'bo-');
+
+Dir_p = signrank(DirMedians(:,1), DirMedians(:,2));
+UnDir_p = signrank(UnDirMedians(:,1), UnDirMedians(:,2));
+
+PlotAxis = [0.5 5.5 0 (1.05*max([UnDirMedians(:); DirMedians(:)])/1000)];
+SetLabelsForFigure(BarPlotFigure, 'YLabel', 'Bout Length (sec)', 'XTickNums', '1 2 4 5', 'XTickLabel', 'Pre Post Pre Post', 'Axis', num2str(PlotAxis));
+SetLabelsForFigure(BarPlotFigure, 'Text', ['Directed (p=', num2str(Dir_p), ')'], ['0.9 ', num2str(PlotAxis(4)/1.01)], 'Text', ['Undirected (p=', num2str(UnDir_p), ')'], ['3.9 ', num2str(PlotAxis(4)/1.01)]);
+print(BarPlotFigure, '-dpng', '-r500', [TitleString, '.BoutLength.BarPlot.png']);
+
+disp('Finished plotting bout lengths');

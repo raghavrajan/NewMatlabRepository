@@ -131,7 +131,7 @@ end
 Index = find(cellfun(@length, strfind(Temp, 'Syllable templates file:')));
 if (~isempty(Index))
     ColonIndex = find(Temp{Index} == ':');
-    Parameters.SyllableTemplatesFileName = strtrim(Temp{Index}(ColonIndex+1:end));
+    Parameters.SyllableTemplateFileName = strtrim(Temp{Index}(ColonIndex+1:end));
 end
 %==========================================================================
 
