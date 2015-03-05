@@ -1,5 +1,6 @@
 function [onsets, offsets] = ASSLSegmentData(smooth, Fs, min_int, min_dur, threshold)
 
+threshold = threshold(1);
 % segment takes smoothed filtered song and returns vectors of note onsets and offsets
 % values are in ms 
 

@@ -22,7 +22,7 @@ function varargout = ASSLReviewTemplateMatching(varargin)
 
 % Edit the above text to modify the response to help ASSLReviewTemplateMatching
 
-% Last Modified by GUIDE v2.5 03-Sep-2014 14:01:52
+% Last Modified by GUIDE v2.5 04-Mar-2015 15:09:44
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -87,7 +87,7 @@ if (nargin >= 1)
 
     Time = (1:1:length(RawData))/Fs;
 
-    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
 %    set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}]);
     [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
@@ -145,7 +145,7 @@ end
 if (SyllableChanged == 1)
     [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
-    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
     [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
     
@@ -192,7 +192,7 @@ end
 if (SyllableChanged == 1)
     [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
-    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
     
     NewThresholdCrossings = Time(find(LogAmplitude < NewThreshold))*1000;
     NewSyllableStart = NewThresholdCrossings(find(NewThresholdCrossings < x(1), 1, 'last'));
@@ -275,7 +275,7 @@ end
 if (SyllableChanged == 1)
     [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
-    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
     [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
     
@@ -319,7 +319,7 @@ if (button ~= 113)
     else
         [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
-        [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+        [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
         SyllStart = round(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart) * Fs/1000);
         SyllEnd = round(handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart) * Fs/1000);
@@ -390,7 +390,7 @@ end
 if (SyllableChanged == 1)
     [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
-    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
     [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
     
@@ -448,7 +448,7 @@ end
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, ' : #', num2str(handles.ASSLReviewTMResults.FileIndex), ' of ', num2str(length(handles.ASSLReviewTMResults.FileName)), ' files']);
 [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
 [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
@@ -475,7 +475,7 @@ end
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, ' : #', num2str(handles.ASSLReviewTMResults.FileIndex), ' of ', num2str(length(handles.ASSLReviewTMResults.FileName)), ' files']);
 [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
 [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
@@ -615,7 +615,7 @@ while (Flag == 1)
     if (SyllableChanged == 1)
         [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
-        [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+        [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
         [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
         
@@ -680,7 +680,7 @@ while (Flag == 1)
     if (SyllableChanged == 1)
         [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
-        [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+        [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
         NewThresholdCrossings = Time(find(LogAmplitude < NewThreshold))*1000;
         NewSyllableStart = NewThresholdCrossings(find(NewThresholdCrossings < x(1), 1, 'last'));
@@ -738,7 +738,7 @@ end
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, ' : #', num2str(handles.ASSLReviewTMResults.FileIndex), ' of ', num2str(length(handles.ASSLReviewTMResults.FileName)), ' files']);
 [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
 [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
@@ -816,7 +816,7 @@ end
 if (SyllableChanged == 1)
     [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
-    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
     [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
@@ -847,7 +847,7 @@ handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} =
 
 [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
 [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
 
@@ -915,7 +915,7 @@ handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} =
 
 [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
 
 [handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}] = ASSLSegmentDataAronovFee(LogAmplitude, Fs, handles.ASSLReviewTMResults.MinInt, handles.ASSLReviewTMResults.MinDur, handles.ASSLReviewTMResults.Threshold{handles.ASSLReviewTMResults.FileIndex});
 
@@ -937,6 +937,70 @@ axis(handles.ASSLReviewTMResults.ZoomLabelAxisLimits);
 
 axes(handles.ReviewAmplitudeAxis);
 axis(handles.ASSLReviewTMResults.ZoomAmpAxisLimits);
+    
+set(handles.InstructionsTextLabel, 'String', 'Instructions:');
+guidata(hObject, handles);
+
+
+% --- Executes on button press in ChangeMultSyllLabels.
+function ChangeMultSyllLabels_Callback(hObject, eventdata, handles)
+% hObject    handle to ChangeMultSyllLabels (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.ASSLReviewTMResults.PrevSyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOnsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex};
+
+Flag = 1;
+
+set(handles.InstructionsTextLabel, 'String', 'Instructions: First click within the axes and then type a common label for all new syllables');
+axes(handles.ReviewSpecAxis);
+[x, y, NewLabel] = ginput(2);
+
+NewLabel = NewLabel(2);
+
+while (Flag == 1)
+    set(handles.InstructionsTextLabel, 'String', 'Instructions: Left click within individual syllables whose label needs to be changed; right click when done');
+
+    SyllableChanged = 0;
+
+    axes(handles.ReviewSpecAxis);
+    [x, y, button] = ginput(1);
+    
+    if (button == 3)
+        Flag = 0;
+        break;
+    end
+    
+    x(1) = x(1) * 1000;
+
+    SyllableStart = find(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} <= x(1), 1, 'last');
+    if (x(1) > handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart))
+        disp('Click within a syllable');
+    else
+        handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(SyllableStart) = NewLabel;
+        SyllableChanged = 1;
+    end
+
+    if (SyllableChanged == 1)
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        Time = (1:1:length(RawData))/Fs;
+        [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting);
+
+        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
+        
+        axes(handles.ReviewSpecAxis);
+        axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
+
+        axes(handles.ReviewLabelAxis);
+        axis(handles.ASSLReviewTMResults.ZoomLabelAxisLimits);
+
+        axes(handles.ReviewAmplitudeAxis);
+        axis(handles.ASSLReviewTMResults.ZoomAmpAxisLimits);
+        guidata(hObject, handles);
+    end
+end
     
 set(handles.InstructionsTextLabel, 'String', 'Instructions:');
 guidata(hObject, handles);

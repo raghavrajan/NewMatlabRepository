@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 03-Nov-2014 15:13:33
+% Last Modified by GUIDE v2.5 24-Feb-2015 13:04:56
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -83,11 +83,14 @@ handles.ASSL.FFTWinOverlapTempMatch = str2double(get(handles.FFTWinOverlapTempMa
 handles.ASSL.FFTWinSizeTempMatch = str2double(get(handles.FFTWinSizeTempMatchEdit, 'String'));
 
 handles.ASSL.AutoThreshold = get(handles.AutoThresholdButton, 'Value');
+handles.ASSL.FixedThreshold(1) = get(handles.UpperThresholdEdit, 'Value');
+handles.ASSL.FixedThreshold(2) = get(handles.LowerThresholdEdit, 'Value');
 if (handles.ASSL.AutoThreshold == 0)
-    set(handles.ThresholdEdit, 'Enable', 'on');
-    handles.ASSL.FixedThreshold = get(handles.ThresholdEdit, 'Value');
+    set(handles.UpperThresholdEdit, 'Enable', 'on');
+    set(handles.LowerThresholdEdit, 'Enable', 'on');
 else
-    set(handles.ThresholdEdit, 'Enable', 'off');
+    set(handles.UpperThresholdEdit, 'Enable', 'off');
+    set(handles.LowerThresholdEdit, 'Enable', 'off');
 end
 
 ProgramDir = which('AutoSongSegmentLabel');
@@ -793,6 +796,18 @@ for i = 1:length(handles.ASSL.FileName),
         end
     end
     SyllableIndex = SyllableIndex + length(handles.ASSL.SyllOnsets{i});
+
+    % Now write labels to note file
+    onsets = handles.ASSL.SyllOnsets{i};
+    offsets = handles.ASSL.SyllOffsets{i};
+    labels = handles.ASSL.SyllLabels{i};
+    threshold = handles.ASSL.Threshold{i};
+    sm_win = handles.ASSL.FFTWinSizeSegmenting;
+    min_int = handles.ASSL.MinInt;
+    min_dur = handles.ASSL.MinDur;
+    save([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int');
+    clear onsets offsets labels threshold sm_win min_int min_dur;
+    
     fprintf('\n');
 end    
 
@@ -1095,11 +1110,13 @@ function ManualThresholdButton_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of ManualThresholdButton
 if (get(hObject, 'Value') == 1)
-    set(handles.ThresholdEdit, 'Enable', 'on');
+    set(handles.UpperThresholdEdit, 'Enable', 'on');
+    set(handles.LowerThresholdEdit, 'Enable', 'on');
     handles.ASSL.AutoThreshold = 0;
     set(handles.AutoThresholdButton, 'Value', 0);
 else
-    set(handles.ThresholdEdit, 'Enable', 'off');
+    set(handles.UpperThresholdEdit, 'Enable', 'off');
+    set(handles.LowerThresholdEdit, 'Enable', 'off');
     handles.ASSL.AutoThreshold = 1;
     set(handles.AutoThresholdButton, 'Value', 1);    
 end
@@ -1113,31 +1130,33 @@ function AutoThresholdButton_Callback(hObject, eventdata, handles)
 
 % Hint: get(hObject,'Value') returns toggle state of AutoThresholdButton
 if (get(hObject, 'Value') == 1)
-    set(handles.ThresholdEdit, 'Enable', 'off');
+    set(handles.UpperThresholdEdit, 'Enable', 'off');
+    set(handles.LowerThresholdEdit, 'Enable', 'off');
     handles.ASSL.AutoThreshold = 0;
     set(handles.ManualThresholdButton, 'Value', 0);
 else
-    set(handles.ThresholdEdit, 'Enable', 'on');
+    set(handles.UpperThresholdEdit, 'Enable', 'on');
+    set(handles.LowerThresholdEdit, 'Enable', 'on');
     handles.ASSL.AutoThreshold = 0;
     set(handles.ManualThresholdButton, 'Value', 1);    
 end
 guidata(hObject, handles);
 
 
-function ThresholdEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to ThresholdEdit (see GCBO)
+function UpperThresholdEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to UpperThresholdEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-% Hints: get(hObject,'String') returns contents of ThresholdEdit as text
-%        str2double(get(hObject,'String')) returns contents of ThresholdEdit as a double
-handles.ASSL.FixedThreshold = str2double(get(hObject, 'String'));
+% Hints: get(hObject,'String') returns contents of UpperThresholdEdit as text
+%        str2double(get(hObject,'String')) returns contents of UpperThresholdEdit as a double
+handles.ASSL.FixedThreshold(1) = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
 
 % --- Executes during object creation, after setting all properties.
-function ThresholdEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to ThresholdEdit (see GCBO)
+function UpperThresholdEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to UpperThresholdEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -1502,3 +1521,46 @@ function SetKlustaKwikExecButton_Callback(hObject, eventdata, handles)
     
 guidata(hObject, handles);
 disp('Finished setting location of KlustaKwik executable');
+
+
+% --- Executes on button press in DeleteNoteFilesButton.
+function DeleteNoteFilesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to DeleteNoteFilesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.FileName),
+    if (handles.ASSL.NoteFileDirName(end) == Filesep)
+        delete([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat']);
+    else
+        delete([handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{i}, '.not.mat']);
+    end
+end
+
+disp('Finished deleting notes files');
+
+
+
+function LowerThresholdEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to LowerThresholdEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of LowerThresholdEdit as text
+%        str2double(get(hObject,'String')) returns contents of LowerThresholdEdit as a double
+handles.ASSL.FixedThreshold(2) = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function LowerThresholdEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to LowerThresholdEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
