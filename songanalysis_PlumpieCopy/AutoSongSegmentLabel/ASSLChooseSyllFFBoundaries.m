@@ -22,7 +22,7 @@ function varargout = ASSLChooseSyllFFBoundaries(varargin)
 
 % Edit the above text to modify the response to help ASSLChooseSyllFFBoundaries
 
-% Last Modified by GUIDE v2.5 18-Apr-2014 22:51:17
+% Last Modified by GUIDE v2.5 16-Apr-2015 13:12:28
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -76,6 +76,8 @@ handles.ASSLCSFFB.SyllIndex = 1;
 handles.ASSLCSFFB.NumExamples = 3;
 set(handles.NumExamplesEdit, 'String', num2str(handles.ASSLCSFFB.NumExamples));
 
+handles.ASSLCSFFB.CurrentStartIndex = 1;
+
 set(handles.SyllableIdentityLabel, 'String', ['Syllable ', handles.ASSLCSFFB.UniqueSyllLabels(handles.ASSLCSFFB.SyllIndex), ': #', num2str(handles.ASSLCSFFB.SyllIndex), ' of ', num2str(length(handles.ASSLCSFFB.UniqueSyllLabels)), ' syllables']);
 
 [handles.ASSLCSFFB.FFSyllBoundaries, handles.DataStruct.FeatValues(:,end)]  = CalculatePlotSyllFFBoundaries(handles);
@@ -119,6 +121,8 @@ if (handles.ASSLCSFFB.SyllIndex == length(handles.ASSLCSFFB.UniqueSyllLabels))
 else
     handles.ASSLCSFFB.FFBoundaryLimits(handles.ASSLCSFFB.SyllIndex, :) = [handles.ASSLCSFFB.StartLimit handles.ASSLCSFFB.EndLimit];
     handles.ASSLCSFFB.SyllIndex = handles.ASSLCSFFB.SyllIndex + 1;
+    
+    handles.ASSLCSFFB.CurrentStartIndex = 1;
     
     handles.ASSLCSFFB.StartLimit = 0;
     set(handles.StartLimitEdit, 'String', num2str(handles.ASSLCSFFB.StartLimit));
@@ -226,6 +230,8 @@ function NumExamplesEdit_Callback(hObject, eventdata, handles)
 %        str2double(get(hObject,'String')) returns contents of NumExamplesEdit as a double
 
 handles.ASSLCSFFB.NumExamples = str2double(get(hObject, 'String'));
+set(handles.NextButton, 'String', ['Next ', num2str(handles.ASSLCSFFB.NumExamples)]);
+set(handles.PrevButton, 'String', ['Prev ', num2str(handles.ASSLCSFFB.NumExamples)]);
 guidata(hObject, handles);
 
 % --- Executes during object creation, after setting all properties.
@@ -239,3 +245,28 @@ function NumExamplesEdit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+% --- Executes on button press in NextButton.
+function NextButton_Callback(hObject, eventdata, handles)
+% hObject    handle to NextButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.ASSLCSFFB.CurrentStartIndex = handles.ASSLCSFFB.CurrentStartIndex + handles.ASSLCSFFB.NumExamples;
+if (handles.ASSLCSFFB.CurrentStartIndex < 0)
+    handles.ASSLCSFFB.CurrentStartIndex = 1;
+end
+ASSLPlotSyllFFBoundaries(handles);
+guidata(hObject, handles);
+
+% --- Executes on button press in PrevButton.
+function PrevButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PrevButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+handles.ASSLCSFFB.CurrentStartIndex = handles.ASSLCSFFB.CurrentStartIndex - handles.ASSLCSFFB.NumExamples;
+if (handles.ASSLCSFFB.CurrentStartIndex < 0)
+    handles.ASSLCSFFB.CurrentStartIndex = 1;
+end
+ASSLPlotSyllFFBoundaries(handles);
+guidata(hObject, handles);
