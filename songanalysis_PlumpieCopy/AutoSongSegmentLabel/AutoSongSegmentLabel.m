@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 24-Feb-2015 13:04:56
+% Last Modified by GUIDE v2.5 30-Jun-2015 15:17:49
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -83,8 +83,8 @@ handles.ASSL.FFTWinOverlapTempMatch = str2double(get(handles.FFTWinOverlapTempMa
 handles.ASSL.FFTWinSizeTempMatch = str2double(get(handles.FFTWinSizeTempMatchEdit, 'String'));
 
 handles.ASSL.AutoThreshold = get(handles.AutoThresholdButton, 'Value');
-handles.ASSL.FixedThreshold(1) = get(handles.UpperThresholdEdit, 'Value');
-handles.ASSL.FixedThreshold(2) = get(handles.LowerThresholdEdit, 'Value');
+handles.ASSL.FixedThreshold(1) = str2double(get(handles.UpperThresholdEdit, 'String'));
+handles.ASSL.FixedThreshold(2) = str2double(get(handles.LowerThresholdEdit, 'String'));
 if (handles.ASSL.AutoThreshold == 0)
     set(handles.UpperThresholdEdit, 'Enable', 'on');
     set(handles.LowerThresholdEdit, 'Enable', 'on');
@@ -92,6 +92,9 @@ else
     set(handles.UpperThresholdEdit, 'Enable', 'off');
     set(handles.LowerThresholdEdit, 'Enable', 'off');
 end
+
+handles.ASSL.LoPassCutOff = str2double(get(handles.LoPassCutOffEdit, 'String'));
+handles.ASSL.HiPassCutOff = str2double(get(handles.HiPassCutOffEdit, 'String'));
 
 ProgramDir = which('AutoSongSegmentLabel');
 SlashIndex = find((ProgramDir == '/') | (ProgramDir == '\'));
@@ -272,7 +275,7 @@ end
 
 Time = (1:1:length(RawData))/Fs;
 
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
 
 set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
 
@@ -375,7 +378,7 @@ for i = 1:length(handles.ASSL.FileName),
     handles.ASSL.FileDur{i} = length(RawData)/Fs;
     
     Time = (1:1:length(RawData))/Fs;
-    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
     
     if (handles.ASSL.AutoThreshold == 0)
         handles.ASSL.Threshold{i} = handles.ASSL.FixedThreshold;
@@ -396,7 +399,7 @@ set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileN
 [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
 
 [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
 
@@ -815,7 +818,7 @@ set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileN
 [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
 
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
 
 [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex}, handles.ASSL.SyllLabels{handles.ASSL.FileIndex});
 
@@ -1285,7 +1288,7 @@ for i = 1:length(handles.ASSL.FileName),
     
     Time = (1:1:length(RawData))/Fs;
     
-    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
     
     if (handles.ASSL.AutoThreshold == 0)
         handles.ASSL.Threshold{i} = handles.ASSL.FixedThreshold;
@@ -1313,7 +1316,7 @@ set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileN
 [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
 Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting);
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
 
 [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
 
@@ -1556,6 +1559,60 @@ guidata(hObject, handles);
 % --- Executes during object creation, after setting all properties.
 function LowerThresholdEdit_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to LowerThresholdEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+% --- Executes on button press in ReviewIndividualSyllButton.
+function ReviewIndividualSyllButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ReviewIndividualSyllButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+function LoPassCutOffEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to LoPassCutOffEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of LoPassCutOffEdit as text
+%        str2double(get(hObject,'String')) returns contents of LoPassCutOffEdit as a double
+handles.ASSL.LoPassCutOff = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function LoPassCutOffEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to LoPassCutOffEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+
+function HiPassCutOffEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to LoPassCutOffEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of LoPassCutOffEdit as text
+%        str2double(get(hObject,'String')) returns contents of LoPassCutOffEdit as a double
+handles.ASSL.HiPassCutOff = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function HiPassCutOffEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to LoPassCutOffEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
