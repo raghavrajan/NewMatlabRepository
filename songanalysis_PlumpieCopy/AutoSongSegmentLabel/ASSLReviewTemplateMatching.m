@@ -1066,9 +1066,9 @@ if (DeleteSylls == 1)
     NewLabel = inputdlg('Type the new syllable label', 'New syllable label');
 
     Syllables = find((handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} >= LeftLimit) & (handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} <= RightLimit));
-    Syllables = Syllables(find(handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(Syllables) == OriginalLabel));
+    Syllables = Syllables(find(handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(Syllables) == OriginalLabel{1}));
     
-    handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(Syllables) = NewLabel;
+    handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(Syllables) = NewLabel{1};
     SyllableChanged = 1;
 end
 
