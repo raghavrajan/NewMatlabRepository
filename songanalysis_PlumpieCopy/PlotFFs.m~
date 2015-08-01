@@ -1,5 +1,0 @@
-function [] = PlotFFs(DirectoryName, Syll, Index)
-
-cd(DirectoryName);
-
-Files = dir('*
