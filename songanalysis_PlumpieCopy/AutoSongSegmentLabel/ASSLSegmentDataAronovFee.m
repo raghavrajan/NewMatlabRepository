@@ -1,5 +1,13 @@
 function [onsets, offsets] = ASSLSegmentDataAronovFee(smooth, Fs, min_int, min_dur, threshold)
 
+% If threshold is < median(data), then return empty onsets and offsets as
+% this means the threshold is too low.
+if (threshold(1) < median(smooth))
+    onsets = [];
+    offsets = [];
+    return;
+end
+
 % segment takes smoothed filtered song and returns vectors of note onsets and offsets
 % values are in ms 
 
