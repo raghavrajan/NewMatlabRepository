@@ -92,7 +92,7 @@ time_spect = [t_min, t_max];
 figure;
 set(gcf, 'Color', 'w');
 set(gcf, 'Position', [153 440 893 269]);
-axes('Position',[0.075 0.2 0.9 0.7]);
+axes('Position',[0.085 0.2 0.89 0.63]);
 cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -55, ...
         0, 2, ColourMap, 'classic');
 axis([t_min t_max 300 8000]);
