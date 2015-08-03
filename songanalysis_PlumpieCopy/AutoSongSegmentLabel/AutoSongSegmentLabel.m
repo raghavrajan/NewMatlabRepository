@@ -698,6 +698,17 @@ for i = 1:length(handles.ASSL.FileName),
         handles.ASSL.SyllLabels{i} = [];
         continue;
     end
+    
+    if (exist([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'file'))
+        Temp = load([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat']);
+        if (isfield(Temp, 'template_match'))
+            if (Temp.template_match == 1)
+                fprintf('%s: Already done\n', [num2str(i), ':', handles.ASSL.FileName{i}]);
+                continue;
+            end
+        end
+    end
+    
     handles.ASSL.SyllableTemplateMatches{i} = [];
 
     fprintf('%s:', [num2str(i), ':', handles.ASSL.FileName{i}]); 
@@ -808,7 +819,8 @@ for i = 1:length(handles.ASSL.FileName),
     sm_win = handles.ASSL.FFTWinSizeSegmenting;
     min_int = handles.ASSL.MinInt;
     min_dur = handles.ASSL.MinDur;
-    save([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int');
+    template_match = 1;
+    save([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int', 'template_match');
     clear onsets offsets labels threshold sm_win min_int min_dur;
     
     fprintf('\n');
