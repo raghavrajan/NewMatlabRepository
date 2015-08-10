@@ -114,8 +114,8 @@ while 1
        
       
        %if notefile exists, get it
-       if exist([notefile])
-           load(notefile);          %Fs, onsets, offsets and labels are defined
+       if exist(fullfile('ASSLNoteFiles', [notefile, '.not.mat']))
+           load(fullfile('ASSLNoteFiles', [notefile, '.not.mat']));          %Fs, onsets, offsets and labels are defined
        else disp(['cannot find ',notefile])
        end
        
@@ -126,7 +126,7 @@ while 1
        
        %get soundfile name
        end_file=findstr('.not.mat',notefile);
-       rootfile=notefile(1:end_file-1);
+       rootfile=notefile;
        soundfile=[rootfile,'.filt'];
        
        %get the sound
@@ -212,7 +212,7 @@ while 1
                 figure
                 if (gcf > 30)
                     uiwait(gcf);
-                    c;
+                    close all;
                 end
             end
 %             specgram(syllable,300,Fs,280,250)

@@ -22,7 +22,7 @@ function varargout = ASSLChooseSyllFFBoundaries(varargin)
 
 % Edit the above text to modify the response to help ASSLChooseSyllFFBoundaries
 
-% Last Modified by GUIDE v2.5 16-Apr-2015 13:12:28
+% Last Modified by GUIDE v2.5 10-Aug-2015 22:23:22
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -76,6 +76,11 @@ handles.ASSLCSFFB.SyllIndex = 1;
 handles.ASSLCSFFB.NumExamples = 3;
 set(handles.NumExamplesEdit, 'String', num2str(handles.ASSLCSFFB.NumExamples));
 
+for i = 1:length(handles.ASSLCSFFB.UniqueSyllLabels),
+    handles.ASSLCSFFB.MaxFF{i} = [];
+end
+set(handles.MaxFFEdit, 'String', num2str(handles.ASSLCSFFB.MaxFF{handles.ASSLCSFFB.SyllIndex}));
+
 handles.ASSLCSFFB.CurrentStartIndex = 1;
 
 set(handles.SyllableIdentityLabel, 'String', ['Syllable ', handles.ASSLCSFFB.UniqueSyllLabels(handles.ASSLCSFFB.SyllIndex), ': #', num2str(handles.ASSLCSFFB.SyllIndex), ' of ', num2str(length(handles.ASSLCSFFB.UniqueSyllLabels)), ' syllables']);
@@ -115,6 +120,9 @@ if (handles.ASSLCSFFB.SyllIndex == length(handles.ASSLCSFFB.UniqueSyllLabels))
         ASSLData.ASSL.FFBoundaryChoice = handles.ASSLCSFFB.BoundaryChoices{handles.ASSLCSFFB.BoundaryChoice};
         ASSLData.ASSL.FFUniqueSyllLabels = handles.ASSLCSFFB.UniqueSyllLabels;
         ASSLData.ASSL.FFBoundaryLimits = handles.ASSLCSFFB.FFBoundaryLimits;
+        ASSLData.ASSL.MaxFF = handles.ASSLCSFFB.MaxFF;
+        ASSLData.ASSL.FeatValues(:,end) = handles.DataStruct.FeatValues(:,end);
+        ASSLData.ASSL.Raw.FundamentalFrequency = handles.DataStruct.Raw.FundamentalFrequency;
         guidata(ASSLMainWindow, ASSLData);
         msgbox('Returned syllable boundary information to Auto Song Segment Label');
     end
@@ -129,6 +137,8 @@ else
 
     handles.ASSLCSFFB.EndLimit = 100;
     set(handles.EndLimitEdit, 'String', num2str(handles.ASSLCSFFB.EndLimit));
+    
+    set(handles.MaxFFEdit, 'String', num2str(handles.ASSLCSFFB.MaxFF{handles.ASSLCSFFB.SyllIndex}));
     
     set(handles.SyllableIdentityLabel, 'String', ['Syllable ', handles.ASSLCSFFB.UniqueSyllLabels(handles.ASSLCSFFB.SyllIndex), ': #', num2str(handles.ASSLCSFFB.SyllIndex), ' of ', num2str(length(handles.ASSLCSFFB.UniqueSyllLabels)), ' syllables']);
     [handles.ASSLCSFFB.FFSyllBoundaries, handles.DataStruct.FeatValues(:,end)]  = CalculatePlotSyllFFBoundaries(handles);
@@ -215,11 +225,9 @@ function ReCalculateButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[handles.ASSLCSFFB.FFSyllBoundaries, handles.DataStruct.FeatValues(:,end)]  = CalculatePlotSyllFFBoundaries(handles);
+[handles.ASSLCSFFB.FFSyllBoundaries, handles.DataStruct.FeatValues(:,end), handles.DataStruct.Raw.FundamentalFrequency]  = CalculatePlotSyllFFBoundaries(handles, handles.ASSLCSFFB.MaxFF{handles.ASSLCSFFB.SyllIndex});
 handles.ASSLCSFFB.FFBoundaryLimits(handles.ASSLCSFFB.SyllIndex, :) = [handles.ASSLCSFFB.StartLimit handles.ASSLCSFFB.EndLimit];
 guidata(hObject, handles);
-
-
 
 function NumExamplesEdit_Callback(hObject, eventdata, handles)
 % hObject    handle to NumExamplesEdit (see GCBO)
@@ -270,3 +278,29 @@ if (handles.ASSLCSFFB.CurrentStartIndex < 0)
 end
 ASSLPlotSyllFFBoundaries(handles);
 guidata(hObject, handles);
+
+
+
+function MaxFFEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to MaxFFEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of MaxFFEdit as text
+%        str2double(get(hObject,'String')) returns contents of MaxFFEdit as a double
+
+handles.ASSLCSFFB.MaxFF{handles.ASSLCSFFB.SyllIndex} = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+
+% --- Executes during object creation, after setting all properties.
+function MaxFFEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to MaxFFEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

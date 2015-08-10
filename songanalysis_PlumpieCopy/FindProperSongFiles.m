@@ -9,7 +9,7 @@ fclose(fid);
 SongFilesList = [];
 
 for i = 1:size(NotesFilesList{1},1),
-    Notes = load(cell2mat(NotesFilesList{1}(i)));
+    Notes = load(fullfile('ASSLNoteFiles', [cell2mat(NotesFilesList{1}(i)), '.not.mat']));
     flag = 0;
     for j = 1:length(motif),
         MotifLabels = find(Notes.labels == motif(j));

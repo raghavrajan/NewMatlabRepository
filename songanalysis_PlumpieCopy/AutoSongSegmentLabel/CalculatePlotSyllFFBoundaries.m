@@ -1,4 +1,12 @@
-function [FFSyllBoundaries, FF] = CalculatePlotSyllFFBoundaries(DataStruct)
+function [FFSyllBoundaries, FF, RawFeats] = CalculatePlotSyllFFBoundaries(DataStruct, varargin)
+
+if (nargin > 1)
+    MaxFF = varargin{1};
+    
+    if (~isempty(MaxFF))
+        DataStruct = ASSLReCalculateSyllFF(DataStruct, MaxFF);
+    end
+end
 
 FF = DataStruct.DataStruct.FeatValues(:,end);
 
@@ -98,6 +106,8 @@ for i = 1:length(Indices),
         plot(TempFF_x(StartIndex:EndIndex), FF(Indices(i)), 'g--', 'LineWidth', 2);
     end    
 end
+
+RawFeats = DataStruct.DataStruct.Raw.FundamentalFrequency;
 
 set(DataStruct.SyllableIdentityLabel, 'String', ['Syllable ', DataStruct.ASSLCSFFB.UniqueSyllLabels(DataStruct.ASSLCSFFB.SyllIndex), ': #', num2str(DataStruct.ASSLCSFFB.SyllIndex), ' of ', num2str(length(DataStruct.ASSLCSFFB.UniqueSyllLabels)), ' syllables; Time dur of FF = ', num2str(TempFF_x(EndIndex) - TempFF_x(StartIndex)), ' sec']);
 

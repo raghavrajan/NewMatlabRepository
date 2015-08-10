@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 30-Jun-2015 15:17:49
+% Last Modified by GUIDE v2.5 10-Aug-2015 22:18:09
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -564,6 +564,7 @@ handles.ASSL.FeatValues = [];
 handles.ASSL.RawFeatValues = [];
 handles.ASSL.SyllIndices = [];
 handles.ASSL.SyllIndexLabels = [];
+handles.ASSL.FeatsFs = [];
 
 SyllNo = 0;
 fprintf('\n');
@@ -577,7 +578,7 @@ for i = 1:length(handles.ASSL.FileName),
     
     Time = (1:1:length(RawData))/Fs;
     
-    [Feats, RawFeats] = ASSLCalculateSAPFeatsWithOnsets(RawData, Time, Fs, handles.ASSL.SyllOnsets{i}/1000, handles.ASSL.SyllOffsets{i}/1000);
+    [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(RawData, Time, Fs, handles.ASSL.SyllOnsets{i}/1000, handles.ASSL.SyllOffsets{i}/1000);
     
     for j = 1:length(handles.ASSL.ToBeUsedFeatures),
         FeatFields = fieldnames(Feats);
@@ -591,6 +592,7 @@ for i = 1:length(handles.ASSL.FileName),
     end
     handles.ASSL.FeatValues = [handles.ASSL.FeatValues; TempFeats];
     handles.ASSL.RawFeatValues = [handles.ASSL.RawFeatValues; TempRawFeats];
+    handles.ASSL.FeatsFs = [handles.ASSL.FeatsFs; FeatsFs];
     handles.ASSL.SyllIndices = [handles.ASSL.SyllIndices; ones(length(handles.ASSL.SyllOnsets{i}),1)*i [1:1:length(handles.ASSL.SyllOnsets{i})]' ([1:1:length(handles.ASSL.SyllOnsets{i})]' + SyllNo)];
     if (isfield(handles.ASSL, 'SyllLabels'))
         handles.ASSL.SyllIndexLabels = [handles.ASSL.SyllIndexLabels; handles.ASSL.SyllLabels{i}'];
@@ -1633,3 +1635,6 @@ function HiPassCutOffEdit_CreateFcn(hObject, eventdata, handles)
 if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
     set(hObject,'BackgroundColor','white');
 end
+
+
+

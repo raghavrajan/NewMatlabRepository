@@ -1,12 +1,14 @@
-function [Feats, RawFeats] = ASSLCalculateSAPFeatsWithOnsets(Song, Time, Fs, Onsets, Offsets)
+function [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(Song, Time, Fs, Onsets, Offsets)
 
 
 [m_spec_deriv , m_AM, m_FM ,m_Entropy , m_amplitude ,m_Freq, m_PitchGoodness , m_Pitch , Pitch_chose , Pitch_weight ]=deriv(Song, Fs);
 T = linspace(Time(1), Time(end), length(m_Entropy));
+FeatsFs.SAPFeats_Fs = 1/(T(2) - T(1));
 
 FF = yin(Song, Fs);
 FF_T = linspace(1/Fs, length(Song)/Fs, length(FF.f0));
 FF = 2.^FF.f0 * 440;
+FeatsFs.FF_Fs = 1/(FF_T(2) - FF_T(1));
 
 if (isempty(Onsets))
     Feats.Duration = []; % Duration 
