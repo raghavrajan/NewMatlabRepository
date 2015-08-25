@@ -22,7 +22,7 @@ function varargout = ASSLReviewTemplateMatching(varargin)
 
 % Edit the above text to modify the response to help ASSLReviewTemplateMatching
 
-% Last Modified by GUIDE v2.5 26-Jul-2015 11:17:38
+% Last Modified by GUIDE v2.5 15-Aug-2015 17:20:38
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -869,7 +869,11 @@ function PlayFileButton_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 
 [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
-RawData = RawData(ceil(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs));
+if ((handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs) < length(RawData))
+    RawData = RawData(ceil(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs));
+else
+    RawData = RawData(ceil(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(1)*Fs):end);
+end
 
 soundsc(RawData, Fs);
 
@@ -1211,3 +1215,154 @@ end
 
 set(handles.InstructionsTextLabel, 'String', 'Instructions:');
 guidata(hObject, handles);
+
+
+% --- Executes on button press in AddSyllCustomBoundariesButton.
+function AddSyllCustomBoundariesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to AddSyllCustomBoundariesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.ASSLReviewTMResults.PrevSyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOnsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex};
+handles.ASSLReviewTMResults.PrevSyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex};
+
+set(handles.InstructionsTextLabel, 'String', 'Instructions: Left click to specify the left boundary of the syllable, right click to specify the right boundary, then hit enter and enter the label of the new syllable. Press q to quit at any time');
+
+Flag = 1;
+temp = axis;
+LeftLimit = temp(1)*1000;
+RightLimit = temp(2)*1000;
+
+hold on;
+LeftLimitLine = plot([LeftLimit LeftLimit], [temp(3) temp(4)], 'r--');
+RightLimitLine = plot([RightLimit RightLimit], [temp(3) temp(4)], 'g--');
+
+AddSylls = 0;
+
+while (Flag == 1)
+    
+    axes(handles.ReviewSpecAxis);
+    [x, y, button] = ginput(1);
+    
+    if (button == 1)
+        LeftLimit = x(1) * 1000;
+    end
+    
+    if (button == 3)
+        RightLimit = x(1) * 1000;
+    end
+
+    delete(LeftLimitLine);
+    delete(RightLimitLine);
+    LeftLimitLine = plot([LeftLimit LeftLimit], [temp(3) temp(4)], 'r--');
+    RightLimitLine = plot([RightLimit RightLimit], [temp(3) temp(4)], 'g--');
+    
+    if (isempty(button))
+        AddSylls = 1;
+        break;
+    end
+    
+    if (button == 113)
+        Flag = 0;
+        break;
+    end
+end
+
+delete(LeftLimitLine);
+delete(RightLimitLine);
+
+if (AddSylls == 1)
+    NewLabel = inputdlg('Type the new syllable label', 'New syllable label');
+
+    Syllables = find((handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} >= LeftLimit) & (handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} <= RightLimit));
+    
+    if (~isempty(Syllables))
+        msgbox('Cannot add syllable as specified boundaries already have a syllable inside them');
+    else
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        Time = (1:1:length(RawData))/Fs;
+        [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
+
+        handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(end + 1) = LeftLimit;
+    
+        handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(end + 1) = RightLimit;
+        handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(end + 1) = NewLabel{1};
+    
+        [SortedVals, SortedIndices] = sort(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex});
+        handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
+        handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
+        handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}(SortedIndices);
+    
+        [handles.ASSLReviewTMResults.SpecAxisLimits, handles.ASSLReviewTMResults.LabelAxisLimits, handles.ASSLReviewTMResults.AmpAxisLimits] = ASSLReviewTMPlotData(handles, Time, LogAmplitude);
+    
+        axes(handles.ReviewSpecAxis);
+        axis(handles.ASSLReviewTMResults.ZoomSpecAxisLimits);
+
+        axes(handles.ReviewLabelAxis);
+        axis(handles.ASSLReviewTMResults.ZoomLabelAxisLimits);
+    
+        axes(handles.ReviewAmplitudeAxis);
+        axis(handles.ASSLReviewTMResults.ZoomAmpAxisLimits);
+    end
+end
+
+set(handles.InstructionsTextLabel, 'String', 'Instructions:');
+guidata(hObject, handles);
+
+% --- Executes on button press in PlayPortionButton.
+function PlayPortionButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PlayPortionButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+set(handles.InstructionsTextLabel, 'String', 'Instructions: Left click to specify the left boundary of the syllable, right click to specify the right boundary, then hit enter. Press q to quit at any time');
+
+Flag = 1;
+temp = axis;
+LeftLimit = temp(1)*1000;
+RightLimit = temp(2)*1000;
+
+hold on;
+LeftLimitLine = plot([LeftLimit/1000 LeftLimit/1000], [temp(3) temp(4)], 'r--');
+RightLimitLine = plot([RightLimit/1000 RightLimit/1000], [temp(3) temp(4)], 'g--');
+
+PlaySylls = 0;
+
+while (Flag == 1)
+    
+    axes(handles.ReviewSpecAxis);
+    [x, y, button] = ginput(1);
+    
+    if (button == 1)
+        LeftLimit = x(1) * 1000;
+    end
+    
+    if (button == 3)
+        RightLimit = x(1) * 1000;
+    end
+
+    delete(LeftLimitLine);
+    delete(RightLimitLine);
+    LeftLimitLine = plot([LeftLimit/1000 LeftLimit/1000], [temp(3) temp(4)], 'r--');
+    RightLimitLine = plot([RightLimit/1000 RightLimit/1000], [temp(3) temp(4)], 'g--');
+    
+    if (isempty(button))
+        PlaySylls = 1;
+        break;
+    end
+    
+    if (button == 113)
+        Flag = 0;
+        break;
+    end
+end
+
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+RawData = RawData(ceil(LeftLimit*Fs/1000):floor(RightLimit*Fs/1000));
+
+soundsc(RawData, Fs);
+
+delete(LeftLimitLine);
+delete(RightLimitLine);
+set(handles.InstructionsTextLabel, 'String', 'Instructions:');
