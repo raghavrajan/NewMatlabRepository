@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 10-Aug-2015 22:18:09
+% Last Modified by GUIDE v2.5 25-Aug-2015 21:34:23
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -1637,4 +1637,51 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
+% --- Executes on button press in SaveSyllTransButton.
+function SaveSyllTransButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveSyllTransButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
 
+Syll = inputdlg('Choose the syllable for which transitions need to be written to file', 'Syllable choice box');
+
+Filesep = filesep;
+
+if (handles.ASSL.NoteFileDirName(end) == Filesep)
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
+    else
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
+    end
+else
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
+    else
+        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
+    end
+end
+
+TextOutputFileName = [RootOutputFileName, '.ASSLSyllTransitionData.Syll', Syll{1}, '.txt'];
+
+Fid = fopen(TextOutputFileName, 'w');
+fprintf(Fid, 'FileName\tSyll #\tSyll Label\t Next Syll Label\t Syll Onset (ms)\t Syll Offset (ms)\t Syll Duration (sec)\t Mean Frequency (Hz)\t Entropy\tLog Amplitude (dB)\tPitch Goodness\tFrequencyModulation\tAmplitudeModulation\tEntropyVariance\n');
+
+RowIndex = 1;
+for i = 1:length(handles.ASSL.SyllOnsets),
+    Indices = find(handles.ASSL.SyllLabels{i} == Syll{1});
+    for j = Indices(:)',
+        if (j == length(handles.ASSL.SyllLabels{i}))
+            fprintf(Fid, '%s\t%i\t%c\tq\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        else
+            fprintf(Fid, '%s\t%i\t%c\t%c\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllLabels{i}(j+1), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        end
+        for k = 1:length(handles.ASSL.ToBeUsedFeatures),
+            fprintf(Fid, '%g\t', eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{k}, '{', num2str(i), '}', '(', num2str(j), ')']));
+        end
+        fprintf(Fid, '\n');
+        Temp(RowIndex,:) = {i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j)};
+        RowIndex = RowIndex + 1;
+    end
+end
+fclose(Fid);
+disp(['Wrote data about syllable transition information to ', TextOutputFileName]); 
