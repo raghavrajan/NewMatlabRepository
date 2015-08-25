@@ -1,4 +1,4 @@
-function [DataStruct] = ASSLReCalculateSyllFF(DataStruct, MaxFF)
+function [DataStruct] = ASSLReCalculateSyllFF(DataStruct, MaxFF, MinFF)
 
 for i = 1:length(DataStruct.DataStruct.FileName),
     if (mod(i,10) == 0)
@@ -8,8 +8,16 @@ for i = 1:length(DataStruct.DataStruct.FileName),
     % Parameters P for calculating FF for yin
     % sr for sample rate
     % maxf0 for max ff
+    % minf0 for min ff
     P.sr = Fs;
-    P.maxf0 = MaxFF;
+    if (~isempty(MaxFF))
+        P.maxf0 = MaxFF;
+    end
+    if (~isempty(MinFF))
+        P.minf0 = MinFF;
+    else
+        P.minf0 = 300; % Default of 300 Hz for min FF
+    end
     
     Temp_FF = yin(RawData, P);
     
