@@ -52,7 +52,7 @@ if meta_fid==-1|batch_in==0
 end
 
 %what part of the syllable to analyze?
-syl_segment=input('1) percent from start,  2) ms from start,  or 3) ms from end?  ');
+syl_segment=input('1) percent from start,  2) ms from start,  or 3) ms from end?  4) entire syllable ');
 
 
 if length(syl_segment)==0
@@ -68,9 +68,14 @@ elseif syl_segment==3
 end    
 
 
-sample_size=input('Duration of the segment? (ms)  (default=16ms)  ');
-if length(sample_size)==0
-    sample_size=.016;                   %default is 16ms
+if (syl_segment < 4)
+    sample_size=input('Duration of the segment? (ms)  (default=16ms)  ');
+else
+    sample_size = [];
+end
+
+if isempty(sample_size)
+        sample_size=.016;                   %default is 16ms
 else sample_size=sample_size/1000;      %convert to seconds
 end
 
@@ -250,10 +255,14 @@ while 1
                 temp_start_time=start_time+(ms_from_start/1000);     %(in seconds)
                 seg_start_time=temp_start_time-half_sample_size;     %sample centered on time entered
                 seg_end_time=(temp_start_time+half_sample_size);     %dur of segment determined by user 
-             elseif syl_segment==3
-                 temp_start_time=end_time-(ms_from_end/1000);     %(in seconds)
-                 seg_start_time=temp_start_time-half_sample_size;     %sample centered on time entered
-                 seg_end_time=(temp_start_time+half_sample_size);     %dur of segment determined by user 
+            elseif syl_segment==3
+                temp_start_time=end_time-(ms_from_end/1000);     %(in seconds)
+                seg_start_time=temp_start_time-half_sample_size;     %sample centered on time entered
+                seg_end_time=(temp_start_time+half_sample_size);     %dur of segment determined by user 
+            elseif syl_segment == 4 % added this to calculate for the entire syllable
+                temp_start_time = start_time;
+                seg_start_time = start_time;
+                seg_end_time = end_time;
             end  
             
             newstarttime=seg_start_time*Fs;
@@ -346,7 +355,7 @@ while 1
            % Draw a line indicating the ff value
            x = linspace(FFstart,FFend,50);
            if (strfind(PlotOption, 'on'))
-               plot(x, ff, '-g')
+               plot(x, ff*ones(size(x)), 'g', 'LineWidth', 2)
            end
            
 %            [m_spec_deriv , m_AM, m_FM ,m_Entropy , m_amplitude , m_Freq, m_PitchGoodness , m_Pitch , Pitch_chose , Pitch_weight ]=segment_data(note_segment,Fs);
@@ -399,6 +408,8 @@ while 1
                 save (jj,'ffreq','ms_from_start','sample_size','note','Fs')     
                 elseif syl_segment==3
                 save (jj,'ffreq','ms_from_end','sample_size','note','Fs')    
+                elseif syl_segment==4
+                save (jj,'ffreq', 'note','Fs')    
                 end
             end
                 
