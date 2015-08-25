@@ -2,9 +2,10 @@ function [FFSyllBoundaries, FF, RawFeats] = CalculatePlotSyllFFBoundaries(DataSt
 
 if (nargin > 1)
     MaxFF = varargin{1};
+    MinFF = varargin{2};
     
-    if (~isempty(MaxFF))
-        DataStruct = ASSLReCalculateSyllFF(DataStruct, MaxFF);
+    if ((~isempty(MaxFF)) || (~isempty(MinFF)))
+        DataStruct = ASSLReCalculateSyllFF(DataStruct, MaxFF, MinFF);
     end
 end
 
