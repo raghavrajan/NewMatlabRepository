@@ -5,7 +5,14 @@ function [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(Song, Time
 T = linspace(Time(1), Time(end), length(m_Entropy));
 FeatsFs.SAPFeats_Fs = 1/(T(2) - T(1));
 
-FF = yin(Song, Fs);
+% Parameters P for calculating FF for yin
+% sr for sample rate
+% maxf0 for max ff
+% minf0 for min ff
+P.sr = Fs;
+P.minf0 = 350; % min ff set to 350 Hz
+
+FF = yin(Song, P);
 FF_T = linspace(1/Fs, length(Song)/Fs, length(FF.f0));
 FF = 2.^FF.f0 * 440;
 FeatsFs.FF_Fs = 1/(FF_T(2) - FF_T(1));
