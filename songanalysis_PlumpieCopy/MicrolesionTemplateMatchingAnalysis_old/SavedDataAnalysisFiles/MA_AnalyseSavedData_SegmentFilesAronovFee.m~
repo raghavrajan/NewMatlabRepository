@@ -1,0 +1,46 @@
+function [Onsets, Offsets, Threshold] = MA_AnalyseSavedData_SegmentFilesAronovFee(BoutLens, DataDir, FileName, FileType, MinInt, MinDur)
+
+for j = 1:length(BoutLens),
+        [RawData, Fs] = ASSLGetRawData(Parameters(ParameterNo).PreDataDir{i}, Parameters(ParameterNo).PreDirSongFileNames{i}{j}, Parameters(ParameterNo).FileType, 0);
+        for k = 1:length(Parameters(ParameterNo).PreDirBoutLens{i}{j}),
+            SongBout = RawData(ceil(Parameters.PreDirBoutOnsets{i}{j}(k)*Fs/1000):floor(Parameters.PreDirBoutOffsets{i}{j}(k)*Fs/1000));
+            NoteFile = [NoteFileDir, Parameters(ParameterNo).PreDirSongFileNames{i}{j}, '.Bout', num2str(k), '.not.mat'];
+            if (exist(NoteFile, 'file'))
+                Temp = load(NoteFile);
+                Onsets = Temp.onsets;
+                Offsets = Temp.offsets;
+            else
+                min_int = 7;
+                min_dur = 7;
+                [Onsets, Offsets, threshold] = MA_AnalyseSavedData_SegmentFilesAronovFee(SongBout, Fs, min_int, min_dur);
+                onsets = Onsets;
+                offsets = Offsets;
+                sm_win = 2.5;
+                if (~isempty(onsets))
+                    labels = repmat('0', 1, length(onsets));
+                else
+                    labels = [];
+                end
+                BoutOnset = Parameters.PreDirBoutOnsets{i}{j}(k);
+                BoutOffset = Parameters.PreDirBoutOffsets{i}{j}(k);
+                save(NoteFile, 'onsets', 'offsets', 'labels', 'threshold', 'min_dur', 'min_int', 'BoutOnset', 'BoutOffset', 'sm_win');
+            end
+
+            SyllDurs = Offsets - Onsets;
+            GapDurs = Onsets(2:end) - Offsets(1:end-1);
+
+            DirSyllDurs = [DirSyllDurs; SyllDurs(:)];
+            DirGapDurs = [DirGapDurs; GapDurs(:)];
+
+            clear SyllDurs GapDurs;
+            BoutIndex = BoutIndex + 1;
+        end
+    end
+
+
+
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(SongBout, Fs, (1:1:length(SongBout))/Fs, 8, 0.9);
+[Threshold] = ASSLCalculateFisherThreshold(LogAmplitude);
+
+
+[Onsets, Offsets] = ASSLSegmentDataAronovFee(LogAmplitude, Fs, MinInt, MinDur, Threshold);

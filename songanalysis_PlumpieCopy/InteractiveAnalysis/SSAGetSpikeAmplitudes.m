@@ -37,6 +37,10 @@ SpikeWaveforms = [];
 for i = 1:length(SpikeTimes),
     Temp = SpikeTimes(i);
     SpikeIndex = find(Times < Temp,1,'last');
+    if (isempty(SpikeIndex))
+        SpikeIndex = 1;
+    end
+    
     if (((SpikeIndex - 8) < 1) || ((SpikeIndex + 47) > length(RawData)))
         if ((SpikeIndex - 8) < 1)
             SpikeAmplitudes(i,1) = max(RawData(1:(SpikeIndex + 23))) - min(RawData(1:(SpikeIndex + 23)));

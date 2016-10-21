@@ -23,7 +23,7 @@ function [m_spec_deriv , m_AM, m_FM ,m_Entropy , m_amplitude ,gravity_center, m_
 
 TS=filter_sound_sam(TS);
 
-load('Parameters');
+load('/home/raghav/repositories/Matlab2015b_Rajan-Lab-Song-Analysis-Scripts/songanalysis_PlumpieCopy/SoundAnalysisMatlab/parameters.mat');
 
 E=taper_read();
 N=length(TS);

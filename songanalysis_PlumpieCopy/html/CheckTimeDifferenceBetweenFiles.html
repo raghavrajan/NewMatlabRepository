@@ -1,0 +1,384 @@
+
+<!DOCTYPE html
+  PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html><head>
+      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <!--
+This HTML was auto-generated from MATLAB code.
+To make changes, update the MATLAB code and republish this document.
+      --><title>CheckTimeDifferenceBetweenFiles</title><meta name="generator" content="MATLAB 8.6"><link rel="schema.DC" href="http://purl.org/dc/elements/1.1/"><meta name="DC.date" content="2016-09-22"><meta name="DC.source" content="CheckTimeDifferenceBetweenFiles.m"><style type="text/css">
+html,body,div,span,applet,object,iframe,h1,h2,h3,h4,h5,h6,p,blockquote,pre,a,abbr,acronym,address,big,cite,code,del,dfn,em,font,img,ins,kbd,q,s,samp,small,strike,strong,sub,sup,tt,var,b,u,i,center,dl,dt,dd,ol,ul,li,fieldset,form,label,legend,table,caption,tbody,tfoot,thead,tr,th,td{margin:0;padding:0;border:0;outline:0;font-size:100%;vertical-align:baseline;background:transparent}body{line-height:1}ol,ul{list-style:none}blockquote,q{quotes:none}blockquote:before,blockquote:after,q:before,q:after{content:'';content:none}:focus{outine:0}ins{text-decoration:none}del{text-decoration:line-through}table{border-collapse:collapse;border-spacing:0}
+
+html { min-height:100%; margin-bottom:1px; }
+html body { height:100%; margin:0px; font-family:Arial, Helvetica, sans-serif; font-size:10px; color:#000; line-height:140%; background:#fff none; overflow-y:scroll; }
+html body td { vertical-align:top; text-align:left; }
+
+h1 { padding:0px; margin:0px 0px 25px; font-family:Arial, Helvetica, sans-serif; font-size:1.5em; color:#d55000; line-height:100%; font-weight:normal; }
+h2 { padding:0px; margin:0px 0px 8px; font-family:Arial, Helvetica, sans-serif; font-size:1.2em; color:#000; font-weight:bold; line-height:140%; border-bottom:1px solid #d6d4d4; display:block; }
+h3 { padding:0px; margin:0px 0px 5px; font-family:Arial, Helvetica, sans-serif; font-size:1.1em; color:#000; font-weight:bold; line-height:140%; }
+
+a { color:#005fce; text-decoration:none; }
+a:hover { color:#005fce; text-decoration:underline; }
+a:visited { color:#004aa0; text-decoration:none; }
+
+p { padding:0px; margin:0px 0px 20px; }
+img { padding:0px; margin:0px 0px 20px; border:none; }
+p img, pre img, tt img, li img, h1 img, h2 img { margin-bottom:0px; } 
+
+ul { padding:0px; margin:0px 0px 20px 23px; list-style:square; }
+ul li { padding:0px; margin:0px 0px 7px 0px; }
+ul li ul { padding:5px 0px 0px; margin:0px 0px 7px 23px; }
+ul li ol li { list-style:decimal; }
+ol { padding:0px; margin:0px 0px 20px 0px; list-style:decimal; }
+ol li { padding:0px; margin:0px 0px 7px 23px; list-style-type:decimal; }
+ol li ol { padding:5px 0px 0px; margin:0px 0px 7px 0px; }
+ol li ol li { list-style-type:lower-alpha; }
+ol li ul { padding-top:7px; }
+ol li ul li { list-style:square; }
+
+.content { font-size:1.2em; line-height:140%; padding: 20px; }
+
+pre, code { font-size:12px; }
+tt { font-size: 1.2em; }
+pre { margin:0px 0px 20px; }
+pre.codeinput { padding:10px; border:1px solid #d3d3d3; background:#f7f7f7; }
+pre.codeoutput { padding:10px 11px; margin:0px 0px 20px; color:#4c4c4c; }
+pre.error { color:red; }
+
+@media print { pre.codeinput, pre.codeoutput { word-wrap:break-word; width:100%; } }
+
+span.keyword { color:#0000FF }
+span.comment { color:#228B22 }
+span.string { color:#A020F0 }
+span.untermstring { color:#B20000 }
+span.syscmd { color:#B28C00 }
+
+.footer { width:auto; padding:10px 0px; margin:25px 0px 0px; border-top:1px dotted #878787; font-size:0.8em; line-height:140%; font-style:italic; color:#878787; text-align:left; float:none; }
+.footer p { margin:0px; }
+.footer a { color:#878787; }
+.footer a:hover { color:#878787; text-decoration:underline; }
+.footer a:visited { color:#878787; }
+
+table th { padding:7px 5px; text-align:left; vertical-align:middle; border: 1px solid #d6d4d4; font-weight:bold; }
+table td { padding:7px 5px; text-align:left; vertical-align:top; border:1px solid #d6d4d4; }
+
+
+
+
+
+  </style></head><body><div class="content"><pre class="codeinput"><span class="keyword">function</span> [] = CheckTimeDifferenceBetweenFiles(DataDir, FileList, FileType)
+
+<span class="comment">% PreTriggerDuration and PostTriggerDuration in ms</span>
+
+Fid = fopen(FileList, <span class="string">'r'</span>);
+Files = textscan(Fid, <span class="string">'%s'</span>, <span class="string">'DeLimiter'</span>, <span class="string">'\n'</span>);
+Files = Files{1};
+fclose(Fid);
+
+Index = 1;
+NegativeTimeDifferences = [];
+<span class="keyword">for</span> i = 1:length(Files)-1,
+    <span class="comment">% Remove the extension if there is one for the file</span>
+    [PathStr, FileName, Ext] = fileparts(Files{i});
+
+    <span class="keyword">if</span> (exist(fullfile(DataDir, <span class="string">'ASSLNoteFiles'</span>, [Files{i}, <span class="string">'.not.mat'</span>]), <span class="string">'file'</span>))
+        load(fullfile(DataDir, <span class="string">'ASSLNoteFiles'</span>, [Files{i}, <span class="string">'.not.mat'</span>]));
+        ValidLabels = find(labels ~= <span class="string">'0'</span>);
+        <span class="keyword">if</span> (~isempty(ValidLabels))
+            CurrentFileTime = str2double(FileName(end-5:end-4))*3600*1000 + str2double(FileName(end-3:end-2))*60*1000 + str2double(FileName(end-1:end))*1000; <span class="comment">% filetime in ms</span>
+
+            [PathStr, NextFileName, Ext] = fileparts(Files{i+1});
+            NextFileTime = str2double(NextFileName(end-5:end-4))*3600*1000 + str2double(NextFileName(end-3:end-2))*60*1000 + str2double(NextFileName(end-1:end))*1000; <span class="comment">% filetime in ms</span>
+
+            [RawData, Fs] = GetData(DataDir, Files{i}, FileType, 0);
+            [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, [], 5, []); <span class="comment">% 5 is FFTWinSize in ms</span>
+            FirstSyllAmplitude = mean(LogAmplitude(round(onsets(ValidLabels(1))*Fs/1000):round(offsets(ValidLabels(1))*Fs/1000)));
+
+            CurrentFileDur = 1000*length(RawData)/Fs;
+
+            TimeDiff = NextFileTime - CurrentFileTime - CurrentFileDur;
+
+            <span class="keyword">if</span> (TimeDiff &lt; 0)
+                NegativeTimeDifferences(end+1) = TimeDiff;
+                disp([<span class="string">'Negative time difference of '</span>, num2str(TimeDiff/1000), <span class="string">' sec between file '</span>, FileName, <span class="string">' of duration '</span>, num2str(CurrentFileDur), <span class="string">' sec and file '</span>, NextFileName]);
+                TimeDiff = abs(TimeDiff);
+            <span class="keyword">end</span>
+
+            FileTimeDifferences(Index,:) = [onsets(ValidLabels(1)) TimeDiff FirstSyllAmplitude];
+
+            Index = Index + 1;
+        <span class="keyword">end</span>
+    <span class="keyword">end</span>
+<span class="keyword">end</span>
+disp([<span class="string">'Proportion of negative time differences = '</span>, num2str(100 * length(NegativeTimeDifferences)/size(FileTimeDifferences,1)), <span class="string">'%'</span>]);
+disp([<span class="string">'Proportion of negative time differences &lt;= -1 sec = '</span>, num2str(100 * length(find(NegativeTimeDifferences &lt;= -1000))/length(NegativeTimeDifferences)), <span class="string">'%'</span>]);
+
+figure; <span class="comment">% Figure with first syllable onset vs. time difference between files</span>
+plot(FileTimeDifferences(:,1)/1000, FileTimeDifferences(:,2)/1000, <span class="string">'ko'</span>);
+hold <span class="string">on</span>;
+set(gcf, <span class="string">'PaperPositionMode'</span>, <span class="string">'auto'</span>);
+set(gcf, <span class="string">'Color'</span>, <span class="string">'w'</span>);
+set(gcf, <span class="string">'Position'</span>, [198 558 1650 400]);
+set(gca, <span class="string">'YScale'</span>, <span class="string">'log'</span>);
+xlabel(<span class="string">'Time of first syllable in the file (sec)'</span>, <span class="string">'FontSize'</span>, 14);
+ylabel(<span class="string">'Time between files (sec)'</span>, <span class="string">'FontSize'</span>, 14);
+
+axis <span class="string">tight</span>;
+Temp = axis;
+Temp(1) = 0;
+axis(Temp);
+
+PreTriggerDuration = inputdlg(<span class="string">'Enter the pre-trigger duration in sec'</span>, <span class="string">'Pre Trigger duration'</span>);
+PreTriggerDuration = str2double(PreTriggerDuration{1});
+plot(PreTriggerDuration * ones(1,2), Temp(3:4), <span class="string">'r--'</span>, <span class="string">'LineWidth'</span>, 2);
+plot(Temp(1:2), PreTriggerDuration * ones(1,2), <span class="string">'r--'</span>, <span class="string">'LineWidth'</span>, 2);
+
+NumSyllsWithOnsetDuringPreTrigger = find(FileTimeDifferences(:,1) &lt;= PreTriggerDuration);
+
+title([FileList, <span class="string">': proportion of pre-trigger syllables with file difference &lt;= pre trigger duration = '</span>, num2str(100 * length(find(FileTimeDifferences(NumSyllsWithOnsetDuringPreTrigger,2) &lt;= PreTriggerDuration))/length(NumSyllsWithOnsetDuringPreTrigger)), <span class="string">'%'</span>], <span class="string">'FontSize'</span>, 14);
+saveas(gcf, fullfile(<span class="string">'/home/raghav/LabNoteBookPlots'</span>, [FileList, <span class="string">'.FirstSyllTime.vs.FileTimeDifference.png'</span>]), <span class="string">'png'</span>);
+
+figure; <span class="comment">% Figure with first syllable onset vs. time difference between files with size and color of marker dependent on amplitude of syllable</span>
+set(gcf, <span class="string">'PaperPositionMode'</span>, <span class="string">'auto'</span>);
+scatter(FileTimeDifferences(:,1)/1000, FileTimeDifferences(:,2)/1000, ceil((FileTimeDifferences(:,3) + 1.001*abs(min(FileTimeDifferences(:,3))))*2), ceil((FileTimeDifferences(:,3) + 1.001*abs(min(FileTimeDifferences(:,3))))*2))
+hold <span class="string">on</span>;
+set(gcf, <span class="string">'Color'</span>, <span class="string">'w'</span>);
+set(gcf, <span class="string">'Position'</span>, [198 558 1650 400]);
+set(gca, <span class="string">'YScale'</span>, <span class="string">'log'</span>);
+xlabel(<span class="string">'Time of first syllable in the file (sec)'</span>, <span class="string">'FontSize'</span>, 12);
+ylabel(<span class="string">'Time between files (sec)'</span>, <span class="string">'FontSize'</span>, 12);
+
+axis <span class="string">tight</span>;
+Temp = axis;
+Temp(1) = 0;
+axis(Temp);
+colorbar;
+
+plot(PreTriggerDuration * ones(1,2), Temp(3:4), <span class="string">'r--'</span>, <span class="string">'LineWidth'</span>, 2);
+plot(Temp(1:2), PreTriggerDuration * ones(1,2), <span class="string">'r--'</span>, <span class="string">'LineWidth'</span>, 2);
+title(<span class="string">'First syllable time vs. time since last file: symbol size and color reflects first syllable amplitude'</span>, <span class="string">'FontSize'</span>, 14);
+text(mean(Temp(1:2)), 1.5*PreTriggerDuration, <span class="string">'Pre trigger duration (sec)'</span>, <span class="string">'FontSize'</span>, 14);
+
+<span class="comment">% Now find all the first syllables that fall within a window 50ms before</span>
+<span class="comment">% the pre-trigger duration to 100ms after the pre-trigger duration and</span>
+<span class="comment">% calculate the amplitude of these syllables - this will approximately be</span>
+<span class="comment">% the trigger amplitude.</span>
+
+TriggerWindow = [(PreTriggerDuration - 0.05) (PreTriggerDuration + 0.1)];
+TriggerSyllables = find((FileTimeDifferences(:,1)/1000 &gt;= TriggerWindow(1)) &amp; (FileTimeDifferences(:,1)/1000 &lt;= TriggerWindow(2)));
+TriggerAmplitude = median(FileTimeDifferences(TriggerSyllables,3));
+
+<span class="comment">% Now scale and write this trigger amplitude on previous graph in the top</span>
+<span class="comment">% right corner.</span>
+ScaledTriggerAmplitude = ceil((TriggerAmplitude + + 1.001*abs(min(FileTimeDifferences(:,3))))*2);
+text(Temp(1) + 0.25*diff(Temp(1:2)), Temp(3) + 0.75*diff(Temp(3:4))/5, [<span class="string">'Trigger amplitude is '</span>, num2str(ScaledTriggerAmplitude), <span class="string">' dB'</span>], <span class="string">'FontSize'</span>, 10);
+
+<span class="comment">% Now find the pre-trigger syllables that are greater than the trigger</span>
+<span class="comment">% amplitude and see what proportion of them have file time differences less</span>
+<span class="comment">% than pre-trigger duration</span>
+PreTriggerSyllables_GreaterThanTriggerAmplitude = find((FileTimeDifferences(:,1)/1000 &lt;= TriggerWindow(1)) &amp; (FileTimeDifferences(:,3) &gt;= TriggerAmplitude));
+text(Temp(1) + 0.25*diff(Temp(1:2)), Temp(3) + 0.75*diff(Temp(3:4))/10, [<span class="string">'Proportion of pre-trigger syllables with amplitudes &gt;= TriggerAmplitude and file time differences &lt; Pre-trigger duration = '</span>, num2str(100 * length(find(FileTimeDifferences(PreTriggerSyllables_GreaterThanTriggerAmplitude,2)/1000 &lt;= PreTriggerDuration))/length(PreTriggerSyllables_GreaterThanTriggerAmplitude)), <span class="string">'%'</span>], <span class="string">'FontSize'</span>, 10);
+
+saveas(gcf, fullfile(<span class="string">'/home/raghav/LabNoteBookPlots'</span>, [FileList, <span class="string">'.FirstSyllTime.vs.FileTimeDifference.SyllAmplitudeBasedColorSize.png'</span>]), <span class="string">'png'</span>);
+disp(<span class="string">'Finished'</span>);
+</pre><pre class="codeoutput">Negative time difference of -0.3 sec between file y32g92_052510102518 of duration 13300 sec and file y32g92_052510102531
+Negative time difference of -0.1 sec between file y32g92_052510104121 of duration 9100 sec and file y32g92_052510104130
+Negative time difference of -0.1 sec between file y32g92_052510104248 of duration 20100 sec and file y32g92_052510104308
+Negative time difference of -0.6 sec between file y32g92_052510105727 of duration 11600 sec and file y32g92_052510105738
+Negative time difference of -0.2 sec between file y32g92_052510105738 of duration 8200 sec and file y32g92_052510105746
+Negative time difference of -0.1 sec between file y32g92_052510105919 of duration 12100 sec and file y32g92_052510105931
+Negative time difference of -0.1 sec between file y32g92_052510110422 of duration 11100 sec and file y32g92_052510110433
+Negative time difference of -0.5 sec between file y32g92_052510110450 of duration 12500 sec and file y32g92_052510110502
+Negative time difference of -0.4 sec between file y32g92_052510110531 of duration 10400 sec and file y32g92_052510110541
+Negative time difference of -0.3 sec between file y32g92_052510110856 of duration 9300 sec and file y32g92_052510110905
+Negative time difference of -0.1 sec between file y32g92_052510110946 of duration 11100 sec and file y32g92_052510110957
+Negative time difference of -0.5 sec between file y32g92_052510111154 of duration 11500 sec and file y32g92_052510111205
+Negative time difference of -0.2 sec between file y32g92_052510111638 of duration 12200 sec and file y32g92_052510111650
+Negative time difference of -0.3 sec between file y32g92_052510111745 of duration 11300 sec and file y32g92_052510111756
+Negative time difference of -0.1 sec between file y32g92_052510111826 of duration 11100 sec and file y32g92_052510111837
+Negative time difference of -0.3 sec between file y32g92_052510112129 of duration 18300 sec and file y32g92_052510112147
+Negative time difference of -0.3 sec between file y32g92_052510112850 of duration 22300 sec and file y32g92_052510112912
+Negative time difference of -0.4 sec between file y32g92_052510113118 of duration 9400 sec and file y32g92_052510113127
+Negative time difference of -0.7 sec between file y32g92_052510113140 of duration 9700 sec and file y32g92_052510113149
+Negative time difference of -0.1 sec between file y32g92_052510113324 of duration 15100 sec and file y32g92_052510113339
+Negative time difference of -0.5 sec between file y32g92_052510113543 of duration 9500 sec and file y32g92_052510113552
+Negative time difference of -0.3 sec between file y32g92_052510113552 of duration 11300 sec and file y32g92_052510113603
+Negative time difference of -0.6 sec between file y32g92_052510114158 of duration 9600 sec and file y32g92_052510114207
+Negative time difference of -0.3 sec between file y32g92_052510114340 of duration 9300 sec and file y32g92_052510114349
+Negative time difference of -0.2 sec between file y32g92_052510122601 of duration 8200 sec and file y32g92_052510122609
+Negative time difference of -0.3 sec between file y32g92_052510122651 of duration 10300 sec and file y32g92_052510122701
+Negative time difference of -0.4 sec between file y32g92_052510122915 of duration 27400 sec and file y32g92_052510122942
+Negative time difference of -0.4 sec between file y32g92_052510123037 of duration 27400 sec and file y32g92_052510123104
+Negative time difference of -0.4 sec between file y32g92_052510123132 of duration 27400 sec and file y32g92_052510123159
+Negative time difference of -0.4 sec between file y32g92_052510123227 of duration 27400 sec and file y32g92_052510123254
+Negative time difference of -0.4 sec between file y32g92_052510123254 of duration 27400 sec and file y32g92_052510123321
+Negative time difference of -0.8 sec between file y32g92_052510124142 of duration 10800 sec and file y32g92_052510124152
+Negative time difference of -0.6 sec between file y32g92_052510124354 of duration 13600 sec and file y32g92_052510124407
+Negative time difference of -0.2 sec between file y32g92_052510124505 of duration 13200 sec and file y32g92_052510124518
+Negative time difference of -0.5 sec between file y32g92_052510124518 of duration 8500 sec and file y32g92_052510124526
+Negative time difference of -0.2 sec between file y32g92_052510124630 of duration 9200 sec and file y32g92_052510124639
+Negative time difference of -1.1 sec between file y32g92_052510124801 of duration 8100 sec and file y32g92_052510124808
+Negative time difference of -0.1 sec between file y32g92_052510124822 of duration 14100 sec and file y32g92_052510124836
+Negative time difference of -0.5 sec between file y32g92_052510125032 of duration 18500 sec and file y32g92_052510125050
+Negative time difference of -0.1 sec between file y32g92_052510125132 of duration 13100 sec and file y32g92_052510125145
+Negative time difference of -0.5 sec between file y32g92_052510125215 of duration 11500 sec and file y32g92_052510125226
+Negative time difference of -0.3 sec between file y32g92_052510125324 of duration 9300 sec and file y32g92_052510125333
+Negative time difference of -0.6 sec between file y32g92_052510125358 of duration 8600 sec and file y32g92_052510125406
+Negative time difference of -0.2 sec between file y32g92_052510125406 of duration 9200 sec and file y32g92_052510125415
+Negative time difference of -0.3 sec between file y32g92_052510125500 of duration 11300 sec and file y32g92_052510125511
+Negative time difference of -0.5 sec between file y32g92_052510125511 of duration 8500 sec and file y32g92_052510125519
+Negative time difference of -0.1 sec between file y32g92_052510125944 of duration 8100 sec and file y32g92_052510125952
+Negative time difference of -0.1 sec between file y32g92_052510130251 of duration 12100 sec and file y32g92_052510130303
+Negative time difference of -0.3 sec between file y32g92_052510130406 of duration 9300 sec and file y32g92_052510130415
+Negative time difference of -0.3 sec between file y32g92_052510130449 of duration 15300 sec and file y32g92_052510130504
+Negative time difference of -0.1 sec between file y32g92_052510130804 of duration 21100 sec and file y32g92_052510130825
+Negative time difference of -0.6 sec between file y32g92_052510131455 of duration 18600 sec and file y32g92_052510131513
+Negative time difference of -0.5 sec between file y32g92_052510131557 of duration 11500 sec and file y32g92_052510131608
+Negative time difference of -0.1 sec between file y32g92_052510131754 of duration 9100 sec and file y32g92_052510131803
+Negative time difference of -0.7 sec between file y32g92_052510132315 of duration 8700 sec and file y32g92_052510132323
+Negative time difference of -0.1 sec between file y32g92_052510132323 of duration 8100 sec and file y32g92_052510132331
+Negative time difference of -0.4 sec between file y32g92_052510133504 of duration 10400 sec and file y32g92_052510133514
+Negative time difference of -0.6 sec between file y32g92_052510134031 of duration 8600 sec and file y32g92_052510134039
+Negative time difference of -0.7 sec between file y32g92_052510134144 of duration 9700 sec and file y32g92_052510134153
+Negative time difference of -0.2 sec between file y32g92_052510134205 of duration 12200 sec and file y32g92_052510134217
+Negative time difference of -0.2 sec between file y32g92_052510134415 of duration 12200 sec and file y32g92_052510134427
+Negative time difference of -0.3 sec between file y32g92_052510134603 of duration 11300 sec and file y32g92_052510134614
+Negative time difference of -0.8 sec between file y32g92_052510134817 of duration 14800 sec and file y32g92_052510134831
+Negative time difference of -0.1 sec between file y32g92_052510134854 of duration 12100 sec and file y32g92_052510134906
+Negative time difference of -0.7 sec between file y32g92_052510135315 of duration 9700 sec and file y32g92_052510135324
+Negative time difference of -0.7 sec between file y32g92_052510135746 of duration 9700 sec and file y32g92_052510135755
+Negative time difference of -0.3 sec between file y32g92_052510135820 of duration 14300 sec and file y32g92_052510135834
+Negative time difference of -0.2 sec between file y32g92_052510141110 of duration 11200 sec and file y32g92_052510141121
+Negative time difference of -0.2 sec between file y32g92_052510144937 of duration 11200 sec and file y32g92_052510144948
+Negative time difference of -0.9 sec between file y32g92_052510145812 of duration 9900 sec and file y32g92_052510145821
+Negative time difference of -0.2 sec between file y32g92_052510145945 of duration 10200 sec and file y32g92_052510145955
+Negative time difference of -0.2 sec between file y32g92_052510150029 of duration 11200 sec and file y32g92_052510150040
+Negative time difference of -0.3 sec between file y32g92_052510150222 of duration 10300 sec and file y32g92_052510150232
+Negative time difference of -0.1 sec between file y32g92_052510150450 of duration 18100 sec and file y32g92_052510150508
+Negative time difference of -0.1 sec between file y32g92_052510151143 of duration 8100 sec and file y32g92_052510151151
+Proportion of negative time differences = 14.2586%
+Proportion of negative time differences &lt;= -1 sec = 1.3333%
+MEvent. CASE!
+MEvent. CASE!
+Finished
+</pre><img vspace="5" hspace="5" src="CheckTimeDifferenceBetweenFiles_01.png" alt=""> <img vspace="5" hspace="5" src="CheckTimeDifferenceBetweenFiles_02.png" alt=""> <p class="footer"><br><a href="http://www.mathworks.com/products/matlab/">Published with MATLAB&reg; R2015b</a><br></p></div><!--
+##### SOURCE BEGIN #####
+function [] = CheckTimeDifferenceBetweenFiles(DataDir, FileList, FileType)
+
+% PreTriggerDuration and PostTriggerDuration in ms
+
+Fid = fopen(FileList, 'r');
+Files = textscan(Fid, '%s', 'DeLimiter', '\n');
+Files = Files{1};
+fclose(Fid);
+
+Index = 1;
+NegativeTimeDifferences = [];
+for i = 1:length(Files)-1,
+    % Remove the extension if there is one for the file
+    [PathStr, FileName, Ext] = fileparts(Files{i});
+    
+    if (exist(fullfile(DataDir, 'ASSLNoteFiles', [Files{i}, '.not.mat']), 'file'))
+        load(fullfile(DataDir, 'ASSLNoteFiles', [Files{i}, '.not.mat']));
+        ValidLabels = find(labels ~= '0');
+        if (~isempty(ValidLabels))
+            CurrentFileTime = str2double(FileName(end-5:end-4))*3600*1000 + str2double(FileName(end-3:end-2))*60*1000 + str2double(FileName(end-1:end))*1000; % filetime in ms
+
+            [PathStr, NextFileName, Ext] = fileparts(Files{i+1});
+            NextFileTime = str2double(NextFileName(end-5:end-4))*3600*1000 + str2double(NextFileName(end-3:end-2))*60*1000 + str2double(NextFileName(end-1:end))*1000; % filetime in ms
+
+            [RawData, Fs] = GetData(DataDir, Files{i}, FileType, 0);
+            [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, [], 5, []); % 5 is FFTWinSize in ms
+            FirstSyllAmplitude = mean(LogAmplitude(round(onsets(ValidLabels(1))*Fs/1000):round(offsets(ValidLabels(1))*Fs/1000)));
+            
+            CurrentFileDur = 1000*length(RawData)/Fs;
+
+            TimeDiff = NextFileTime - CurrentFileTime - CurrentFileDur;
+            
+            if (TimeDiff < 0)
+                NegativeTimeDifferences(end+1) = TimeDiff;
+                disp(['Negative time difference of ', num2str(TimeDiff/1000), ' sec between file ', FileName, ' of duration ', num2str(CurrentFileDur), ' sec and file ', NextFileName]);
+                TimeDiff = abs(TimeDiff);
+            end
+
+            FileTimeDifferences(Index,:) = [onsets(ValidLabels(1)) TimeDiff FirstSyllAmplitude];
+            
+            Index = Index + 1;
+        end
+    end
+end
+disp(['Proportion of negative time differences = ', num2str(100 * length(NegativeTimeDifferences)/size(FileTimeDifferences,1)), '%']);
+disp(['Proportion of negative time differences <= -1 sec = ', num2str(100 * length(find(NegativeTimeDifferences <= -1000))/length(NegativeTimeDifferences)), '%']);
+
+figure; % Figure with first syllable onset vs. time difference between files
+plot(FileTimeDifferences(:,1)/1000, FileTimeDifferences(:,2)/1000, 'ko');
+hold on;
+set(gcf, 'PaperPositionMode', 'auto');
+set(gcf, 'Color', 'w');
+set(gcf, 'Position', [198 558 1650 400]);
+set(gca, 'YScale', 'log');
+xlabel('Time of first syllable in the file (sec)', 'FontSize', 14);
+ylabel('Time between files (sec)', 'FontSize', 14);
+
+axis tight;
+Temp = axis;
+Temp(1) = 0;
+axis(Temp);
+
+PreTriggerDuration = inputdlg('Enter the pre-trigger duration in sec', 'Pre Trigger duration');
+PreTriggerDuration = str2double(PreTriggerDuration{1});
+plot(PreTriggerDuration * ones(1,2), Temp(3:4), 'rREPLACE_WITH_DASH_DASH', 'LineWidth', 2);
+plot(Temp(1:2), PreTriggerDuration * ones(1,2), 'rREPLACE_WITH_DASH_DASH', 'LineWidth', 2);
+
+NumSyllsWithOnsetDuringPreTrigger = find(FileTimeDifferences(:,1) <= PreTriggerDuration);
+
+title([FileList, ': proportion of pre-trigger syllables with file difference <= pre trigger duration = ', num2str(100 * length(find(FileTimeDifferences(NumSyllsWithOnsetDuringPreTrigger,2) <= PreTriggerDuration))/length(NumSyllsWithOnsetDuringPreTrigger)), '%'], 'FontSize', 14);
+saveas(gcf, fullfile('/home/raghav/LabNoteBookPlots', [FileList, '.FirstSyllTime.vs.FileTimeDifference.png']), 'png');
+
+figure; % Figure with first syllable onset vs. time difference between files with size and color of marker dependent on amplitude of syllable
+set(gcf, 'PaperPositionMode', 'auto');
+scatter(FileTimeDifferences(:,1)/1000, FileTimeDifferences(:,2)/1000, ceil((FileTimeDifferences(:,3) + 1.001*abs(min(FileTimeDifferences(:,3))))*2), ceil((FileTimeDifferences(:,3) + 1.001*abs(min(FileTimeDifferences(:,3))))*2))
+hold on;
+set(gcf, 'Color', 'w');
+set(gcf, 'Position', [198 558 1650 400]);
+set(gca, 'YScale', 'log');
+xlabel('Time of first syllable in the file (sec)', 'FontSize', 12);
+ylabel('Time between files (sec)', 'FontSize', 12);
+
+axis tight;
+Temp = axis;
+Temp(1) = 0;
+axis(Temp);
+colorbar;
+
+plot(PreTriggerDuration * ones(1,2), Temp(3:4), 'rREPLACE_WITH_DASH_DASH', 'LineWidth', 2);
+plot(Temp(1:2), PreTriggerDuration * ones(1,2), 'rREPLACE_WITH_DASH_DASH', 'LineWidth', 2);
+title('First syllable time vs. time since last file: symbol size and color reflects first syllable amplitude', 'FontSize', 14);
+text(mean(Temp(1:2)), 1.5*PreTriggerDuration, 'Pre trigger duration (sec)', 'FontSize', 14);
+
+% Now find all the first syllables that fall within a window 50ms before
+% the pre-trigger duration to 100ms after the pre-trigger duration and
+% calculate the amplitude of these syllables - this will approximately be
+% the trigger amplitude.
+
+TriggerWindow = [(PreTriggerDuration - 0.05) (PreTriggerDuration + 0.1)];
+TriggerSyllables = find((FileTimeDifferences(:,1)/1000 >= TriggerWindow(1)) & (FileTimeDifferences(:,1)/1000 <= TriggerWindow(2)));
+TriggerAmplitude = median(FileTimeDifferences(TriggerSyllables,3));
+
+% Now scale and write this trigger amplitude on previous graph in the top
+% right corner.
+ScaledTriggerAmplitude = ceil((TriggerAmplitude + + 1.001*abs(min(FileTimeDifferences(:,3))))*2);
+text(Temp(1) + 0.25*diff(Temp(1:2)), Temp(3) + 0.75*diff(Temp(3:4))/5, ['Trigger amplitude is ', num2str(ScaledTriggerAmplitude), ' dB'], 'FontSize', 10);
+
+% Now find the pre-trigger syllables that are greater than the trigger
+% amplitude and see what proportion of them have file time differences less
+% than pre-trigger duration
+PreTriggerSyllables_GreaterThanTriggerAmplitude = find((FileTimeDifferences(:,1)/1000 <= TriggerWindow(1)) & (FileTimeDifferences(:,3) >= TriggerAmplitude));
+text(Temp(1) + 0.25*diff(Temp(1:2)), Temp(3) + 0.75*diff(Temp(3:4))/10, ['Proportion of pre-trigger syllables with amplitudes >= TriggerAmplitude and file time differences < Pre-trigger duration = ', num2str(100 * length(find(FileTimeDifferences(PreTriggerSyllables_GreaterThanTriggerAmplitude,2)/1000 <= PreTriggerDuration))/length(PreTriggerSyllables_GreaterThanTriggerAmplitude)), '%'], 'FontSize', 10);
+
+saveas(gcf, fullfile('/home/raghav/LabNoteBookPlots', [FileList, '.FirstSyllTime.vs.FileTimeDifference.SyllAmplitudeBasedColorSize.png']), 'png');
+disp('Finished');
+
+
+##### SOURCE END #####
+--></body></html>

@@ -1,0 +1,12 @@
+AccessArray.mexa64: OK
+ASSLCalculateFisherThresholdMex.mexa64: OK
+CalculateMean.mexa64: OK
+CalculateMeanSTDforSpectralMatch.mexa64: OK
+CalculateSpikeEnergy.mexa64: OK
+CalculateVarForFisherThreshold.mexa64: OK
+CalTemplateMatch1.mexa64: OK
+CalTemplateMatch.mexa64: OK
+FindSpikes.mexa64: OK
+FindSpikesNegativeFirst.mexa64: OK
+ScaleSpect.mexa64: OK
+tetrode_find_spikes.mexa64: OK

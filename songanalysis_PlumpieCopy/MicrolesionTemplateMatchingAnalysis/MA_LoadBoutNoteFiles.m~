@@ -1,0 +1,7 @@
+function [BoutOnsets, BoutOffsets, BoutLens] = MA_LoadBoutNoteFiles(SongFileName, NoteFileDir)
+
+PresentDir = pwd;
+cd(NoteFileDir);
+
+if (exist([SongFileName, '.not.mat']))
+    Temp = load([SongFileName, '.not.mat'])

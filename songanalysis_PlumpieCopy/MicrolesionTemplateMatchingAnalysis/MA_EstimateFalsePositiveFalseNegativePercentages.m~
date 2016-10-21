@@ -1,0 +1,81 @@
+function [CorrectMatches_Threshold, Thresholds, FalsePositivePercentage, FalseNegativePercentage, OptimalThreshold] = MA_EstimateFalsePositiveFalseNegativePercentages(TemplateMatchValues, LowerThreshold, UpperThreshold, Parameters, i, SyllTemp, TemplateLen, PreOrPost)
+
+% A script to estimate the false positive and false negative percentages in
+% using a threshold for automatic detection of syllables
+% Based on Glaze and Troyer 2013
+
+close all;
+
+CorrectMatches_Threshold = [];
+
+TemplateIncrement = 0.1;
+Temp_Threshold = LowerThreshold;
+
+% First estimate the values for all template match values below lower
+% threshold
+
+Indices = find((TemplateMatchValues(:,1) < LowerThreshold));
+
+[CorrectMatches] = MA_PlotMatchSpectrograms(Parameters, Indices, i, SyllTemp, TemplateMatchValues, TemplateLen, PreOrPost);
+
+CorrectMatches_Threshold(end + 1,:) = [min(TemplateMatchValues(:,1)) LowerThreshold length(Indices) min([20 length(Indices)]) str2double(CorrectMatches{1})];
+
+Flag = 1;
+
+while (Temp_Threshold <= UpperThreshold)
+    Multiplier = 1;
+    Indices = find((TemplateMatchValues(:,1) >= Temp_Threshold) & (TemplateMatchValues(:,1) < (Temp_Threshold + Multiplier*TemplateIncrement)));
+    while (length(Indices) < 20)
+        if ((Temp_Threshold + Multiplier*TemplateIncrement) > UpperThreshold)
+            Flag = 0;
+            break;
+        end
+        Multiplier = Multiplier + 1;
+        Indices = find((TemplateMatchValues(:,1) >= Temp_Threshold) & (TemplateMatchValues(:,1) < (Temp_Threshold + Multiplier*TemplateIncrement)));
+    end
+    
+    if (Flag == 0)
+        break;
+    end
+    [CorrectMatches] = MA_PlotMatchSpectrograms(Parameters, Indices, i, SyllTemp, TemplateMatchValues, TemplateLen, PreOrPost);
+
+    if (~isempty(CorrectMatches{1}))
+        CorrectMatches = textscan(CorrectMatches{1}, '%f', 'DeLimiter', ',');
+    end
+    CorrectMatches_Threshold(end + 1,:) = [(Temp_Threshold) (Temp_Threshold + Multiplier*TemplateIncrement) length(Indices) min([20 length(Indices)]) CorrectMatches{1}];
+    Temp_Threshold = Temp_Threshold + Multiplier*TemplateIncrement;
+end
+
+% Now do the same estimations for all values above Upper threshold
+Indices = find((TemplateMatchValues(:,1) >= Temp_Threshold));
+
+[CorrectMatches] = MA_PlotMatchSpectrograms(Parameters, Indices, i, SyllTemp, TemplateMatchValues, TemplateLen, PreOrPost);
+
+if (~isempty(CorrectMatches{1}))
+    CorrectMatches = textscan(CorrectMatches{1}, '%f', 'DeLimiter', ',');
+end
+
+CorrectMatches_Threshold(end + 1,:) = [(Temp_Threshold) max(TemplateMatchValues(:,1)) length(Indices) min([20 length(Indices)]) CorrectMatches{1}];
+
+CorrectMatches_Threshold(:, end+1) = round((CorrectMatches_Threshold(:,5) ./ CorrectMatches_Threshold(:,4)) .* CorrectMatches_Threshold(:,3));
+
+% Now to estimate false positive percentage and false negative percentage
+% for each threshold
+
+for i = 1:(size(CorrectMatches_Threshold, 1)-1),
+    Thresholds(i) = CorrectMatches_Threshold(i,2);
+    NumAboveThreshold = sum(CorrectMatches_Threshold((i+1):end, 3));
+    NumActualCorrect = sum(CorrectMatches_Threshold((i+1):end, 6));
+    FalsePositivePercentage(i) = (NumAboveThreshold - NumActualCorrect) * 100 / NumAboveThreshold;
+    
+    NumBelowThreshold = sum(CorrectMatches_Threshold(1:i, 3));
+    NumActualCorrect = sum(CorrectMatches_Threshold(1:i, 6));
+    FalseNegativePercentage(i) = (NumActualCorrect * 100) / NumBelowThreshold;
+end
+
+% Optimal threshold is the threshold where sum of false positive percentage
+% and false negative percentage is minimum
+[MinVal, MinIndex] = min(FalseNegativePercentage + FalsePositivePercentage);
+OptimalThreshold = Thresholds(MinIndex);
+
+disp('Finished');

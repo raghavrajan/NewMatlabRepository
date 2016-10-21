@@ -22,7 +22,7 @@ function varargout = SongSpikeAnalysis(varargin)
 
 % Edit the above text to modify the response to help SongSpikeAnalysis
 
-% Last Modified by GUIDE v2.5 06-Jan-2013 23:09:52
+% Last Modified by GUIDE v2.5 02-Jul-2015 14:28:39
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -801,6 +801,8 @@ switch (SpikeSortMethod)
                         for j = 1:length(handles.SSA.ClusterstoLoad),
                             SpikeIndices = [SpikeIndices; find(SpikeTimes(:,1) == handles.SSA.ClusterstoLoad(j))];
                         end
+
+                        
                         [handles.SSA.UnDirFileInfo.SpikeData.Times{i}] = sort(SpikeTimes(SpikeIndices,2));
                         [handles.SSA.UnDirFileInfo.SpikeData.Amplitudes{i}, handles.SSA.UnDirFileInfo.SpikeData.Waveforms{i}] = SSAGetSpikeAmplitudes(handles.SSA.RawDataDirectory, handles.SSA.RecFileDirectory, handles.SSA.UnDirFileInfo.FileNames{i}, handles.SSA.SpikeChanNo, handles.SSA.UnDirFileInfo.SpikeData.Times{i}, handles.SSA.FileType);
                     end

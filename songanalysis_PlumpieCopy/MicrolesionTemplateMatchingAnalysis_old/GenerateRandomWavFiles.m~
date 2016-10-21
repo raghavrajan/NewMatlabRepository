@@ -1,0 +1,5 @@
+function [] = GenerateRandomWavFiles(Duration, Fs, OutputDir)
+
+% First set the random number generator to the same state by using the same
+% seed
+

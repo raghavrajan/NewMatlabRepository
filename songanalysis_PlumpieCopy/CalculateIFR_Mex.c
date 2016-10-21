@@ -1,0 +1,73 @@
+ /* Calculating the instantaneous firing rate for a neuron, given the spike train
+ * MEX file
+ * 
+ * Raghav 2015
+ * 
+ * inputs: SpikeTimes:   This is a vector of the data which is the spike times in ms
+ *         StartTime :   This is a scalar with the start time in ms
+ *         EndTime   :   This is a scalar with the end time in ms
+ *         dt        :   This is the resolution for the IFR in ms
+ *
+ * outputs:outputs
+ *         outputs: this is a vector with instantaneous firing rate at the specified resolution from start time to end time
+ *  
+ * If there is a spike t1 and the next one at t2, then IFR for t1<= t < t2 = 1/(t2 - t1)         
+ * For the time before the first spike, and after the last spike, IFR is not defined.
+ -----------------------------------*/
+
+#include "mex.h"
+#include <math.h>
+#include <matrix.h>
+
+void mexFunction(
+  int nOUT, mxArray *outputs[],
+  int nINP, const mxArray *inputs[])
+{
+  
+      double *Data, *IFR;
+      double StartTime, EndTime, dt, i; 
+      int DataLen, OutputLen, Index, SpikeIndex;
+      
+      if (nINP < 4) 
+        mexErrMsgTxt("4 inputs required");
+      
+      if (nOUT > 1) 
+        mexErrMsgTxt("Too many output arguments");
+      
+      Data = (double *)mxGetPr(inputs[0]);
+      StartTime = mxGetScalar(inputs[1]);
+      EndTime = mxGetScalar(inputs[2]);
+      dt = mxGetScalar(inputs[3]);
+
+      OutputLen = 2*((EndTime - StartTime)/dt + 1);
+      
+      outputs[0] = mxCreateDoubleMatrix(OutputLen, 1, mxREAL);
+      IFR = mxGetPr(outputs[0]);
+      
+      DataLen = mxGetM(inputs[0]) * mxGetN(inputs[0]);
+      
+      /*printf("Data length is %i, start time is %f, end time is %f and dt is %f \n", DataLen, StartTime, EndTime, dt);*/
+      
+      Index = 0;
+      SpikeIndex = 0;
+      
+      for (i = StartTime; i < EndTime; i+=dt)
+      {
+          /*printf("i = %f\n", i);*/
+          if (SpikeIndex == (DataLen - 1))
+              break;
+          
+          if (i < Data[SpikeIndex + 1])
+          {
+              /*printf("Index is %i\n and output length is %i\n", Index, OutputLen);*/
+              IFR[Index] = 1/(Data[SpikeIndex + 1] - Data[SpikeIndex]);
+              IFR[Index + OutputLen/2] = i;
+              Index++;
+          }
+          else
+          {
+              i-=dt;
+              SpikeIndex++;
+          }
+      }
+}

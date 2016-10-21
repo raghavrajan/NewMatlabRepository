@@ -1,0 +1,5 @@
+readtextfile.m: OK
+xcorr_songenv_batch.m: OK
+xcorr_songenv_batch_original_fromsk.m: OK
+xcorr_songenv.m: OK
+xcorr_songenv_original_fromsk.m: OK

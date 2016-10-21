@@ -1,4 +1,4 @@
-function [Bout] = MA_TemplateMatch_WithBoutLens(DataDir, SongFile, FileType, MotifTemplate, Label, OutputDir, TemplateType, BoutOnsets, BoutOffsets)
+function [Bout] = MA_TemplateMatch_WithBoutLens(DataDir, SongFile, FileType, MotifTemplate, Label, OutputDir, TemplateType, BoutOnsets, BoutOffsets, Normalization)
 
 PresentDir =pwd;
 
@@ -58,14 +58,36 @@ try
 
         for i = 1:length(MotifTemplate.MotifTemplate),
             WMotif = MotifTemplate.MotifTemplate(i).MotifTemplate;
-            WinMean = zeros((size(S,2) - size(WMotif,2) + 1), 1);
-            WinSTD = zeros((size(S,2) - size(WMotif,2) + 1), 1);
+            if (Normalization == 1)
+                WinMean = zeros((size(S,2) - size(WMotif,2) + 1), 1);
+                WinSTD = zeros((size(S,2) - size(WMotif,2) + 1), 1);
 
-            TempMeanSTD = CalculateMeanSTDforSpectralMatch(S(1:size(S,1)*size(S,2)), size(WMotif,1)*size(WMotif,2), (size(S,2) - size(WMotif,2) + 1), size(WMotif,1));
+                TempMeanSTD = CalculateMeanSTDforSpectralMatch(S(1:size(S,1)*size(S,2)), size(WMotif,1)*size(WMotif,2), (size(S,2) - size(WMotif,2) + 1), size(WMotif,1));
 
-            WinMean = TempMeanSTD(1:length(TempMeanSTD)/2);
-            WinSTD = TempMeanSTD((length(TempMeanSTD)/2 + 1):end);
-            [Match] = CalTemplateMatch(WMotif, S, WinMean, WinSTD);
+                WinMean = TempMeanSTD(1:length(TempMeanSTD)/2);
+                WinSTD = TempMeanSTD((length(TempMeanSTD)/2 + 1):end);
+                [Match] = CalTemplateMatch(WMotif, S, WinMean, WinSTD);
+            else
+                if (Normalization == 2)
+                    WinMedian = zeros((size(S,2) - size(WMotif,2) + 1), 1);
+                    WinMAD = zeros((size(S,2) - size(WMotif,2) + 1), 1);
+
+                    for ColNo = 1:(size(S,2) - size(WMotif, 2) + 1),
+                        StartIndex = ((ColNo - 1)*size(WMotif,1)) + 1;
+                        WinIndices = StartIndex:1:(StartIndex + size(WMotif,1)*size(WMotif,2) - 1);
+                        WinMedian(ColNo) = median(S(WinIndices));
+                        WinMAD(ColNo) = std(S(WinIndices));
+                    end
+    %                TempMedianMAD = CalculateMedianMADforSpectralMatch(S(1:size(S,1)*size(S,2)), size(WMotif,1)*size(WMotif,2), (size(S,2) - size(WMotif,2) + 1), size(WMotif,1));
+
+    %                WinMedian = TempMedianMAD(1:length(TempMedianMAD)/2);
+    %                WinMAD = TempMedianMAD((length(TempMedianMAD)/2 + 1):end);
+                    [Match] = CalTemplateMatch(WMotif, S, WinMedian, WinMAD);
+                else
+                    [Match] = CalTemplateMatchWithoutNormalization(WMotif, S);
+                end
+            end
+            
             Match = Match*size(WMotif,1)*size(WMotif,2);
             Bout{BoutNo}.BoutSeqMatch{i} = Match;
         end
@@ -75,7 +97,7 @@ try
         for MatchNo = 1:length(Bout{BoutNo}.BoutSeqMatch),
             Match(MatchNo,:) = Bout{BoutNo}.BoutSeqMatch{MatchNo}(1:length(Bout{BoutNo}.BoutSeqMatch{end}));
         end
-        Match = max(Match);
+        Match = max(Match, [], 1);
         Bout{BoutNo}.MaxBoutSeqMatch = Match;
         clear Match;
         [MaxVal, MaxInd] = max(Bout{BoutNo}.MaxBoutSeqMatch);

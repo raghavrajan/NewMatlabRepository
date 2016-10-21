@@ -1,0 +1,60 @@
+function [Bout] = MA_Efficient_PartRandomTemplateMatch_WithBoutLens(S, FileType, MotifTemplate, Label, OutputDir, TemplateType, ShufflePercentage, BoutOnsets, BoutOffsets, Normalization)
+
+OutputFileName = [SongFile, '.', Label, '.*.TempMatch.mat'];
+cd(OutputDir);
+if (~isempty(dir(OutputFileName)))
+    return;
+end
+
+for Repetition = 1:2,
+    TempS = zeros(size(S));
+    RandomColIndices = randperm(size(S,2));
+    for j = 1:length(RandomColIndices),
+        if (j <= round(ShufflePercentage*length(RandomColIndices)))
+            RandomIndices = randperm(size(S,1));
+            TempS(:,RandomColIndices(j)) = S(RandomIndices,RandomColIndices(j));
+        else
+            TempS(:,RandomColIndices(j)) = S(:,RandomColIndices(j));
+        end
+    end
+
+    for i = 1:length(MotifTemplate.MotifTemplate),
+        WMotif1 = MotifTemplate.MotifTemplate(i).MotifTemplate;
+        if (Normalization == 1)
+            TempMeanSTD = CalculateMeanSTDforSpectralMatch(TempS(1:size(S,1)*size(S,2)), size(WMotif1,1)*size(WMotif1,2), (size(S,2) - size(WMotif1,2) + 1), size(WMotif1,1));
+
+            WinMean = TempMeanSTD(1:length(TempMeanSTD)/2);
+            WinSTD = TempMeanSTD((length(TempMeanSTD)/2 + 1):end);
+
+            [Match] = CalTemplateMatch(WMotif1, TempS, WinMean, WinSTD);
+        else
+            [Match] = CalTemplateMatchWithoutNormalization(WMotif1, TempS);
+        end
+        Match = Match*size(WMotif1,1)*size(WMotif1,2);
+        Bout.BoutSeqMatch{i} = Match;
+    end
+    Bout.T = T;
+
+    clear Match;
+    for MatchNo = 1:length(Bout.BoutSeqMatch),
+        Match(MatchNo,:) = Bout.BoutSeqMatch{MatchNo}(1:length(Bout.BoutSeqMatch{end}));
+    end
+    Match = max(Match);
+    Bout.MaxBoutSeqMatch = Match;
+    clear Match;
+    [MaxVal, MaxInd] = max(Bout.MaxBoutSeqMatch);
+    Bout.MaxBoutSeqMatchVal = [Bout.T(MaxInd) MaxVal];
+    Bout.FileName = SongFile;
+    Bout.FileLength = (BoutOffsets(1) - BoutOnsets(1))/1000;
+    Bout.BoutOnset = BoutOnsets(1);
+    Bout.BoutOffset = BoutOffsets(1);
+    Bout.BoutSeqMatch = [];
+
+    cd(OutputDir);
+    OutputFileName = [SongFile, '.', Label, '.', num2str(Repetition), '.TempMatch.mat'];
+    save(OutputFileName, 'Bout');
+
+    cd(PresentDir);
+    clear Bout;
+    clear onsets offsets Bouts Temp;
+end

@@ -1,0 +1,3 @@
+AutoSegmentSongFiles.m: OK
+AutoSegmentSongFiles.m~: OK
+AutoSongSegmentParameters.mat: OK

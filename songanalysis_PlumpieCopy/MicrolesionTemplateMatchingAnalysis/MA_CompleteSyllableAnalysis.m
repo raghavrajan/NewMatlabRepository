@@ -1,4 +1,4 @@
-function [Results, Parameters] = MA_CompleteSyllableAnalysis(ParameterFile, OtherBirdsSongParametersFile, Multiplier, ShuffledMatchesFigure, NoteFileDir)
+function [Results, Parameters] = MA_CompleteSyllableAnalysis(ParameterFile, OtherBirdsSongParametersFile, Multiplier, ShuffledMatchesFigure, NoteFileDir, varargin)
 
 %==========================================================================
 % Function for analysing the effects of a treatment on song - written in
@@ -6,6 +6,12 @@ function [Results, Parameters] = MA_CompleteSyllableAnalysis(ParameterFile, Othe
 % for analysing individual syllables
 % Raghav Rajan - 01st July 2014
 %==========================================================================
+
+if (nargin > 5)
+    Normalization = varargin{1};
+else
+    Normalization = 1;
+end
 
 %============== Some common variables =====================================
 OutputDir = '/home/raghav/MicrolesionAnalysisResults/';
@@ -66,62 +72,6 @@ end
 
 %==========================================================================
 
-%======Now segment files (Aronov Fee style) ===============================
-% Segment each file separately, minimum interval = 7ms, minimum duration =
-% 7ms and the thresholds are determined separately for each file similar to
-% Aronov and Fee (J.Neurosci) paper.
-
-disp('Segmenting files into note files ...');
-
-% First for pre days
-for i = 1:Parameters.NoPreDays,
-    disp(['   Pre Day #', num2str(i), ' - directed song ...']); 
-    % First directed songs
-    FileTypeCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double(Parameters.FileType)));
-    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double(Parameters.PreDataDir{i})));
-    OutputDirCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
-    
-    % using cellfun so that i iterate over each element of the cell array.
-    % To use cellfun, all of the other inputs also have to be in the form
-    % of cell arrays of the same length - so the previous three lines
-    % convert file type, data dir and output dir - common parameters for
-    % all of the files into cell arrays
-    
-    [Parameters.PreDirOnsets{i}, Parameters.PreDirOffsets{i}, Parameters.PreDirSyllDurs{i}, Parameters.PreDirGapDurs{i}, Parameters.PreDirThresholds{i}, Parameters.PreDirLens{i}, Parameters.PreDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PreDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, 'UniformOutput', 0);
-
-    % next undirected songs
-    disp(['   Pre Day #', num2str(i), ' - undirected song ...']); 
-    FileTypeCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double(Parameters.FileType)));
-    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double(Parameters.PreDataDir{i})));
-    OutputDirCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
-    [Parameters.PreUnDirOnsets{i}, Parameters.PreUnDirOffsets{i}, Parameters.PreUnDirSyllDurs{i}, Parameters.PreUnDirGapDurs{i}, Parameters.PreUnDirThresholds{i}, Parameters.PreUnDirLens{i}, Parameters.PreUnDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PreUnDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, 'UniformOutput', 0);
-end
-
-% Next for post days
-for i = 1:Parameters.NoPostDays,
-    % First directed songs
-    disp(['   Post Day #', num2str(i), ' - directed song ...']); 
-    FileTypeCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double(Parameters.FileType)));
-    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double(Parameters.PostDataDir{i})));
-    OutputDirCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
-    
-    % using cellfun so that i iterate over each element of the cell array.
-    % To use cellfun, all of the other inputs also have to be in the form
-    % of cell arrays of the same length - so the previous three lines
-    % convert file type, data dir and output dir - common parameters for
-    % all of the files into cell arrays
-    
-    [Parameters.PostDirOnsets{i}, Parameters.PostDirOffsets{i}, Parameters.PostDirSyllDurs{i}, Parameters.PostDirGapDurs{i}, Parameters.PostDirThresholds{i}, Parameters.PostDirLens{i}, Parameters.PostDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PostDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, 'UniformOutput', 0);
-
-    % next undirected songs
-    disp(['   Post Day #', num2str(i), ' - undirected song ...']); 
-    FileTypeCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double(Parameters.FileType)));
-    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double(Parameters.PostDataDir{i})));
-    OutputDirCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
-    [Parameters.PostUnDirOnsets{i}, Parameters.PostUnDirOffsets{i}, Parameters.PostUnDirSyllDurs{i}, Parameters.PostUnDirGapDurs{i}, Parameters.PostUnDirThresholds{i}, Parameters.PostUnDirLens{i}, Parameters.PostUnDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PostUnDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, 'UniformOutput', 0);
-end
-%==========================================================================
-
 %======Now load up note files with bout information =======================
 % Load up note files which have bouts labelled with a 'B'. This has been
 % done to get a better idea of consistency of song production.
@@ -170,6 +120,67 @@ if (~isempty(NoteFileDir))
         NoteFileDirCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double(NoteFileDir)));
         [Parameters.PostUnDirBoutOnsets{i}, Parameters.PostUnDirBoutOffsets{i}, Parameters.PostUnDirBoutLens{i}] = cellfun(@MA_LoadBoutNoteFiles, Parameters.PostUnDirSongFileNames{i}, NoteFileDirCellArray, 'UniformOutput', 0);
     end
+end
+%==========================================================================
+
+%======Now segment files (Aronov Fee style) ===============================
+% Segment each file separately, minimum interval = 7ms, minimum duration =
+% 7ms and the thresholds are determined separately for each file similar to
+% Aronov and Fee (J.Neurosci) paper.
+% Use the bout information from the previous thing to segment only the bout
+% part of the song
+
+disp('Segmenting files into note files ...');
+
+% First for pre days
+for i = 1:Parameters.NoPreDays,
+    disp(['   Pre Day #', num2str(i), ' - directed song ...']); 
+    % First directed songs
+    FileTypeCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double(Parameters.FileType)));
+    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double(Parameters.PreDataDir{i})));
+    OutputDirCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
+    BoutCellArray = num2cell(ones(length(Parameters.PreDirSongFileNames{i}), 1));
+    % using cellfun so that i iterate over each element of the cell array.
+    % To use cellfun, all of the other inputs also have to be in the form
+    % of cell arrays of the same length - so the previous three lines
+    % convert file type, data dir and output dir - common parameters for
+    % all of the files into cell arrays
+    
+    [Parameters.PreDirOnsets{i}, Parameters.PreDirOffsets{i}, Parameters.PreDirSyllDurs{i}, Parameters.PreDirGapDurs{i}, Parameters.PreDirThresholds{i}, Parameters.PreDirLens{i}, Parameters.PreDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PreDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, Parameters.PreDirBoutOnsets{i}, Parameters.PreDirBoutOffsets{i}, BoutCellArray, 'UniformOutput', 0);
+
+    % next undirected songs
+    disp(['   Pre Day #', num2str(i), ' - undirected song ...']); 
+    FileTypeCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double(Parameters.FileType)));
+    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double(Parameters.PreDataDir{i})));
+    OutputDirCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
+    BoutCellArray = num2cell(ones(length(Parameters.PreUnDirSongFileNames{i}), 1));
+    [Parameters.PreUnDirOnsets{i}, Parameters.PreUnDirOffsets{i}, Parameters.PreUnDirSyllDurs{i}, Parameters.PreUnDirGapDurs{i}, Parameters.PreUnDirThresholds{i}, Parameters.PreUnDirLens{i}, Parameters.PreUnDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PreUnDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, Parameters.PreUnDirBoutOnsets{i}, Parameters.PreUnDirBoutOffsets{i}, BoutCellArray, 'UniformOutput', 0);
+end
+
+% Next for post days
+for i = 1:Parameters.NoPostDays,
+    % First directed songs
+    disp(['   Post Day #', num2str(i), ' - directed song ...']); 
+    FileTypeCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double(Parameters.FileType)));
+    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double(Parameters.PostDataDir{i})));
+    OutputDirCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
+    BoutCellArray = num2cell(ones(length(Parameters.PostDirSongFileNames{i}), 1));
+    
+    % using cellfun so that i iterate over each element of the cell array.
+    % To use cellfun, all of the other inputs also have to be in the form
+    % of cell arrays of the same length - so the previous three lines
+    % convert file type, data dir and output dir - common parameters for
+    % all of the files into cell arrays
+    
+    [Parameters.PostDirOnsets{i}, Parameters.PostDirOffsets{i}, Parameters.PostDirSyllDurs{i}, Parameters.PostDirGapDurs{i}, Parameters.PostDirThresholds{i}, Parameters.PostDirLens{i}, Parameters.PostDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PostDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, Parameters.PostDirBoutOnsets{i}, Parameters.PostDirBoutOffsets{i}, BoutCellArray, 'UniformOutput', 0);
+
+    % next undirected songs
+    disp(['   Post Day #', num2str(i), ' - undirected song ...']); 
+    FileTypeCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double(Parameters.FileType)));
+    RawDataDirCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double(Parameters.PostDataDir{i})));
+    OutputDirCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double([OutputDir, Parameters.BirdName, '.NoteFiles', FileSep])));
+    BoutCellArray = num2cell(ones(length(Parameters.PostUnDirSongFileNames{i}), 1));
+    [Parameters.PostUnDirOnsets{i}, Parameters.PostUnDirOffsets{i}, Parameters.PostUnDirSyllDurs{i}, Parameters.PostUnDirGapDurs{i}, Parameters.PostUnDirThresholds{i}, Parameters.PostUnDirLens{i}, Parameters.PostUnDirFs{i}] = cellfun(@MA_SegmentFiles, Parameters.PostUnDirSongFileNames{i}, FileTypeCellArray, RawDataDirCellArray, OutputDirCellArray, Parameters.PostUnDirBoutOnsets{i}, Parameters.PostUnDirBoutOffsets{i}, BoutCellArray, 'UniformOutput', 0);
 end
 %==========================================================================
 
@@ -335,7 +346,7 @@ end
 %============ Now to start the syllable template matching =================
 %============= Template Matching ==========================================
 
-TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/';
+TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/';
 [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 
 TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.TemplateMatchResults'];
@@ -367,6 +378,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         LabelCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double(['Syll_', Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Label])));
         TemplateTypeCellArray = cellstr(char(ones(length(Parameters.PreDirSongFileNames{i}), 1)*double('Spectrogram')));
         SyllableTemplateCellArray = cell(size(Parameters.PreDirSongFileNames{i}));
+        NormalizationCellArray = num2cell(ones(length(Parameters.PreDirSongFileNames{i}), 1) * Normalization);
         for j = 1:length(SyllableTemplateCellArray),
             SyllableTemplateCellArray{j} = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{min([3, length(Parameters.SyllableTemplate.SyllableTemplates{SyllTemp})])};
         end
@@ -375,7 +387,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         % of cell arrays of the same length - so the previous three lines
         % convert file type, data dir and output dir - common parameters for
         % all of the files into cell arrays
-        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PreDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, Parameters.PreDirBoutOnsets{i}, Parameters.PreDirBoutOffsets{i}, 'UniformOutput', 0);
+        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PreDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, Parameters.PreDirBoutOnsets{i}, Parameters.PreDirBoutOffsets{i}, NormalizationCellArray, 'UniformOutput', 0);
 
         % next undirected songs
         disp(['      Pre Day #', num2str(i), ' - undirected song ...']); 
@@ -386,6 +398,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         LabelCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double(['Syll_', Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Label])));
         TemplateTypeCellArray = cellstr(char(ones(length(Parameters.PreUnDirSongFileNames{i}), 1)*double('Spectrogram')));
         SyllableTemplateCellArray = cell(size(Parameters.PreUnDirSongFileNames{i}));
+        NormalizationCellArray = num2cell(ones(length(Parameters.PreUnDirSongFileNames{i}), 1) * Normalization);
         for j = 1:length(SyllableTemplateCellArray),
             SyllableTemplateCellArray{j} = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{min([3, length(Parameters.SyllableTemplate.SyllableTemplates{SyllTemp})])};
         end
@@ -394,7 +407,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         % of cell arrays of the same length - so the previous three lines
         % convert file type, data dir and output dir - common parameters for
         % all of the files into cell arrays
-        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PreUnDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, Parameters.PreUnDirBoutOnsets{i}, Parameters.PreUnDirBoutOffsets{i}, 'UniformOutput', 0);
+        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PreUnDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, Parameters.PreUnDirBoutOnsets{i}, Parameters.PreUnDirBoutOffsets{i}, NormalizationCellArray, 'UniformOutput', 0);
     end
 
     % Next for post song
@@ -407,6 +420,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         LabelCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double(['Syll_', Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Label])));
         TemplateTypeCellArray = cellstr(char(ones(length(Parameters.PostDirSongFileNames{i}), 1)*double('Spectrogram')));
         SyllableTemplateCellArray = cell(size(Parameters.PostDirSongFileNames{i}));
+        NormalizationCellArray = num2cell(ones(length(Parameters.PostDirSongFileNames{i}), 1) * Normalization);
         for j = 1:length(SyllableTemplateCellArray),
             SyllableTemplateCellArray{j} = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{min([3, length(Parameters.SyllableTemplate.SyllableTemplates{SyllTemp})])};
         end
@@ -415,7 +429,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         % of cell arrays of the same length - so the previous three lines
         % convert file type, data dir and output dir - common parameters for
         % all of the files into cell arrays
-        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PostDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  Parameters.PostDirBoutOnsets{i}, Parameters.PostDirBoutOffsets{i}, 'UniformOutput', 0);
+        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PostDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  Parameters.PostDirBoutOnsets{i}, Parameters.PostDirBoutOffsets{i}, NormalizationCellArray, 'UniformOutput', 0);
 
         % next undirected songs
         disp(['      Post Day #', num2str(i), ' - undirected song ...']); 
@@ -426,6 +440,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         LabelCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double(['Syll_', Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Label])));
         TemplateTypeCellArray = cellstr(char(ones(length(Parameters.PostUnDirSongFileNames{i}), 1)*double('Spectrogram')));
         SyllableTemplateCellArray = cell(size(Parameters.PostUnDirSongFileNames{i}));
+        NormalizationCellArray = num2cell(ones(length(Parameters.PostUnDirSongFileNames{i}), 1) * Normalization);
         for j = 1:length(SyllableTemplateCellArray),
             SyllableTemplateCellArray{j} = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{min([3, length(Parameters.SyllableTemplate.SyllableTemplates{SyllTemp})])};
         end
@@ -434,13 +449,13 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
         % of cell arrays of the same length - so the previous three lines
         % convert file type, data dir and output dir - common parameters for
         % all of the files into cell arrays
-        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PostUnDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  Parameters.PostUnDirBoutOnsets{i}, Parameters.PostUnDirBoutOffsets{i}, 'UniformOutput', 0);
+        cellfun(@MA_TemplateMatch_WithBoutLens, RawDataDirCellArray, Parameters.PostUnDirSongFileNames{i}, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray,  Parameters.PostUnDirBoutOnsets{i}, Parameters.PostUnDirBoutOffsets{i}, NormalizationCellArray, 'UniformOutput', 0);
     end
 end    
 %==========================================================================
 
 % %============= Template Matching with other bird's songs ==================
-% TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/OtherBirdSongs/';
+% TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/OtherBirdSongs/';
 % [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 % 
 % TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.TemplateMatchResults', FileSep];
@@ -475,7 +490,7 @@ end
 % %==========================================================================
 
 %============= Shuffled song comparisons with template ====================
-TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/ShuffledSongComparisons/';
+TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/ShuffledSongComparisons/';
 [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 
 TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.TemplateMatchResults'];
@@ -507,6 +522,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
     LabelCellArray = cellstr(char(ones(length(RandomFiles), 1)*double(['Syll_', Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Label])));
     TemplateTypeCellArray = cellstr(char(ones(length(RandomFiles), 1)*double('Spectrogram')));
     SyllableTemplateCellArray = cell(size(RandomFiles));
+    NormalizationCellArray = num2cell(ones(length(RandomFiles), 1) * Normalization);
     for j = 1:length(SyllableTemplateCellArray),
         SyllableTemplateCellArray{j} = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{min([3, length(Parameters.SyllableTemplate.SyllableTemplates{SyllTemp})])};
     end
@@ -515,7 +531,7 @@ for SyllTemp = 1:length(Parameters.SyllableTemplate.SyllableTemplates),
     % of cell arrays of the same length - so the previous three lines
     % convert file type, data dir and output dir - common parameters for
     % all of the files into cell arrays
-    cellfun(@MA_RandomTemplateMatch_WithBoutLens, RawDataDirCellArray, RandomFiles, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, Parameters.PreUnDirBoutOnsets{1}(1:NumberofFiles), Parameters.PreUnDirBoutOffsets{1}(1:NumberofFiles), 'UniformOutput', 0);
+    cellfun(@MA_RandomTemplateMatch_WithBoutLens, RawDataDirCellArray, RandomFiles, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, Parameters.PreUnDirBoutOnsets{1}(1:NumberofFiles), Parameters.PreUnDirBoutOffsets{1}(1:NumberofFiles), NormalizationCellArray, 'UniformOutput', 0);
 end
 %==========================================================================
 
@@ -523,7 +539,7 @@ end
 ShufflePercentages = [25 50 75];
 
 for Shuffle = ShufflePercentages,
-    TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/PartShuffledSongComparisons/';
+    TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/PartShuffledSongComparisons/';
     [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 
     TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.Shuffle.', num2str(Shuffle), 'percent.TemplateMatchResults'];
@@ -555,6 +571,7 @@ for Shuffle = ShufflePercentages,
         OutputDirCellArray = cellstr(char(ones(length(RandomFiles), 1)*double([TemplateMatchOutputDir, FileSep, 'Syll_', Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Label])));
         LabelCellArray = cellstr(char(ones(length(RandomFiles), 1)*double(['Syll_', Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Label])));
         TemplateTypeCellArray = cellstr(char(ones(length(RandomFiles), 1)*double('Spectrogram')));
+        NormalizationCellArray = num2cell(ones(length(RandomFiles), 1) * Normalization);
         SyllableTemplateCellArray = cell(size(RandomFiles));
         for j = 1:length(SyllableTemplateCellArray),
             SyllableTemplateCellArray{j} = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{min([3, length(Parameters.SyllableTemplate.SyllableTemplates{SyllTemp})])};
@@ -564,14 +581,14 @@ for Shuffle = ShufflePercentages,
         % of cell arrays of the same length - so the previous three lines
         % convert file type, data dir and output dir - common parameters for
         % all of the files into cell arrays
-        cellfun(@MA_PartRandomTemplateMatch_WithBoutLens, RawDataDirCellArray, RandomFiles, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, ShuffleCellArray, Parameters.PreUnDirBoutOnsets{1}(1:NumberofFiles), Parameters.PreUnDirBoutOffsets{1}(1:NumberofFiles), 'UniformOutput', 0);
+        cellfun(@MA_PartRandomTemplateMatch_WithBoutLens, RawDataDirCellArray, RandomFiles, FileTypeCellArray, SyllableTemplateCellArray, LabelCellArray, OutputDirCellArray, TemplateTypeCellArray, ShuffleCellArray, Parameters.PreUnDirBoutOnsets{1}(1:NumberofFiles), Parameters.PreUnDirBoutOffsets{1}(1:NumberofFiles), NormalizationCellArray, 'UniformOutput', 0);
     end
 end
 %==========================================================================
 
 %============= Load results of syllable template matching =================
 % Next for the 100% shuffled song comparisons
-TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/ShuffledSongComparisons/';
+TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/ShuffledSongComparisons/';
 [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 
 TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.TemplateMatchResults'];
@@ -609,7 +626,7 @@ for Shuffle = ShufflePercentages,
 
     ShuffleIndex = ShuffleIndex + 1;
     
-    TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/PartShuffledSongComparisons/';
+    TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/PartShuffledSongComparisons/';
     [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 
     TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.Shuffle.', num2str(Shuffle), 'percent.TemplateMatchResults'];
@@ -649,7 +666,7 @@ end
 
 % % Loading results for other birds songs
 % 
-% TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/OtherBirdSongs/';
+% TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/OtherBirdSongs/';
 % [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 % 
 % TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.TemplateMatchResults', FileSep];
@@ -677,7 +694,7 @@ end
 
 % Loading results for pre song with threshold as 0 - basically all the
 % peaks
-TemplateMatchOutputDir = '/home/raghav/MicrolesionAnalysisResults_MT_Templates/';
+TemplateMatchOutputDir = '/home/raghav/PitchShiftedTemplates/';
 [SyllableTemplateDir, SyllableTemplateFileName, SyllableTemplateExt] = fileparts(Parameters.SyllableTemplateFileName);
 
 TemplateMatchOutputDir = [TemplateMatchOutputDir, SyllableTemplateFileName, SyllableTemplateExt, '.TemplateMatchResults'];

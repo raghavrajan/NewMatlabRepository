@@ -19,7 +19,7 @@ else
     if (strfind(FileType,'wav'));
         PresentDir = pwd;
         cd(pathname);
-        [rawsong, Fs] = wavread(filename);
+        [rawsong, Fs] = audioread(filename);
         cd(PresentDir);
     else 
         if (strfind(FileType, 'okrank'))
@@ -91,14 +91,15 @@ t_max = time(end); %convert to ms
 time_spect = [t_min, t_max];   
 figure;
 set(gcf, 'Color', 'w');
-set(gcf, 'Position', [153 440 893 269]);
-axes('Position',[0.085 0.2 0.89 0.63]);
-cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -55, ...
+set(gcf, 'Position', [153 440 1200 250]);
+axes('Position',[0.08 0.25 0.88 0.6]);
+cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -70, ...
         0, 2, ColourMap, 'classic');
 axis([t_min t_max 300 8000]);
 set(gca, 'FontSize', 14, 'FontWeight', 'bold');
 xlabel('Time (sec)', 'FontSize', 14, 'FontWeight', 'bold');
-ylabel('Frequency (Hz)', 'FontSize', 14, 'FontWeight', 'bold');
+ylabel('Frequency (kHz)', 'FontSize', 14, 'FontWeight', 'bold');
+set(gca, 'YTick', [0:2000:8000], 'YTickLabel', [0:2:8]);
 title(filename, 'FontSize', 14, 'FontWeight', 'bold');
 zoom xon;
 hold on;

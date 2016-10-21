@@ -14,24 +14,15 @@ end
 ChannelNo = 1;
 
 % Get Song Data from observer file
+
 if (strfind(FileType,'obs'))
     channel_string = strcat('obs',num2str(0),'r');
-    [rawsong,Fs] = soundin_copy(pathname,filename,channel_string);
-    
-    % Convert to uV - 5V on the data acquisition is 32768
-    rawsong = rawsong * 5/32768;
+    ChannelNo = 0;
 else
-    if (strfind(FileType,'wav'));
-        cd(pathname);
-        [rawsong, Fs] = wavread(filename);
-        cd(PresentDir);
-    else 
-        if (strfind(FileType, 'okrank'))
-            [rawsong, Fs] = ReadOKrankData(pathname, filename, ChannelNo);
-        end
-    end
+    channel_string = ChannelNo;
 end
 
+[rawsong, Fs] = GetData(pathname, filename, FileType, ChannelNo);
 
 % Time axis
 time = 0:1/Fs:(length(rawsong)/Fs);
@@ -93,7 +84,7 @@ time_spect = [t_min, t_max];
 axes(gca);
 hold off;
 cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -50, ...
-        10, 1.2, 'hot', 'classic');
+        0, 2, 'hot', 'classic');
 axis([t_min t_max 300 8000]);
 set(gca, 'FontSize', 10);
 set(gca, 'XTick', []);

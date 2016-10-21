@@ -1,0 +1,156 @@
+function [] = MA_CheckDataTemplateDifferences(DataDir, FileList, FileType, MatchOutputDir, TemplateFile, TemplateLabel, MaxNum, Normalization)
+
+Flag = 1;
+% First load syllable templates and figure out which one corresponds to the
+% template label specified by the user
+
+SyllTemplate = load(TemplateFile);
+for i = 1:length(SyllTemplate.SyllableTemplates),
+    if (SyllTemplate.SyllableTemplates{i}{1}.MotifTemplate(1).Label == TemplateLabel)
+        MotifTemplate = SyllTemplate.SyllableTemplates{i}{length(SyllTemplate.SyllableTemplates{i})}.MotifTemplate;
+        break;
+    end
+end
+
+% Now get fft window size and window overlap values from the template
+
+FFTWinSize = MotifTemplate(1).FFTWinSize;
+FFTWinOverlap = MotifTemplate(1).FFTWinOverlap;
+
+% Now find the motif template with 0 time stretch and 0 freq stretch
+ZeroStretchIndex = find(([MotifTemplate.TimeStretch] == 0) & ([MotifTemplate.FreqStretch] == 0));
+UniqueTimeStretches = unique([MotifTemplate.TimeStretch]);
+for i = 1:length(UniqueTimeStretches),
+    UniqueTimeStretchIndices(i) = find(([MotifTemplate.TimeStretch] == UniqueTimeStretches(i)) & ([MotifTemplate.FreqStretch] == 0));
+end
+
+Error = [];
+
+% Now get the data file names
+Fid = fopen(FileList, 'r');
+DataFiles = textscan(Fid, '%s', 'DeLimiter', '\n');
+DataFiles = DataFiles{1};
+fclose(Fid);
+
+% Now find the template match value files
+
+figure;
+Index = 1;
+PlotIndex = 1;
+for i = 1:length(DataFiles),
+    if (Flag == 0)
+        break;
+    end
+    
+    [TemplateFilePath, ActualTemplateFileName, TemplateFileExt] = fileparts(TemplateFile);
+    MatchValueFileDir = fullfile([fullfile(MatchOutputDir, [ActualTemplateFileName, TemplateFileExt]), '.TemplateMatchResults'], ['Syll_', TemplateLabel]);
+    MatchValueFileName = [DataFiles{i}, '.Syll_', TemplateLabel, '.TempMatch.mat'];
+    
+    TemplateMatchBout = load(fullfile(MatchValueFileDir, MatchValueFileName));
+    
+    [ActualSong, Fs] = MA_ReadSongFile(DataDir, DataFiles{i}, FileType);
+
+    SongTime = (1:1:length(ActualSong))/Fs;
+
+    for j = 1:length(TemplateMatchBout.Bout),
+        BoutOnsets(j) = TemplateMatchBout.Bout{j}.BoutOnset;
+        BoutOffsets(j) = TemplateMatchBout.Bout{j}.BoutOffset;
+    end
+    
+    for BoutNo = 1:length(TemplateMatchBout.Bout),
+        if (Flag == 0)
+            break;
+        end
+        
+        Song = ActualSong(round(BoutOnsets(BoutNo) * Fs/1000):round(BoutOffsets(BoutNo) * Fs/1000));
+        
+        [P, F, S1, T] = CalculateMultiTaperSpectrogram(Song, Fs, FFTWinSize, FFTWinOverlap, 1.5);
+
+        Freq1 = find((F >= 860) & (F <= 8600));
+        S = log10(abs(S1(Freq1,:)));
+        
+       
+        SmoothingKernelLen = 3;
+        SmoothingKernel = ones(SmoothingKernelLen,1)/SmoothingKernelLen;
+        TemplateMatchValues = conv(TemplateMatchBout.Bout{BoutNo}.MaxBoutSeqMatch, SmoothingKernel, 'same');
+
+        figure;
+        plot(TemplateMatchValues, 'k');
+        set(gcf, 'Position', [187 307 1200 400]);
+        Threshold = inputdlg('Enter the threshold for choosing matches', 'Threshold entry dialog');
+        close all;
+        
+        Threshold = str2double(Threshold{1});
+        
+        [MatchValues, MatchIndices] = findpeaks(TemplateMatchValues, 'MINPEAKHEIGHT', Threshold);
+        
+        for j = 1:length(MatchValues),
+            MatchTime = TemplateMatchBout.Bout{BoutNo}.T(MatchIndices(j));
+            MatchIndex = find(T <= MatchTime, 1, 'last');
+            
+            clear MatchValue TempError;
+            for k = 1:length(MotifTemplate),
+                TemplateLen = size(MotifTemplate(k).MotifTemplate, 2);
+            
+                DataWindow = S(:, MatchIndex:(MatchIndex + TemplateLen - 1));
+                if (Normalization == 1)
+                    DataWindow = (DataWindow - mean(DataWindow(:)))/std(DataWindow(:));
+                else
+                    if (Normalization == 2)
+                        DataWindow = (DataWindow - median(DataWindow(:)))/mad(DataWindow(:));
+                    end
+                end
+                TempError{k} = (MotifTemplate(k).MotifTemplate - DataWindow).^2;
+                MatchValue(k) = size(DataWindow,1)*size(DataWindow,2)/sum(TempError{k}(:));
+            end
+            [MaxVal, MaxIndex] = max(MatchValue);
+            
+            clear TempAxis;
+            subplot(floor(MaxNum*3)/6, 6, PlotIndex);
+            contourf(MotifTemplate(MaxIndex).MotifTemplate);
+            title(['f = ', num2str(MotifTemplate(MaxIndex).FreqStretch), '; t = ', num2str(MotifTemplate(MaxIndex).TimeStretch)]);
+            TempAxis(1,:) = caxis;
+            PlotIndex = PlotIndex + 1;
+            
+            subplot(floor(MaxNum*3)/6, 6, PlotIndex);
+            TemplateLen = size(MotifTemplate(k).MotifTemplate, 2);
+            DataWindow = S(:, MatchIndex:(MatchIndex + TemplateLen - 1));
+            DataWindow = (DataWindow - mean(DataWindow(:)))/std(DataWindow(:));
+            contourf(DataWindow);    
+            TempAxis(2,:) = caxis;
+            PlotIndex = PlotIndex + 1;
+            
+            subplot(floor(MaxNum*3)/6, 6, PlotIndex-2);
+            caxis([min(TempAxis(:,1)) max(TempAxis(:,2))]);
+            
+            subplot(floor(MaxNum*3)/6, 6, PlotIndex-1);
+            caxis([min(TempAxis(:,1)) max(TempAxis(:,2))]);
+            
+            subplot(floor(MaxNum*3)/6, 6, PlotIndex);
+            contourf(TempError{MaxIndex});
+            title(['Match Value = ', num2str(MaxVal)]);
+            PlotIndex = PlotIndex + 1;
+
+            Index = Index + 1;
+            if (Index > MaxNum)
+                Flag = 0;
+                break;
+            end
+        end
+    end
+    
+end
+
+% figure;
+% Index = 1;
+% for i = 1:2:length(UniqueTimeStretches),
+%     subplot(ceil(length(UniqueTimeStretches)/2), 10, (Index-1)*10 + 1);
+%     contourf(MotifTemplate(UniqueTimeStretchIndices(i)).MotifTemplate);
+%     subplot(ceil(length(UniqueTimeStretches)/2), 10, [((Index-1)*10 + 2):(Index*10)]);
+%     Index = Index + 1;
+%     contourf(Error{i});
+%     title(['Template len = ', num2str(size(MotifTemplate(UniqueTimeStretchIndices(i)).MotifTemplate,2))]);
+%     colorbar;
+% end
+
+disp('Finished');

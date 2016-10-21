@@ -23,7 +23,7 @@ if (strfind(FileType,'obs'))
 else
     if (strfind(FileType,'wav'));
         cd(pathname);
-        [rawsong, Fs] = wavread(filename);
+        [rawsong, Fs] = audioread(filename);
         cd(PresentDir);
     else 
         if (strfind(FileType, 'okrank'))
@@ -74,7 +74,7 @@ h = ones(1, Len)/Len;
 nfft=round(Fs*8/1000);
 nfft = 2^nextpow2(nfft);
 spect_win = hanning(nfft);
-noverlap = round(0.5*length(spect_win)); %number of overlapping points       
+noverlap = round(0.3*length(spect_win)); %number of overlapping points       
 
 %now calculate spectrogram
 %     [spect, freq, time_song] = specgram(filtsong, nfft, Fs, spect_win, noverlap);

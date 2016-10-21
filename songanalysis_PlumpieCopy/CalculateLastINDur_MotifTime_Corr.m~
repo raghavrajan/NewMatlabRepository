@@ -1,0 +1,7 @@
+function [] = CalculateLastINDur_MotifTime_Corr(INR)
+
+for i = 1:length(INR.INs),
+INDur_TimeToStartMotif(i,:) = [(INR.BoutDetails(i).offsets(INR.INs{i}(end)) - INR.BoutDetails(i).onsets(INR{1}.INs{i}(end))) (INR{1}.BoutDetails(i).onsets(INR{1}.INs{i}(end) + 1) - INR{1}.BoutDetails(i).onsets(INR{1}.INs{i}(end)))];
+end
+
+for 

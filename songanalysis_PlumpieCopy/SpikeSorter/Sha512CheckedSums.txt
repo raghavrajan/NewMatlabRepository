@@ -1,0 +1,10 @@
+autodflts.mclust: OK
+autosave.clusters: OK
+DetectSpikes.c: OK
+DetectSpikes.mexa64: OK
+FinishedFiles.mat: OK
+Run-27Jan2009-10-48-38.log: OK
+Run-27Jan2009-10-48-38.mat: OK
+SpikeDetect.m: OK
+SpikeDetect.m~: OK
+test: OK

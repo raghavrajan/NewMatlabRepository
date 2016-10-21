@@ -1,0 +1,4 @@
+CompareSongs.fig: OK
+CompareSongs.m: OK
+CSIdentifyBouts.m: OK
+CSIdentifyINs.m: OK

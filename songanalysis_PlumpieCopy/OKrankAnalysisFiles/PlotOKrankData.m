@@ -20,17 +20,17 @@ if ((recfid) > 0)
         tline = fgetl(recfid);
         if (strfind(tline, 'ai_freq'))
             ColonIndex = find(tline == ':');
-            Fs = str2double(tline((ColonIndex + 1):end))
+            Fs = str2double(tline((ColonIndex + 1):end));
         end
 
         if (strfind(tline, 'n_ai_chan'))
             ColonIndex = find(tline == ':');
-            NoOfChannels = str2double(tline((ColonIndex + 1):end))
+            NoOfChannels = str2double(tline((ColonIndex + 1):end));
         end
 
         if (strfind(tline, 'n_samples'))
             ColonIndex = find(tline == ':');
-            NoOfSamples = str2double(tline((ColonIndex + 1):end))
+            NoOfSamples = str2double(tline((ColonIndex + 1):end));
             break;
         end
     end

@@ -13,7 +13,9 @@ cd(DirectoryName);
 disp(FileName);
 
 SpikeSortTimes = load(SpikeSortFileName);
-SpikeSortTimes(:,2) = SpikeSortTimes(:,2)/1000;
+if (SpikeSortTimes(end,2) > 1000)
+    SpikeSortTimes(:,2) = SpikeSortTimes(:,2)/1000;
+end
 
 if ((recfid) > 0)
     while (~feof(recfid))
@@ -53,7 +55,7 @@ if ((recfid) > 0)
         end
         time = 0:1/Fs:(length(data)/Fs);
         time(end) = [];
-        if (i == 1)
+        if (i ~= 1)
             for j = 1:length(SpikeSortTimes),
                 SpikeIndices(j) = find(time < SpikeSortTimes(j),1,'last');
                 SpikeWaveformIndices(j,:) = (SpikeIndices(j) - 8):(SpikeIndices(j) + 23);

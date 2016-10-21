@@ -1,0 +1,12 @@
+AnalyzeINNumberSongCorrelation.m: OK
+LSINA_CalcSAPFeats.m: OK
+LSINA_CalculateBoutStartingSyllStats.m: OK
+LSINA_CollateBouts.m: OK
+LSINA_FixPlotLabels.m: OK
+LSINA_GetDataFileNames.m: OK
+LSINA_GetDetailsFromCSVFile.m: OK
+LSINA_IdentifyBouts.m: OK
+LSINA_IdentifyINs.m: OK
+LSINA_LoadNoteFileInfo.m: OK
+LSINA_ParseHeaderBirdData.m: OK
+LSINA_PlotProportionDiversitySyllables.m: OK

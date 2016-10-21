@@ -1,0 +1,4 @@
+FindEnvelope.m: OK
+JSongAnalysisBatch.m: OK
+JSongAnalysis.m: OK
+JSongAnalysis.m~: OK

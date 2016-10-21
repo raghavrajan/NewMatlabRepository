@@ -1,0 +1,77 @@
+function [CorrectMatches_Threshold] = MA_ManualSpectClassificationCheck(TemplateMatchValues, LowerThreshold, UpperThreshold, Parameters, i, SyllTemp, TemplateLen, PreOrPost, Context, Combine)
+
+% A script to manually check the number of correctly classified syllables.
+% This will be done on a small sample (20) of syllables and will then be
+% extrapolated to the entire sample. This can then be used to calculated
+% false positive and false negative percentages.
+% Based on Glaze and Troyer 2013
+
+close all;
+
+CorrectMatches_Threshold = [];
+
+TemplateIncrement = 0.1;
+Temp_Threshold = LowerThreshold;
+
+% First estimate the values for all template match values below lower
+% threshold
+
+Indices = find((TemplateMatchValues(:,1) < LowerThreshold));
+
+[CorrectMatches] = MA_PlotMatchSpectrograms(Parameters, Indices, i, SyllTemp, TemplateMatchValues, TemplateLen, PreOrPost, Context);
+
+if (isstr(CorrectMatches{1}))
+    CorrectMatches{1} = str2double(CorrectMatches{1});
+end
+
+CorrectMatches_Threshold(end + 1,:) = [min(TemplateMatchValues(:,1)) LowerThreshold length(Indices) min([20 length(Indices)]) CorrectMatches{1}];
+
+Flag = 1;
+
+while (Temp_Threshold <= UpperThreshold)
+    Multiplier = 1;
+    Indices = find((TemplateMatchValues(:,1) >= Temp_Threshold) & (TemplateMatchValues(:,1) < (Temp_Threshold + Multiplier*TemplateIncrement)));
+    if (Combine == 1)
+        while (length(Indices) < 20)
+            if ((Temp_Threshold + Multiplier*TemplateIncrement) > UpperThreshold)
+                Flag = 0;
+                break;
+            end
+            Multiplier = Multiplier + 1;
+            Indices = find((TemplateMatchValues(:,1) >= Temp_Threshold) & (TemplateMatchValues(:,1) < (Temp_Threshold + Multiplier*TemplateIncrement)));
+        end
+    else
+        if ((Temp_Threshold + Multiplier*TemplateIncrement) > UpperThreshold)
+            Flag = 0;
+        end
+    end
+    if (Flag == 0)
+        break;
+    end
+    [CorrectMatches] = MA_PlotMatchSpectrograms(Parameters, Indices, i, SyllTemp, TemplateMatchValues, TemplateLen, PreOrPost, Context);
+
+    if (isstr(CorrectMatches{1}))
+        CorrectMatches{1} = str2double(CorrectMatches{1});  
+    end
+    
+    CorrectMatches_Threshold(end + 1,:) = [(Temp_Threshold) (Temp_Threshold + Multiplier*TemplateIncrement) length(Indices) min([20 length(Indices)]) CorrectMatches{1}];
+    Temp_Threshold = Temp_Threshold + Multiplier*TemplateIncrement;
+end
+
+% Now do the same estimations for all values above Upper threshold
+Indices = find((TemplateMatchValues(:,1) >= Temp_Threshold));
+
+if (~isempty(Indices))
+    [CorrectMatches] = MA_PlotMatchSpectrograms(Parameters, Indices, i, SyllTemp, TemplateMatchValues, TemplateLen, PreOrPost, Context);
+
+    if (ischar(CorrectMatches{1}))
+        CorrectMatches{1} = str2double(CorrectMatches{1});
+    end
+
+    CorrectMatches_Threshold(end + 1,:) = [(Temp_Threshold) max(TemplateMatchValues(:,1)) length(Indices) min([20 length(Indices)]) CorrectMatches{1}];
+
+    CorrectMatches_Threshold(:, end+1) = round((CorrectMatches_Threshold(:,5) ./ CorrectMatches_Threshold(:,4)) .* CorrectMatches_Threshold(:,3));
+    CorrectMatches_Threshold(find(CorrectMatches_Threshold(:,4) == 0),end) = 0;
+end
+
+disp('Finished');

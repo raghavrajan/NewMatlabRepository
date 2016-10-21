@@ -1,0 +1,2 @@
+AnalyzeStimulusResponse.m: OK
+AnalyzeStimulusResponse.m~: OK

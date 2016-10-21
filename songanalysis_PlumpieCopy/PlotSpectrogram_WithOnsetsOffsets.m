@@ -18,7 +18,7 @@ if (strfind(FileType,'obs'))
     rawsong = rawsong * 5/32768;
 else
     if (strfind(FileType,'wav'));
-        [rawsong, Fs] = wavread(filename);
+        [rawsong, Fs] = audioread(filename);
     else 
         if (strfind(FileType, 'okrank'))
             [rawsong, Fs] = ReadOKrankData(pathname, filename, 0);

@@ -1,4 +1,8 @@
-function [INFR, INEdges, MeanINFR, STDINFR, GapFR, GapEdges, MeanGapFR, STDGapFR, Position] = IntroNoteCalculateAverageINGapFRHist(Neural_INR, PreTime, BinSize)
+function [INFR, INEdges, MeanINFR, STDINFR, GapFR, GapEdges, MeanGapFR, STDGapFR, Position] = IntroNoteCalculateAverageINGapFRHist(Neural_INR, PreTime, BinSize, varargin)
+
+if (nargin > 3)
+    INPositionToBeAnalyzed = varargin{1};
+end
 
 GapPreMotorLag = 0.045;
 
@@ -64,7 +68,16 @@ for i = 1:size(Neural_INR.WithinBoutNoofINs, 1),
         end
     end
 end
-%INFR(find(Position(:,1) ~= -2),:) = [];
+
+if (exist('INPositionToBeAnalyzed', 'var'))
+    if (INPositionToBeAnalyzed ~= 1000)
+        if (INPositionToBeAnalyzed < 0)
+            INFR(find(Position(:,1) ~= INPositionToBeAnalyzed),:) = [];
+        else
+            INFR(find(Position(:,2) ~= INPositionToBeAnalyzed),:) = [];
+        end
+    end
+end
 
 MeanINFR(1,:) = mean(INFR(:,1:end-1));
 STDINFR(1,:) = std(INFR(:,1:end-1));
@@ -73,7 +86,16 @@ Edges = -PreTime:BinSize:10;
 Edges = Edges + BinSize/2;
 INEdges = INPSTEdges(1:end-1) + BinSize/2;
 
-%GapFR(Position(:,1) ~= -2) = [];
+if (exist('INPositionToBeAnalyzed', 'var'))
+    if (INPositionToBeAnalyzed ~= 1000)
+        if (INPositionToBeAnalyzed < 0)
+            GapFR(find(Position(:,1) ~= INPositionToBeAnalyzed)) = [];
+        else
+            GapFR(find(Position(:,2) ~= INPositionToBeAnalyzed)) = [];
+        end
+    end
+end
+
 
 Lens = cellfun(@length, GapFR);
 

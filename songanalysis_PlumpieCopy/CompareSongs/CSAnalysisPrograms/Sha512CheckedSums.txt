@@ -1,0 +1,17 @@
+CSAnalyseINAcousticStructure.m: OK
+CSAnalyseINFrequency.m: OK
+CSAnalyseINFrequency.m~: OK
+CSAnalyseINLikeSyllables.m: OK
+CSAnalyseSyllableAcousticFeatures.m: OK
+CSAnalyseUnLabelledINs.m: OK
+CSAnalyseUnLabelledINs.m~: OK
+CSAnalyzeIntervalBetweenINs.m: OK
+CSColorPlotBouts.m: OK
+CSOverlayAcousticFeaturesPlot.m: OK
+CSPlotFeatureVsTimeofDay.m: OK
+CSPlotINDistribution.m: OK
+CSPlotINDistribution.m~: OK
+CSPlotIndividualINDistances.m: OK
+CSPlotIndividualINDistances.m~: OK
+CSPlotIntervalsIndividualTrials.m: OK
+CSPlotIntervalsIndividualTrials.m~: OK

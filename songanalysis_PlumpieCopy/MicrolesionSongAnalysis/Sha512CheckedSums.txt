@@ -1,0 +1,2 @@
+MSAMakeAllSyllableTemplatesFromFile.m: OK
+MSATemplateMatch.m: OK

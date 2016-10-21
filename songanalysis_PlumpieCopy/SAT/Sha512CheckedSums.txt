@@ -1,0 +1,9 @@
+example 1.wav: OK
+example 2.wav: OK
+SAT.m: OK
+SAT_params.mat: OK
+SAT_plot.m: OK
+SAT_set_params.m: OK
+SAT_similarity.m: OK
+SAT_similarity_plot.m: OK
+SAT_sound.m: OK

@@ -6,26 +6,25 @@ if (nargin > 9)
     offsets = varargin{3};
 end
 
+if (nargin > 12)
+    FFTWinSize = varargin{4};
+    FFTWinOverlap = varargin{5};
+    Normalization = varargin{6};
+end
+
+% THis is to normalize the whole raw song by rms of the whole song.
+
+if (nargin > 15)
+    RawDataNormalization = varargin{7};
+end
+
 PresentDir = pwd;
-cd(DirectoryName);
 %disp(SongFile);
 
-if (strfind(FileType, 'okrank'))
-    [Song, Fs] = ReadOKrankData(DirectoryName, SongFile, 1);
-else
-    if (strfind(FileType, 'obs'))
-        if ispc
-            [Song, Fs] = soundin_copy([DirectoryName, '\'], SongFile, 'obs0r');
-        else
-            [Song, Fs] = soundin_copy([DirectoryName, '/'], SongFile, 'obs0r');
-        end
-        Song = Song*5/32768;
-    else
-        if (strfind(FileType, 'wav'))
-            cd(DirectoryName);
-            [Song, Fs] = wavread(SongFile);
-            cd(PresentDir);
-        end
+[Song, Fs] = GetData(DirectoryName, SongFile, FileType, 0);
+if (exist('RawDataNormalization', 'var'))
+    if (RawDataNormalization == 1)
+        Song = Song/sqrt(mean(Song.^2));
     end
 end
 
@@ -33,6 +32,7 @@ if (~exist('labels', 'var'))
     cd(NoteDir);
     load([SongFile, '.not.mat']);
 end
+
 UniqueLabels = unique(labels);
 
 ExcludedSyllables = zeros(size(UniqueLabels));
@@ -44,16 +44,14 @@ end
 
 UniqueLabels(find(ExcludedSyllables == 1)) = [];
 
-for i = 1:length(UniqueLabels),
-    Indices = find(labels == UniqueLabels(i));
-    for j = 1:length(Indices),
-        SyllableTemplates{i}{j}.MotifTemplate = MakeTemplatesMicrolesionSpectralMatchAnalysis(Song, Fs, [(onsets(Indices(j))/1000) (offsets(Indices(j))/1000)], UniqueLabels(i), TimeStretch, FreqStretch);
-        %title([labels(Indices(j)), num2str(j)], 'FontSize', 16, 'FontWeight', 'bold');
-    end
+if (exist('FFTWinSize', 'var'))
+    SyllableTemplates = MakeTemplatesMicrolesionSpectralMatchAnalysis(Song, Fs, [(onsets/1000) (offsets/1000)], labels, UniqueLabels, TimeStretch, FreqStretch, FFTWinSize, FFTWinOverlap, Normalization);
+else
+    SyllableTemplates = MakeTemplatesMicrolesionSpectralMatchAnalysis(Song, Fs, [(onsets/1000) (offsets/1000)], labels, UniqueLabels, TimeStretch, FreqStretch);
 end
 
 OutputFileName = [SongFile, '.SyllTemplates.', num2str(TemplateIncrement), '.template.mat'];
 FileSep = filesep;
 
-save([OutputDir, FileSep, OutputFileName], 'SyllableTemplates');
+save(fullfile(OutputDir, OutputFileName), 'SyllableTemplates');
 disp(['Saved templates to ', OutputFileName, ' in directory ', OutputDir]);

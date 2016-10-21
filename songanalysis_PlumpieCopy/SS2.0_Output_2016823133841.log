@@ -1,0 +1,38 @@
+SpikeSorter 2.0 Log file : 23.8.2016 13:38:41
+======================
+DEFAULT PARAMETERS
+===============================
+File type : okrank
+Spike channel no : 3
+Data display duration : 100 sec
+Data inverted (1) or not (0) : 0
+Data continuous (1) or not (0) : 0
+Tetrode data (1) or not (0) : 0
+Default Gain : 10000
+Spike detect mode : median
+TEOkValues : 1  3  5  7  9
+Pre N Samples : 16
+Post N Samples : 32
+Artefact negative voltage : -10
+Artefact positive voltage : 10
+Threshold multiplier : 5
+Spike refractory period : 0.5
+Maximum allowed shift for aligning waveforms : 3
+Keep (1) or not to keep waveforms that cross max allowed alignment : 0
+Features - falling slope : 0
+Features - rising slope : 0
+Features - PC 123 : 0
+Features - PC 456 : 0
+Features - Peak : 0
+Features - Valley : 0
+Features - Spike width : 0
+Features - Energy : 0
+Features - PC 123 normalized by energy : 0
+Clustering method : klustakwik
+KMeans - # of clusters : 3
+===================================================================================
+
+USAGE UPDATES
+===============================
+Data display duration :10 sec
+Data display duration :100 sec

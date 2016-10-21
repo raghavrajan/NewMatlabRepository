@@ -1,0 +1,98 @@
+function [CorrectMatches] = MA_PlotMatchSpectrograms(Parameters, Indices, i, SyllTemp, TemplateMatchValues, TemplateLen, PreOrPost, Context)
+
+NumRows = 5;
+NumCols = 5;
+
+PlotIndices = [];
+
+figure;
+set(gcf, 'Position', [108 111 1212 578]);
+subplot(NumRows, NumCols, NumCols + 1);
+PlotIndices = [PlotIndices (NumCols + 1)];
+
+SyllableData = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).RawSound;
+SyllableDataFs = Parameters.SyllableTemplate.SyllableTemplates{SyllTemp}{1}.MotifTemplate(1).Fs;
+PlotSpectrogramInAxis_SongVar(SyllableData, (1:1:length(SyllableData))/SyllableDataFs, SyllableDataFs, gca);
+Temp = axis;
+PlotDur(1,:) = Temp(2) - Temp(1);
+
+title('Syllable template', 'FontSize', 8, 'FontWeight', 'bold');
+
+RandSubset = randperm(length(Indices));
+
+Index = 1;
+for k = 1:min([20 length(RandSubset)]),
+    if (Index > 5)
+        subplot(NumRows, NumCols, Index+NumCols);
+        PlotIndices = [PlotIndices (Index + NumCols)];
+    else
+        subplot(NumRows, NumCols,Index);
+        PlotIndices = [PlotIndices Index];
+    end
+    FileIndex = TemplateMatchValues(Indices(RandSubset(k)), 3);
+    
+    Onsets = eval(['Parameters.', PreOrPost, Context, 'Onsets{i}{FileIndex}']);
+    Offsets = eval(['Parameters.', PreOrPost, Context, 'Offsets{i}{FileIndex}']);
+    [OnsetTime, OffsetTime] = MA_FindMatchOnsetsOffsets(Onsets, Offsets, TemplateMatchValues(Indices(RandSubset(k)),:), TemplateLen);
+    
+    DataDir = [eval(['Parameters.', PreOrPost, 'DataDir{i}']), '/'];
+    SongFileName = eval(['Parameters.', PreOrPost, Context, 'SongFileNames{i}{FileIndex}']);
+    
+    PlotSpectrogramInAxis(DataDir, SongFileName, Parameters.FileType, gca, [(OnsetTime - 0.01) (OffsetTime + 0.005)]);
+    hold on;
+    plot(ones(1,2) * (TemplateMatchValues(Indices(RandSubset(k)),2)), [300 8000], 'b--');
+    title([SongFileName, ': ', num2str(TemplateMatchValues(Indices(RandSubset(k)),2))], 'FontSize', 8);
+        else
+            if (strfind(PreOrPost, 'Post'))
+                [MinVal, MinIndex] = min(abs(Parameters.PostDirOnsets{i}{FileIndex} - TemplateMatchValues(Indices(RandSubset(k)),2)*1000));
+                OnsetTime = Parameters.PostDirOnsets{i}{FileIndex}(MinIndex)/1000;
+
+                [MinVal, MinIndex] = min(abs(Parameters.PostDirOffsets{i}{FileIndex} - (TemplateMatchValues(Indices(RandSubset(k)),2) + TemplateLen)*1000));
+                OffsetTime = Parameters.PostDirOffsets{i}{FileIndex}(MinIndex)/1000;
+            
+                PlotSpectrogramInAxis([Parameters.PostDataDir{i}, '/'], Parameters.PostDirSongFileNames{i}{FileIndex}, Parameters.FileType, gca, [(OnsetTime - 0.01) (OffsetTime + 0.005)]);                
+                hold on;
+                plot(ones(1,2) * (TemplateMatchValues(Indices(RandSubset(k)),2)), [300 8000], 'b--');
+                title([Parameters.PostDirSongFileNames{i}{TemplateMatchValues(Indices(RandSubset(k)),3)}, ': ', num2str(TemplateMatchValues(Indices(RandSubset(k)),2))], 'FontSize', 8);
+            end
+        end
+    else
+        if (strfind(PreOrPost, 'Pre'))
+            [MinVal, MinIndex] = min(abs(Parameters.PreUnDirOnsets{i}{FileIndex} - TemplateMatchValues(Indices(RandSubset(k)),2)*1000));
+            OnsetTime = Parameters.PreUnDirOnsets{i}{FileIndex}(MinIndex)/1000;
+            
+            [MinVal, MinIndex] = min(abs(Parameters.PreUnDirOffsets{i}{FileIndex} - (TemplateMatchValues(Indices(RandSubset(k)),2) + TemplateLen)*1000));
+            OffsetTime = Parameters.PreUnDirOffsets{i}{FileIndex}(MinIndex)/1000;
+            
+            PlotSpectrogramInAxis([Parameters.PreDataDir{i}, '/'], Parameters.PreUnDirSongFileNames{i}{FileIndex}, Parameters.FileType, gca, [(OnsetTime - 0.01) (OffsetTime + 0.005)]);
+            hold on;
+            plot(ones(1,2) * (TemplateMatchValues(Indices(RandSubset(k)),2)), [300 8000], 'b--');
+            title([Parameters.PreUnDirSongFileNames{i}{TemplateMatchValues(Indices(RandSubset(k)),3)}, ': ', num2str(TemplateMatchValues(Indices(RandSubset(k)),2))], 'FontSize', 8);
+        else
+            if (strfind(PreOrPost, 'Post'))
+                [MinVal, MinIndex] = min(abs(Parameters.PostUnDirOnsets{i}{FileIndex} - TemplateMatchValues(Indices(RandSubset(k)),2)*1000));
+                OnsetTime = Parameters.PostUnDirOnsets{i}{FileIndex}(MinIndex)/1000;
+            
+                [MinVal, MinIndex] = min(abs(Parameters.PostUnDirOffsets{i}{FileIndex} - (TemplateMatchValues(Indices(RandSubset(k)),2) + TemplateLen)*1000));
+                OffsetTime = Parameters.PostUnDirOffsets{i}{FileIndex}(MinIndex)/1000;
+            
+                PlotSpectrogramInAxis([Parameters.PostDataDir{i}, '/'], Parameters.PostUnDirSongFileNames{i}{FileIndex}, Parameters.FileType, gca, [(OnsetTime - 0.01) (OffsetTime + 0.005)]);
+                hold on;
+                plot(ones(1,2) * (TemplateMatchValues(Indices(RandSubset(k)),2)), [300 8000], 'b--');
+                title([Parameters.PostUnDirSongFileNames{i}{TemplateMatchValues(Indices(RandSubset(k)),3)}, ': ', num2str(TemplateMatchValues(Indices(RandSubset(k)),2))], 'FontSize', 8);
+            end
+        end
+    end
+    Temp = axis;
+    PlotDur(end+1) = Temp(2) - Temp(1);
+    Index = Index + 1;
+end
+
+for k = PlotIndices(:)',
+    subplot(NumRows, NumCols, k);
+    Temp = axis;
+    Temp(2) = Temp(1) + max(PlotDur);
+    axis(Temp);
+end
+    
+CorrectMatches = inputdlg('Enter the number of plots that have correct matches', 'Correct plot selection box');

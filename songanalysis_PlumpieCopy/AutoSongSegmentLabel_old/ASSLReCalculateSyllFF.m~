@@ -1,0 +1,31 @@
+function [DataStruct] = ASSLReCalculateSyllFF(DataStruct, MaxFF)
+
+Sylls = find(DataStruct.DataStruct.SyllIndexLabels == DataStruct.ASSLCSFFB.UniqueSyllLabels(DataStruct.ASSLCSFFB.SyllIndex));
+
+for i = 1:length(Sylls),
+    if (mod(i,10) == 0)
+        fprintf('>%
+    [RawData, Fs] = ASSLGetRawData(DataStruct.DataStruct.DirName, DataStruct.DataStruct.FileName{DataStruct.DataStruct.SyllIndices(Sylls(i),1)}, DataStruct.DataStruct.FileType, DataStruct.DataStruct.SongChanNo);
+    % Parameters P for calculating FF for yin
+    % sr for sample rate
+    % maxf0 for max ff
+    P.sr = Fs;
+    P.maxf0 = MaxFF;
+    
+    Temp_FF = yin(RawData, P);
+    
+    FF_T = linspace(1/Fs, length(RawData)/Fs, length(Temp_FF.f0));
+    Temp_FF = 2.^Temp_FF.f0 * 440;
+    
+    StartIndex = find(FF_T <= DataStruct.DataStruct.SyllOnsets{DataStruct.DataStruct.SyllIndices(Sylls(i),1)}(DataStruct.DataStruct.SyllIndices(Sylls(i),2))/1000, 1, 'last');
+    if (isempty(StartIndex))
+        StartIndex = 1;
+    end
+    
+    EndIndex = find(FF_T >= DataStruct.DataStruct.SyllOffsets{DataStruct.DataStruct.SyllIndices(Sylls(i),1)}(DataStruct.DataStruct.SyllIndices(Sylls(i),2))/1000, 1, 'first');
+    if (isempty(EndIndex))
+        EndIndex = length(FF_T);
+    end
+    
+    DataStruct.DataStruct.Raw.FundamentalFrequency{DataStruct.DataStruct.SyllIndices(Sylls(i), 1)}{DataStruct.DataStruct.SyllIndices(Sylls(i),2)} = Temp_FF(StartIndex:EndIndex);
+end        

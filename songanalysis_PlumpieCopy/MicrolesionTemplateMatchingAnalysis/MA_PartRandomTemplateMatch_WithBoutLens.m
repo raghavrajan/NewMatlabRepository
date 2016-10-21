@@ -1,4 +1,4 @@
-function [Bout] = MA_PartRandomTemplateMatch_WithBoutLens(DataDir, SongFile, FileType, MotifTemplate, Label, OutputDir, TemplateType, ShufflePercentage, BoutOnsets, BoutOffsets)
+function [Bout] = MA_PartRandomTemplateMatch_WithBoutLens(DataDir, SongFile, FileType, MotifTemplate, Label, OutputDir, TemplateType, ShufflePercentage, BoutOnsets, BoutOffsets, Normalization)
 
 PresentDir =pwd;
 
@@ -70,12 +70,16 @@ try
 
         for i = 1:length(MotifTemplate.MotifTemplate),
             WMotif1 = MotifTemplate.MotifTemplate(i).MotifTemplate;
-            TempMeanSTD = CalculateMeanSTDforSpectralMatch(TempS(1:size(S,1)*size(S,2)), size(WMotif1,1)*size(WMotif1,2), (size(S,2) - size(WMotif1,2) + 1), size(WMotif1,1));
+            if (Normalization == 1)
+                TempMeanSTD = CalculateMeanSTDforSpectralMatch(TempS(1:size(S,1)*size(S,2)), size(WMotif1,1)*size(WMotif1,2), (size(S,2) - size(WMotif1,2) + 1), size(WMotif1,1));
 
-            WinMean = TempMeanSTD(1:length(TempMeanSTD)/2);
-            WinSTD = TempMeanSTD((length(TempMeanSTD)/2 + 1):end);
+                WinMean = TempMeanSTD(1:length(TempMeanSTD)/2);
+                WinSTD = TempMeanSTD((length(TempMeanSTD)/2 + 1):end);
 
-            [Match] = CalTemplateMatch(WMotif1, TempS, WinMean, WinSTD);
+                [Match] = CalTemplateMatch(WMotif1, TempS, WinMean, WinSTD);
+            else
+                [Match] = CalTemplateMatchWithoutNormalization(WMotif1, TempS);
+            end
             Match = Match*size(WMotif1,1)*size(WMotif1,2);
             Bout.BoutSeqMatch{i} = Match;
         end

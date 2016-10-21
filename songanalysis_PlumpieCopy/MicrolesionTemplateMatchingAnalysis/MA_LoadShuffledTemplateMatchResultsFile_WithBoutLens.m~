@@ -1,0 +1,23 @@
+function [Results] = MA_LoadTemplateMatchResultsFile_WithBoutLens(SongFile, OutputDir, Label)
+
+SmoothingKernelLen = 3;
+SmoothingKernel = ones(SmoothingKernelLen,1)/SmoothingKernelLen;
+
+Files = dir(fullfile(OutputDir, [SongFile, '.', Label, '.*.TempMatch.mat']));
+
+if isempty(Files)
+    Results = [];
+    return;
+end
+
+for i = 1:length(Files),
+    Temp = load
+
+Results = [];
+for i = 1:length(Temp.Bout),
+    [Pks, Locs] = findpeaks(conv(Temp.Bout{i}.MaxBoutSeqMatch, SmoothingKernel, 'same'), 'MINPEAKHEIGHT', Threshold);
+    Pks = Pks(:);
+    Locs = Locs(:);
+    
+    Results = [Results; [Pks (Temp.Bout{i}.T(Locs)' + Temp.Bout{i}.BoutOnset/1000) ones(size(Pks))*SongFileNo]];
+end       

@@ -1,0 +1,5 @@
+MakeStimForPlayBack.fig: OK
+MakeStimForPlayBack.m: OK
+MSPB_MakeEqualLengthLeftRightStimuli.m: OK
+MSPB_TrimWriteSongs.fig: OK
+MSPB_TrimWriteSongs.m: OK

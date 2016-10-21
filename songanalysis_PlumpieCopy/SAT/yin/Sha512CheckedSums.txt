@@ -1,0 +1,9 @@
+CHANGES: OK
+CHANGES~: OK
+clarinet.au: OK
+INSTALL: OK
+README: OK
+testyin.m: OK
+yin2.m: OK
+yin.html: OK
+yin.m: OK

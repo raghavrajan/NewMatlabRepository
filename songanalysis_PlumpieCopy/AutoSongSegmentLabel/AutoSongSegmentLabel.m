@@ -1,5 +1,5 @@
 function varargout = AutoSongSegmentLabel(varargin)
-% AUTOSONGSEGMENTLABEL M-file for AutoSongSegmentLabel.fig
+% AUTOSONGSEGMENTM-file for AutoSongSegmentLabel.fig
 %      AUTOSONGSEGMENTLABEL, by itself, creates a new AUTOSONGSEGMENTLABEL or raises the existing
 %      singleton*.
 %
@@ -82,16 +82,15 @@ handles.ASSL.MinDur = str2double(get(handles.MinSyllDurEdit, 'String'));
 handles.ASSL.FFTWinOverlapTempMatch = str2double(get(handles.FFTWinOverlapTempMatchEdit, 'String'));
 handles.ASSL.FFTWinSizeTempMatch = str2double(get(handles.FFTWinSizeTempMatchEdit, 'String'));
 
-handles.ASSL.AutoThreshold = get(handles.AutoThresholdButton, 'Value');
+% Removed the feature where threshold is automatically decided. Instead
+% user always has to enter the upper and lower threshold - Raghav
+% 22.06.2016
+handles.ASSL.AutoThreshold = 0;
+
 handles.ASSL.FixedThreshold(1) = str2double(get(handles.UpperThresholdEdit, 'String'));
 handles.ASSL.FixedThreshold(2) = str2double(get(handles.LowerThresholdEdit, 'String'));
-if (handles.ASSL.AutoThreshold == 0)
-    set(handles.UpperThresholdEdit, 'Enable', 'on');
-    set(handles.LowerThresholdEdit, 'Enable', 'on');
-else
-    set(handles.UpperThresholdEdit, 'Enable', 'off');
-    set(handles.LowerThresholdEdit, 'Enable', 'off');
-end
+set(handles.UpperThresholdEdit, 'Enable', 'on');
+set(handles.LowerThresholdEdit, 'Enable', 'on');
 
 handles.ASSL.LoPassCutOff = str2double(get(handles.LoPassCutOffEdit, 'String'));
 handles.ASSL.HiPassCutOff = str2double(get(handles.HiPassCutOffEdit, 'String'));
@@ -144,6 +143,7 @@ else
     set(handles.WavFileButton, 'Value', 0);
 end
 guidata(hObject, handles);
+
 % --- Executes on button press in ObsFileButton.
 function ObsFileButton_Callback(hObject, eventdata, handles)
 % hObject    handle to ObsFileButton (see GCBO)
@@ -271,7 +271,7 @@ else
     end
 end
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+[RawData, Fs] = GetData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
 
 Time = (1:1:length(RawData))/Fs;
 
@@ -1271,6 +1271,17 @@ function SegementSongsAronovFeeButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+% First remove existing labels, onsets, offsets
+if (isfield(handles.ASSL, 'SyllLabels'))
+    handles.ASSL = rmfield(handles.ASSL, 'SyllLabels');
+end
+if (isfield(handles.ASSL, 'SyllOnsets'))
+    handles.ASSL = rmfield(handles.ASSL, 'SyllOnsets');
+end
+if (isfield(handles.ASSL, 'SyllOffsets'))
+    handles.ASSL = rmfield(handles.ASSL, 'SyllOffsets');
+end
+
 for i = 1:length(handles.ASSL.FileName),
     if (isfield(handles.ASSL, 'SyllLabels'))
         if (length(handles.ASSL.SyllLabels) >= i)
@@ -1294,7 +1305,7 @@ for i = 1:length(handles.ASSL.FileName),
             [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
             handles.ASSL.FileDur{i} = length(RawData)/Fs;
         end
-        disp(['Loaded syllable data from ', handles.ASSL.FileName{i}, '.not.mat']);
+        disp([' File #', num2str(i), ': Loaded syllable data from ', handles.ASSL.FileName{i}, '.not.mat']);
         continue;
     end
     [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
@@ -1316,14 +1327,16 @@ for i = 1:length(handles.ASSL.FileName),
     for j = 1:length(handles.ASSL.SyllOnsets{i}),
         handles.ASSL.SyllLabels{i}(j) = '0';
     end
-    disp([' Detected ', num2str(length(handles.ASSL.SyllOnsets{i})), ' syllables for ', handles.ASSL.FileName{i}]);
+    disp([' File #', num2str(i), ': Detected ', num2str(length(handles.ASSL.SyllOnsets{i})), ' syllables for ', handles.ASSL.FileName{i}]);
 end
 
 for i = 1:length(handles.ASSL.FileName),
-    SyllDur = handles.ASSL.SyllOffsets{i} - handles.ASSL.SyllOnsets{i};
-    handles.ASSL.SyllOnsets{i}(find(SyllDur >=  1000)) = [];
-    handles.ASSL.SyllOffsets{i}(find(SyllDur >=  1000)) = [];
-    handles.ASSL.SyllLabels{i}(find(SyllDur >=  1000)) = [];
+    if (~isempty(handles.ASSL.SyllOnsets{i}))
+        SyllDur = handles.ASSL.SyllOffsets{i} - handles.ASSL.SyllOnsets{i};
+        handles.ASSL.SyllOnsets{i}(find(SyllDur >=  1000)) = [];
+        handles.ASSL.SyllOffsets{i}(find(SyllDur >=  1000)) = [];
+        handles.ASSL.SyllLabels{i}(find(SyllDur >=  1000)) = [];
+    end
 end
 
 set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
@@ -1515,7 +1528,7 @@ if (~isfield(handles.ASSL, 'KlustaKwikFile'))
     msgbox('You have not chosen the KlustaKwik executable file');
     return;
 else
-    eval(['!', handles.ASSL.KlustaKwikDir, handles.ASSL.KlustaKwikFile, ' ', handles.ASSL.FileName{1}, ' 1 -UseDistributional 0']);
+    eval(['!', handles.ASSL.KlustaKwikDir, handles.ASSL.KlustaKwikFile, ' ', handles.ASSL.FileName{1}, ' 1 -UseDistributional 0 -MaxClusters 25 -MaxPossibleClusters 30 -MinClusters 15']);
     Temp = load([handles.ASSL.FileName{1}, '.clu.1']);
     % Convert numbers to ascii numbers for A-P and a-p - that is a total of
     % 30 clusters which is the maximum number of clusters that Klustakwik
