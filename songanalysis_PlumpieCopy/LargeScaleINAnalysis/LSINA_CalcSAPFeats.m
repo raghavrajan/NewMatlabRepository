@@ -15,29 +15,29 @@ SAPFeats = [];
 Padding = 0.2; % A variable that decides how much extra raw data to take before and after each syllable in seconds
 fprintf('\n>');
 UniqueFileIndices = unique(BirdParameters.SyllableData(:,2));
-for i = 1:length(UniqueFileIndices),
-    if (mod(i, 5) == 0)
-        fprintf('%d>>', i);
-    end
-    FileIndices = find(BirdParameters.SyllableData(:,2) == UniqueFileIndices(i));
-    % Check if the offsets for all these syllables is the same or not
-    
-    if (BirdParameters.SyllableData(i,2) == BirdParameters.SyllableData(i,3))
-        [Song, Fs] = GetData(BirdParameters.DataDirectory, BirdParameters.SongFileNames{BirdParameters.SyllableData(i,2)}, BirdParameters.FileType, 0);
-        
-                SongBoutOnsetIndex = find(Time >= (Onsets(1)/1000 - Padding), 1, 'first');
-                SongBoutOffsetIndex = find(Time >= (Offsets(end)/1000 + Padding), 1, 'first');
-                
-                [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(Song(SongBoutOnsetIndex:SongBoutOffsetIndex), Time(SongBoutOnsetIndex:SongBoutOffsetIndex), Fs, Onsets/1000, Offsets/1000);
-                if (~exist('SAPFeat_FieldNames', 'var'))
-                    SAPFeat_FieldNames = fieldnames(Feats);
-                    for k = 1:length(SAPFeat_FieldNames),
-                        SAPFeats.(SAPFeat_FieldNames{k}) = Feats.(SAPFeat_FieldNames{k})(:);
-                    end
-                else
-                    for k = 1:length(SAPFeat_FieldNames),
-                        SAPFeats.(SAPFeat_FieldNames{k}) = [SAPFeats.(SAPFeat_FieldNames{k}); Feats.(SAPFeat_FieldNames{k})(:)];
-                    end
+if (BirdParameters.Continuousdata == 0)
+    for i = 1:length(UniqueFileIndices),
+        if (mod(i, 5) == 0)
+            fprintf('%d>>', i);
+        end
+        FileIndices = find(BirdParameters.SyllableData(:,2) == UniqueFileIndices(i));
+        % Check if the offsets for all these syllables is the same or not
+
+        if (BirdParameters.SyllableData(i,2) == BirdParameters.SyllableData(i,3))
+            [Song, Fs] = GetData(BirdParameters.DataDirectory, BirdParameters.SongFileNames{BirdParameters.SyllableData(i,2)}, BirdParameters.FileType, 0);
+
+            SongBoutOnsetIndex = find(Time >= (Onsets(1)/1000 - Padding), 1, 'first');
+            SongBoutOffsetIndex = find(Time >= (Offsets(end)/1000 + Padding), 1, 'first');
+
+            [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(Song(SongBoutOnsetIndex:SongBoutOffsetIndex), Time(SongBoutOnsetIndex:SongBoutOffsetIndex), Fs, Onsets/1000, Offsets/1000);
+            if (~exist('SAPFeat_FieldNames', 'var'))
+                SAPFeat_FieldNames = fieldnames(Feats);
+                for k = 1:length(SAPFeat_FieldNames),
+                    SAPFeats.(SAPFeat_FieldNames{k}) = Feats.(SAPFeat_FieldNames{k})(:);
+                end
+            else
+                for k = 1:length(SAPFeat_FieldNames),
+                    SAPFeats.(SAPFeat_FieldNames{k}) = [SAPFeats.(SAPFeat_FieldNames{k}); Feats.(SAPFeat_FieldNames{k})(:)];
                 end
             end
         end
