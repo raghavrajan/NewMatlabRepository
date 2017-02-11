@@ -33,7 +33,7 @@ for i = 1:length(Matches),
         SyllMatchNo = SyllMatchNo + 1;
     end
 end
-Edges = -0.1:BinSize:1;
+Edges = -0.6:BinSize:1;
 UniqueNextSylls = unique(SyllLabels(:,end));
 RasterIncrement = 0;
 RasterFig = figure;
@@ -64,7 +64,11 @@ for i = 1:length(UniqueNextSylls),
             SpikeTimes = SpikeTimes';
         end
         Raster = [Raster; [SpikeTimes ones(size(SpikeTimes))*j]];
-        PST(j,:) = histc(SpikeTimes, Edges);
+        if (isempty(SpikeTimes))
+            PST(j,:) = zeros(1, length(Edges));
+        else
+            PST(j,:) = histc(SpikeTimes, Edges);
+        end
     end
     PST = PST/BinSize;
     disp([SyllLabels(SyllMatches(end),:), ' - ', ColNames{(mod(i,length(Cols)) + 1)}]);
@@ -115,7 +119,7 @@ axes(RasterPlotAxes);
 title([TitleString, '- Aligned to syllable onset'], 'FontSize', 14, 'FontWeight', 'bold');
 
 
-Edges = -(mean(SyllOffsetTime - SyllOnsetTime)+0.1):BinSize:1;
+Edges = -(mean(SyllOffsetTime - SyllOnsetTime)+0.6):BinSize:1;
 UniqueNextSylls = unique(SyllLabels(:,end));
 RasterIncrement = 0;
 RasterFig2 = figure;
@@ -146,7 +150,11 @@ for i = 1:length(UniqueNextSylls),
             SpikeTimes = SpikeTimes';
         end
         Raster = [Raster; [SpikeTimes ones(size(SpikeTimes))*j]];
-        PST(j,:) = histc(SpikeTimes, Edges);
+        if (isempty(SpikeTimes))
+            PST(j,:) = zeros(1, length(Edges));
+        else
+            PST(j,:) = histc(SpikeTimes, Edges);
+        end
     end
     PST = PST/BinSize;
     disp([SyllLabels(SyllMatches(end),:), ' - ', ColNames{(mod(i,length(Cols)) + 1)}]);

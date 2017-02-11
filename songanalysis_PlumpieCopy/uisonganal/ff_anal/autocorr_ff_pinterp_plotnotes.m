@@ -177,7 +177,7 @@ while 1
                 PresentDir = pwd;
                 if (strfind(FileType, 'wav'))
                     cd(RawDataDir);
-                    [rawsong, Fs] = wavread(rootfile);
+                    [rawsong, Fs] = audioread(rootfile);
                     cd(PresentDir);
                 else
                     if (strfind(FileType, 'obs'));

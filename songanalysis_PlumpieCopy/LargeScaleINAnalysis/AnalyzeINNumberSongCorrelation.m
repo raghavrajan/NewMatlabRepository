@@ -55,7 +55,7 @@ for i = 1:length(BirdParameters),
     disp(['Calculating SAP features for ', BirdParameters(i).BirdName, '-', BirdParameters(i).DataLabel, ' ...']);
     if (exist([BirdParameters(i).BirdName, '.', BirdParameters(i).DataLabel, '.SAPFeats.mat'], 'file'))
         load([BirdParameters(i).BirdName, '.', BirdParameters(i).DataLabel, '.SAPFeats.mat']);
-        BirdParameters(i).SAPFeats = SAPFeats;
+        BirdParameters(i).SAPFeats = SAPFeatsMatrix;
     else
         [BirdParameters(i).SAPFeats] = LSINA_CalcSAPFeats(BirdParameters(i));
         SAPFeats = BirdParameters(i).SAPFeats;
