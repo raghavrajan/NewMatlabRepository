@@ -45,7 +45,7 @@ cla(LabelAxis);
 axes(LabelAxis);
 if (exist('Labels', 'var'))
     for i = 1:length(Labels),
-        text(Onsets(i), 1, Labels(i), 'Color', 'b');
+        text(Onsets(i), 1, char(Labels(i)), 'Color', 'b');
     end
 end
 LabelAxisLimits = [Time(1) Time(end) 0.9 1.1];
