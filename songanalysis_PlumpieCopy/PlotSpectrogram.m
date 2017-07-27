@@ -93,8 +93,8 @@ figure;
 set(gcf, 'Color', 'w');
 set(gcf, 'Position', [153 440 1200 250]);
 axes('Position',[0.08 0.25 0.88 0.6]);
-cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -70, ...
-        0, 2, ColourMap, 'classic');
+cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -55, ...
+        -10, 1.2, ColourMap, 'classic');
 axis([t_min t_max 300 8000]);
 set(gca, 'FontSize', 14, 'FontWeight', 'bold');
 xlabel('Time (sec)', 'FontSize', 14, 'FontWeight', 'bold');
