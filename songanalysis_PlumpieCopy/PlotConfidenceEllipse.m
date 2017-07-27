@@ -17,4 +17,4 @@ VV = V*sqrt(D);               %# scale eigenvectors
 e = bsxfun(@plus, VV*e, Mu'); %#' project circle back to orig space
 
 %# plot cov and major/minor axes
-fill(e(1,:), e(2,:), Colour, 'FaceColor', Colour, 'EdgeColor', 'none', 'FaceAlpha', 0.25);
+fill(e(1,:), e(2,:), Colour, 'FaceColor', Colour, 'EdgeColor', 'none', 'FaceAlpha', 0.2);

@@ -6,7 +6,7 @@ function [BirdParameters] = LSINA_ParseHeaderBirdData(HeaderLine, BirdDetails)
 for i = 1:length(HeaderLine),
     ParameterName = HeaderLine{i}(find(HeaderLine{i} ~= ' '));
     switch (ParameterName)
-        case {'Continuousdata', 'Interboutinterval', 'InterINinterval', 'SerialNo', 'Fulldaydata', 'Templateindex', 'Onsettimeinms', 'Offsettimeinms', 'SongChanNo', 'NeuronNo', 'SpikeChanNo', 'Bout', 'BoutOnset', 'BoutOffset'}
+        case {'Continuousdata', 'Interboutinterval', 'InterINinterval', 'SerialNo', 'Fulldaydata', 'Templateindex', 'Onsettimeinms', 'Offsettimeinms', 'SongChanNo', 'NeuronNo', 'RevisedNeuronNo', 'FinalNeuronNo', 'SpikeChanNo', 'Bout', 'BoutOnset', 'BoutOffset', 'Tutor', 'NestNo'}
             for j = 1:length(BirdDetails),
                 eval(['BirdParameters(', num2str(j), ').', ParameterName, '= str2double(BirdDetails{', num2str(j), '}{', num2str(i), '});']);
             end

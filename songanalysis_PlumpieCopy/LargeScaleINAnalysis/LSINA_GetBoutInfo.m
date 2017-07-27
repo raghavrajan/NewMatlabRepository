@@ -96,7 +96,7 @@ if (SURecordingDetails.Continuousdata == 0)
             Bouts(end,3:4) = [i i];
             Bouts(end,5:6) = [SURecordingDetails.NoteInfo{i}.onsets(1) SURecordingDetails.NoteInfo{i}.offsets(LongIntervals(1))];
             Bouts(end,7) = MotifFlag;
-            Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.FileLen(i) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
+            Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.NoteInfo{i}.onsets(LongIntervals(1) + 1) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
             
             for k = 2:length(LongIntervals),
                 MotifFlag = 0; 
@@ -111,7 +111,7 @@ if (SURecordingDetails.Continuousdata == 0)
                 Bouts(end,3:4) = [i i];
                 Bouts(end,5:6) = [SURecordingDetails.NoteInfo{i}.onsets(LongIntervals(k-1) + 1) SURecordingDetails.NoteInfo{i}.offsets(LongIntervals(k))];
                 Bouts(end,7) = MotifFlag;
-                Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.FileLen(i) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
+                Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.NoteInfo{i}.onsets(LongIntervals(k) + 1) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
             end
             
             MotifFlag = 0; 
@@ -133,15 +133,17 @@ else
     [AllLabels, AllOnsets, AllOffsets, AllUnAdjustedOnsets, AllUnAdjustedOffsets, OnsetFileNos, OffsetFileNos] = CombineContinuousDataNoteFiles(SURecordingDetails.DataDirectory, SURecordingDetails.SongFileNames, fullfile(SURecordingDetails.DataDirectory, 'ASSLNoteFiles'), SURecordingDetails.FileType);
     
     % Now get rid of female in, out events and female calls
-    FemaleINOUTEvents = regexp(AllLabels, ['[', SURecordingDetails.Femalecalllabel, SURecordingDetails.FemaleinLabel, SURecordingDetails.FemaleoutLabel, SURecordingDetails.Closedoorlabel, ']']);
-    if (~isempty(FemaleINOUTEvents))
-        AllLabels(FemaleINOUTEvents) = [];
-        AllOnsets(FemaleINOUTEvents) = [];
-        AllOffsets(FemaleINOUTEvents) = [];
-        AllUnAdjustedOnsets(FemaleINOUTEvents) = [];
-        AllUnAdjustedOffsets(FemaleINOUTEvents) = [];
-        OnsetFileNos(FemaleINOUTEvents) = [];
-        OffsetFileNos(FemaleINOUTEvents) = [];
+    if (isfield(SURecordingDetails, 'Femalecalllabel'))
+        FemaleINOUTEvents = regexp(AllLabels, ['[', SURecordingDetails.Femalecalllabel, SURecordingDetails.FemaleinLabel, SURecordingDetails.FemaleoutLabel, SURecordingDetails.Closedoorlabel, ']']);
+        if (~isempty(FemaleINOUTEvents))
+            AllLabels(FemaleINOUTEvents) = [];
+            AllOnsets(FemaleINOUTEvents) = [];
+            AllOffsets(FemaleINOUTEvents) = [];
+            AllUnAdjustedOnsets(FemaleINOUTEvents) = [];
+            AllUnAdjustedOffsets(FemaleINOUTEvents) = [];
+            OnsetFileNos(FemaleINOUTEvents) = [];
+            OffsetFileNos(FemaleINOUTEvents) = [];
+        end
     end
     
     % Make everything into column vectors
@@ -173,7 +175,7 @@ else
         Bouts(end,3:4) = [OnsetFileNos(1) OffsetFileNos(end)];
         Bouts(end,5:6) = [AllUnAdjustedOnsets(1) AllUnAdjustedOffsets(end)];
         Bouts(end,7) = MotifFlag;
-        Bouts(end,8:9) = [((AllOnsets(1) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) (((cumsum(SURecordingDetails.FileLen) - AllOffsets(end)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)];
+        Bouts(end,8:9) = [((AllOnsets(1) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) (((sum(SURecordingDetails.FileLen) - AllOffsets(end))/SURecordingDetails.Interboutinterval))];
     else
         MotifFlag = 0; 
         for j = 1:length(SURecordingDetails.MotifLabels),
@@ -187,7 +189,7 @@ else
         Bouts(end,3:4) = [OnsetFileNos(1) OffsetFileNos(LongIntervals(1))];
         Bouts(end,5:6) = [AllUnAdjustedOnsets(1) AllUnAdjustedOffsets(LongIntervals(1))];
         Bouts(end,7) = MotifFlag;
-        Bouts(end,8:9) = [(((AllOnsets(1) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) ((Intervals(LongIntervals(1)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)];
+        Bouts(end,8:9) = [(((AllOnsets(1) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) ((AllOnsets(LongIntervals(1) + 1) - AllOffsets(LongIntervals(1)))/SURecordingDetails.Interboutinterval)];
         
         for k = 2:length(LongIntervals),
             MotifFlag = 0; 
@@ -202,7 +204,7 @@ else
             Bouts(end,3:4) = [OnsetFileNos(LongIntervals(k-1) + 1) OffsetFileNos(LongIntervals(k))];
             Bouts(end,5:6) = [AllUnAdjustedOnsets(LongIntervals(k-1) + 1) AllUnAdjustedOffsets(LongIntervals(k))];
             Bouts(end,7) = MotifFlag;
-            Bouts(end,8:9) = [((Intervals(LongIntervals(k-1)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) ((Intervals(LongIntervals(k)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)];
+            Bouts(end,8:9) = [((Intervals(LongIntervals(k-1)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) ((AllOnsets(LongIntervals(k) + 1) - AllOffsets(LongIntervals(k)))/SURecordingDetails.Interboutinterval)];
         end
 
         MotifFlag = 0; 
@@ -218,6 +220,6 @@ else
         Bouts(end,5:6) = [AllUnAdjustedOnsets(LongIntervals(end) + 1) AllUnAdjustedOffsets(end)];
         Bouts(end,7) = MotifFlag;
         
-        Bouts(end,8:9) = [((Intervals(LongIntervals(end)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) (((sum(SURecordingDetails.FileLen) - AllOffsets(end)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)];
+        Bouts(end,8:9) = [((Intervals(LongIntervals(end)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) ((sum(SURecordingDetails.FileLen) - AllOffsets(end))/SURecordingDetails.Interboutinterval)];
     end
 end

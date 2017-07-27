@@ -2,7 +2,7 @@ function [] = MakeSongMovie(Song, Fs, OutputFileName)
 
 MaxSpectVal = CalculateMaxSpectVal(Song, Fs);
 
-FrameRate = 10;
+FrameRate = 25;
 Time = 0:1/Fs:length(Song)/Fs;
 Time(end) = [];
 
@@ -21,7 +21,7 @@ for i = 1:NoofFrames,
     set(gca, 'Visible', 'off');
     F(i) = getframe(gcf);
     F(i) = getframe;
-    c;
+    close all;
 end
 movie(figure, F, 1, 10);
 movie2avi(F, OutputFileName, 'compression', 'None', 'fps', FrameRate);
