@@ -1324,8 +1324,12 @@ for i = 1:length(handles.ASSL.FileName),
     end
     
     [handles.ASSL.SyllOnsets{i}, handles.ASSL.SyllOffsets{i}] = ASSLSegmentDataAronovFee(LogAmplitude, Fs, handles.ASSL.MinInt, handles.ASSL.MinDur, handles.ASSL.Threshold{i});
-    for j = 1:length(handles.ASSL.SyllOnsets{i}),
-        handles.ASSL.SyllLabels{i}(j) = '0';
+    if (isempty(handles.ASSL.SyllOnsets{i}))
+        handles.ASSL.SyllLabels{i} = [];
+    else
+        for j = 1:length(handles.ASSL.SyllOnsets{i}),
+            handles.ASSL.SyllLabels{i}(j) = '0';
+        end
     end
     disp([' File #', num2str(i), ': Detected ', num2str(length(handles.ASSL.SyllOnsets{i})), ' syllables for ', handles.ASSL.FileName{i}]);
 end
