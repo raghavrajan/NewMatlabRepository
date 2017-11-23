@@ -80,7 +80,11 @@ else
                     if (ContinuousFirstSyllFlag == 0)
                         TempLabels = [BirdParameters.NoteInfo{i}.labels(1:end-1)'; lower(BirdParameters.NoteInfo{i}.labels(end))];
                         TempOnsets = BirdParameters.NoteInfo{i}.onsets; 
-                        TempOffsets = [BirdParameters.NoteInfo{i}.offsets(1:end-1); BirdParameters.NoteInfo{i+1}.offsets(1)];
+                        if (size(BirdParameters.NoteInfo{i}.offsets,1) < size(BirdParameters.NoteInfo{i}.offsets,2))
+                            TempOffsets = [BirdParameters.NoteInfo{i}.offsets(1:end-1)'; BirdParameters.NoteInfo{i+1}.offsets(1)];
+                        else
+                            TempOffsets = [BirdParameters.NoteInfo{i}.offsets(1:end-1); BirdParameters.NoteInfo{i+1}.offsets(1)];
+                        end
                         TempOnsetFileNo = ones(length(TempLabels), 1)*i;
                         TempOffsetFileNo = [ones(length(TempLabels)-1, 1)*i; i+1];            
                     else                  

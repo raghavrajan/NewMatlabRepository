@@ -52,6 +52,7 @@ end
 figure;
 subplot(2,1,1);
 PlotSpectrogramInAxis_SongVar(SyllData{1}, (1:1:length(SyllData{1}))/Fs, Fs, gca);
+SpecAxis = axis;
 
 subplot(2,1,2);
 hold on;
@@ -68,6 +69,12 @@ set(gcf, 'Color', 'w');
 set(gca, 'FontSize', 14);
 set(gcf, 'Position', [680 89 800 900]);
 AxisLimits = axis;
+
+FinalXAxis = [min(SpecAxis(1), AxisLimits(1)) max(SpecAxis(2), AxisLimits(2))];
+subplot(2,1,1);
+axis([FinalXAxis(1:2) SpecAxis(3:4)]);
+subplot(2,1,2);
+axis([FinalXAxis(1:2) AxisLimits(3:4)]);
 
 % Now ask the user to use left click to put the centers for where syllables
 % should be segmented and right click when done.
@@ -127,8 +134,16 @@ end
 PrePostPaddingForBoundary = 5; % in ms
 PrePostPaddingForSplit = 2; % in ms
 for j = 1:length(PointsToSplit),
-    SplitBoundaries(j,:) = PointsToSplit(j) + [-PrePostPaddingForBoundary PrePostPaddingForBoundary];
+    if (j == 1)
+        SplitBoundaries(j,:) = [0 PointsToSplit(j)];
+        SplitBoundariesIndices(j,:) = [1 round(PointsToSplit(j)*Fs/1000)];
+    else
+        SplitBoundaries(j,:) = [PointsToSplit(j-1) PointsToSplit(j)];
+        SplitBoundariesIndices(j,:) = [(1 + SplitBoundariesIndices(j-1,2)) round(PointsToSplit(j)*Fs/1000)];
+    end
 end
+SplitBoundaries(end+1,:) = [PointsToSplit(end) NaN];
+SplitBoundariesIndices(end+1,:) = [(1 + SplitBoundariesIndices(j,2)) NaN];
 
 ShortSyllFlag = 0;
 UniqueFiles = unique(FileNo);
@@ -138,32 +153,60 @@ for Files = 1:length(UniqueFiles),
     TempSyllLabels = [];
     for i = SyllsToSplit(:)',
         NewSyllOnsets = [];
-        for j = 1:length(PointsToSplit),
-            if (j == 1)
-                NewSyllOnsets(end+1,1) = 0;  % onset of new syllable
-            end
+        for j = 1:size(SplitBoundaries,1),
             if (length(OriginalSyllAmp{i}) < (round(SplitBoundaries(j,2) * Fs/1000)))
                 ShortSyllFlag = 1;
                 break;
             end
-            [MinVal, MinValLocation] = min(OriginalSyllAmp{i}(round(SplitBoundaries(j,1) * Fs/1000):round(SplitBoundaries(j,2) * Fs/1000)));
-
-            MinValLocation = MinValLocation + (round(SplitBoundaries(j,1) * Fs/1000) - 1);
-            % Now new boundary is 2ms before and after this point
-            NewSyllOnsets(end,2) = (MinValLocation * 1000/Fs) - PrePostPaddingForSplit; % new offset
-            NewSyllOnsets(end+1,1) = (MinValLocation * 1000/Fs) + PrePostPaddingForSplit; %
+            if (j == 1)
+                NewSyllOnsets(end+1,1) = 0;
+                AboveThreshold = (OriginalSyllAmp{i}(1:SplitBoundariesIndices(j,2)) >= NoteInfo(UniqueFiles(Files)).threshold(2));
+                Transitions = conv(double(AboveThreshold), [1 -1], 'same');
+                if (isempty(find(Transitions < 0)))
+                    NewSyllOnsets(end,2) = SplitBoundaries(j,2) - PrePostPaddingForSplit;
+                else
+                    Transitions = find(Transitions < 0);
+                    NewSyllOnsets(end,2) = Transitions(end) * 1000 / Fs;
+                end
+            else
+                if (j == size(SplitBoundaries,1))
+                    NewSyllOnsets(end+1,2) = length(OriginalSyllAmp{i})*1000/Fs;
+                    AboveThreshold = (OriginalSyllAmp{i}(SplitBoundariesIndices(j,1):end) >= NoteInfo(UniqueFiles(Files)).threshold(2));
+                    Transitions = conv(double(AboveThreshold), [1 -1], 'same');
+                    if (isempty(find(Transitions > 0)))
+                        NewSyllOnsets(end,1) = SplitBoundaries(j,1) + PrePostPaddingForSplit;
+                    else
+                        Transitions = find(Transitions > 0);
+                        NewSyllOnsets(end,1) = Transitions(1) * 1000 / Fs + SplitBoundaries(j,1);
+                    end
+                else
+                    AboveThreshold = (OriginalSyllAmp{i}(SplitBoundariesIndices(j,1):SplitBoundariesIndices(j,2)) >= NoteInfo(UniqueFiles(Files)).threshold(2));
+                    Transitions = conv(double(AboveThreshold), [1 -1], 'same');
+                    if (isempty(find(Transitions < 0)))
+                        NewSyllOnsets(end+1,2) = SplitBoundaries(j,2) - PrePostPaddingForSplit;
+                    else
+                        Transitions = find(Transitions < 0);
+                        NewSyllOnsets(end+1,2) = (Transitions(end) * 1000 / Fs) + SplitBoundaries(j,1);
+                    end
+                    if (isempty(find(Transitions > 0)))
+                        NewSyllOnsets(end,1) = SplitBoundaries(j,1) + PrePostPaddingForSplit;
+                    else
+                        Transitions = find(Transitions > 0);
+                        NewSyllOnsets(end,1) = SplitBoundaries(j,1) + (Transitions(1) * 1000 / Fs);
+                    end
+                end
+            end
+            if (NewSyllOnsets(end,1) > NewSyllOnsets(end,2))
+                NewSyllOnsets(end,1) = NewSyllOnsets(end,2);
+            end
             TempSyllLabels(end+1) = NewSyllLabels(j);
         end
-        TempSyllLabels(end+1) = NewSyllLabels(end);
         
         if (ShortSyllFlag == 1)
             ShortSyllFlag = 0;
             disp('Skipped one syllable');
             continue;
         end
-
-        NewSyllOnsets(end,2) = length(OriginalSyllAmp{i})*1000/Fs;
-
         NewSyllOnsets = NewSyllOnsets + NoteInfo(FileNo(i)).onsets(SyllIndex(i));
         TempSyllOnsets = [TempSyllOnsets; NewSyllOnsets];
     end

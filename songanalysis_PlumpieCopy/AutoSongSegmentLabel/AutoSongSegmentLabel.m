@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 25-Aug-2015 21:34:23
+% Last Modified by GUIDE v2.5 27-Aug-2017 23:32:03
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -578,7 +578,8 @@ for i = 1:length(handles.ASSL.FileName),
     
     Time = (1:1:length(RawData))/Fs;
     
-    [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(RawData, Time, Fs, handles.ASSL.SyllOnsets{i}/1000, handles.ASSL.SyllOffsets{i}/1000);
+    % [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(RawData, Time, Fs, handles.ASSL.SyllOnsets{i}/1000, handles.ASSL.SyllOffsets{i}/1000);
+    [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets_SplitSylls(RawData, Time, Fs, handles.ASSL.SyllOnsets{i}/1000, handles.ASSL.SyllOffsets{i}/1000);
     
     for j = 1:length(handles.ASSL.ToBeUsedFeatures),
         FeatFields = fieldnames(Feats);
@@ -1702,3 +1703,23 @@ for i = 1:length(handles.ASSL.SyllOnsets),
 end
 fclose(Fid);
 disp(['Wrote data about syllable transition information to ', TextOutputFileName]); 
+
+
+% --- Executes on button press in GenerateSummaryButton.
+function GenerateSummaryButton_Callback(hObject, eventdata, handles)
+% hObject    handle to GenerateSummaryButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% This function is to generate a summary of the labelling. I basically want
+% the following in the summary
+% a) spectrogram with examples of all syllable labels
+% b) # of occurences of each of the syllables
+% c) cluster variance as measured by mean distance of individual points
+% from cluster centroid - Mahalanobis distance (only if there are more than
+% 5 points)
+% d) spectrograms of some of the outliers, chosen based on the criteria
+% that Mahalanobis distance of that point is > 75th percentile + 3*IQR
+% e) also show the most common sequences
+
+ASSL_GenerateSummaryReport(handles);

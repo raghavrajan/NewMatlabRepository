@@ -6,7 +6,7 @@ function [BirdParameters] = LSINA_ParseHeaderBirdData(HeaderLine, BirdDetails)
 for i = 1:length(HeaderLine),
     ParameterName = HeaderLine{i}(find(HeaderLine{i} ~= ' '));
     switch (ParameterName)
-        case {'Continuousdata', 'Interboutinterval', 'InterINinterval', 'SerialNo', 'Fulldaydata', 'Templateindex', 'Onsettimeinms', 'Offsettimeinms', 'SongChanNo', 'NeuronNo', 'RevisedNeuronNo', 'FinalNeuronNo', 'SpikeChanNo', 'Bout', 'BoutOnset', 'BoutOffset', 'Tutor', 'NestNo'}
+        case {'Continuousdata', 'Interboutinterval', 'InterINinterval', 'SerialNo', 'Fulldaydata', 'Templateindex', 'Onsettimeinms', 'Offsettimeinms', 'SongChanNo', 'NeuronNo', 'RevisedNeuronNo', 'FinalNeuronNo', 'SpikeChanNo', 'Bout', 'BoutOnset', 'BoutOffset', 'Tutor', 'NestNo', 'Antidromicstimtrialnum', 'Meantimeofantidromicspike', 'Stdofantidromicspiketime', 'Meantimeofantidromicsikeforallstim', 'Stdofantidromicspiketimeforallstim', 'AntidromicstimcurrentuA', 'Antidromicstimchan', 'Percentilebasedstdofantidromicspiketimeforallstim', 'Spikeinvertedornot', 'Gain', 'TotalNumChannels'}
             for j = 1:length(BirdDetails),
                 eval(['BirdParameters(', num2str(j), ').', ParameterName, '= str2double(BirdDetails{', num2str(j), '}{', num2str(i), '});']);
             end
@@ -16,6 +16,12 @@ for i = 1:length(HeaderLine),
                 Temp = textscan(BirdDetails{j}{i}, '%f', 'DeLimiter', ',');
                 eval(['BirdParameters(', num2str(j), ').', ParameterName, '= Temp{1};']);
             end
+            
+        case 'Antidromicstimnos'
+            for j = 1:length(BirdDetails),
+                Temp = textscan(BirdDetails{j}{i}, '%f', 'DeLimiter', {',' ' '}, 'MultipleDelimsAsOne', 1);
+                eval(['BirdParameters(', num2str(j), ').', ParameterName, '= Temp{1};']);
+            end    
             
         case 'Optionalclusterstotest'
             for j = 1:length(BirdDetails),

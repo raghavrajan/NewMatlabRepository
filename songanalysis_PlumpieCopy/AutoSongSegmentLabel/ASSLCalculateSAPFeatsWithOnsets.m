@@ -2,8 +2,11 @@ function [Feats, RawFeats, FeatsFs] = ASSLCalculateSAPFeatsWithOnsets(Song, Time
 
 if (~isempty(Onsets))
     
-    [m_spec_deriv , m_AM, m_FM ,m_Entropy , m_amplitude ,m_Freq, m_PitchGoodness , m_Pitch , Pitch_chose , Pitch_weight ]=deriv(Song, Fs);
-    T = linspace(Time(1), Time(end), length(m_Entropy));
+    [m_spec_deriv , m_AM, m_FM ,m_Entropy , m_amplitude ,m_Freq, m_PitchGoodness , m_Pitch , Pitch_chose , Pitch_weight] = deriv(Song, Fs);
+    Temp = load('/home/raghav/repositories/Matlab2015b_Rajan-Lab-Song-Analysis-Scripts/songanalysis_PlumpieCopy/SoundAnalysisMatlab/parameters.mat');
+    % T = linspace(Time(1), Time(end), length(m_Entropy));
+    T = Time(1):Temp.param.winstep/Fs:(Time(end) + 2);
+    T = T(1:length(m_amplitude));
     FeatsFs.SAPFeats_Fs = 1/(T(2) - T(1));
 
     % Parameters P for calculating FF for yin
