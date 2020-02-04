@@ -1335,14 +1335,14 @@ for i = 1:length(handles.ASSL.FileName),
     disp([' File #', num2str(i), ': Detected ', num2str(length(handles.ASSL.SyllOnsets{i})), ' syllables for ', handles.ASSL.FileName{i}]);
 end
 
-for i = 1:length(handles.ASSL.FileName),
-    if (~isempty(handles.ASSL.SyllOnsets{i}))
-        SyllDur = handles.ASSL.SyllOffsets{i} - handles.ASSL.SyllOnsets{i};
-        handles.ASSL.SyllOnsets{i}(find(SyllDur >=  1000)) = [];
-        handles.ASSL.SyllOffsets{i}(find(SyllDur >=  1000)) = [];
-        handles.ASSL.SyllLabels{i}(find(SyllDur >=  1000)) = [];
-    end
-end
+% for i = 1:length(handles.ASSL.FileName),
+%     if (~isempty(handles.ASSL.SyllOnsets{i}))
+%         SyllDur = handles.ASSL.SyllOffsets{i} - handles.ASSL.SyllOnsets{i};
+%         handles.ASSL.SyllOnsets{i}(find(SyllDur >=  1000)) = [];
+%         handles.ASSL.SyllOffsets{i}(find(SyllDur >=  1000)) = [];
+%         handles.ASSL.SyllLabels{i}(find(SyllDur >=  1000)) = [];
+%     end
+% end
 
 set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
 [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);

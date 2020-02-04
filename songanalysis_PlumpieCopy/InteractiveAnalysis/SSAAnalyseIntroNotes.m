@@ -107,7 +107,7 @@ for NoteFileNo = 1:length(FileInfo.NoteLabels),
                 MotifNo = MotifNo + 1;
             end
         else
-            IntroNoteIndices = find(Notes.labels(1:Motifs(1)) == 'i');
+            IntroNoteIndices = find(Notes.labels(1:Motifs(1)) == 'z');
             if (~isempty(IntroNoteIndices))
                 if (length(IntroNoteIndices) > 1)
                     Intervals = Notes.onsets(IntroNoteIndices(2:end)) - Notes.offsets(IntroNoteIndices(1:end-1));

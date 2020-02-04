@@ -1,8 +1,5 @@
-function [] = PlotSpectrogram_SongVar_Scaled(rawsong, Fs, MaxSpectVal, varargin)
+function [] = PlotSpectrogram_SongVar_Scaled(rawsong, time, Fs, MaxSpectVal, varargin)
 
-% Time axis
-time = 0:1/Fs:(length(rawsong)/Fs);
-time(end) = [];
 
 if (length(varargin) > 0)
     start_time = varargin{1};

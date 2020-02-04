@@ -1,4 +1,4 @@
-function [] = PlotSpectrogram(pathname,filename,FileType,ColourMap, varargin)
+function [MaxSpectVal] = PlotSpectrogram(pathname,filename,FileType,ColourMap, varargin)
 
 
 Slash = find((filename == '/') | (filename == '\'));

@@ -39,6 +39,14 @@ if (isempty(Onsets))
     Feats.FrequencyModulation = [];
     Feats.EntropyVariance = [];
     Feats.FundamentalFrequency = [];
+    
+    Feats.STDLogAmplitude = [];
+    Feats.STDEntropy = [];
+    Feats.STDMeanFrequency = [];
+    Feats.STDAmplitudeModulation = [];
+    Feats.STDPitchGoodness = [];
+    Feats.STDFrequencyModulation = [];
+    
     FeatsFs.SAPFeats_Fs = [];
     FeatsFs.FF_Fs = [];
     
@@ -72,6 +80,13 @@ for i = 1:length(Onsets),
     Feats.PitchGoodness(SyllNo) = mean(m_PitchGoodness(StartIndex:EndIndex));
     Feats.FrequencyModulation(SyllNo) = mean(m_FM(StartIndex:EndIndex));
     Feats.EntropyVariance(SyllNo) = var(m_Entropy(StartIndex:EndIndex));
+    
+    Feats.STDLogAmplitude(SyllNo) = std(m_amplitude(StartIndex:EndIndex)); % Amplitude
+    Feats.STDEntropy(SyllNo) = std(m_Entropy(StartIndex:EndIndex)); % Entropy 
+    Feats.STDMeanFrequency(SyllNo) = std(m_Freq(StartIndex:EndIndex));
+    Feats.STDAmplitudeModulation(SyllNo) = std(m_AM(StartIndex:EndIndex));
+    Feats.STDPitchGoodness(SyllNo) = std(m_PitchGoodness(StartIndex:EndIndex));
+    Feats.STDFrequencyModulation(SyllNo) = std(m_FM(StartIndex:EndIndex));
     
     RawFeats.LogAmplitude{SyllNo} = (m_amplitude(StartIndex:EndIndex)); % Amplitude
     RawFeats.Entropy{SyllNo} = (m_Entropy(StartIndex:EndIndex)); % Entropy 

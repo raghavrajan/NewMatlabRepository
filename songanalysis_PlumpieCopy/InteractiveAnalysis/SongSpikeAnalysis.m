@@ -1547,7 +1547,7 @@ end
 if (handles.SSA.UnDirSong == 1)
     SSAAnalyseSeq(handles.SSA.SeqSyll, handles.SSA.PSTBinSize/1000, handles.SSA.UnDirFileInfo, [TitleString, '-Undirected song']);
     SSAAnalyseConvSeq(handles.SSA.SeqSyll, handles.SSA.PSTBinSize/1000, handles.SSA.UnDirFileInfo, [TitleString, '-Undirected song']);
-    if (strfind(handles.SSA.SeqSyll, 'i'))
+    if (strfind(handles.SSA.SeqSyll, 'z'))
         SSAAnalyseIntroNotes(handles.SSA.RawDataDirectory, handles.SSA.RecFileDirectory, handles.SSA.PreBoutDuration, handles.SSA.PostBoutDuration, handles.SSA.UnDirFileInfo, [TitleString, '-Directed song'], handles.SSA.Motif1, handles.SSA.Motif2, handles.SSA.FileType);
     else
         %SSAAnalyseSeqMotif(handles.SSA.SeqSyll, handles.SSA.PSTBinSize/1000, handles.SSA.UnDirFileInfo, [TitleString, '-Undirected song'], handles.SSA.Motif);

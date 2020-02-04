@@ -4,9 +4,10 @@ function [BirdParameters] = LSINA_ParseHeaderBirdData(HeaderLine, BirdDetails)
 % assign bird detail variables appropriately
 
 for i = 1:length(HeaderLine),
+    % fprintf('\n%g:', i);
     ParameterName = HeaderLine{i}(find(HeaderLine{i} ~= ' '));
     switch (ParameterName)
-        case {'Continuousdata', 'Interboutinterval', 'InterINinterval', 'SerialNo', 'Fulldaydata', 'Templateindex', 'Onsettimeinms', 'Offsettimeinms', 'SongChanNo', 'NeuronNo', 'RevisedNeuronNo', 'FinalNeuronNo', 'SpikeChanNo', 'Bout', 'BoutOnset', 'BoutOffset', 'Tutor', 'NestNo', 'Antidromicstimtrialnum', 'Meantimeofantidromicspike', 'Stdofantidromicspiketime', 'Meantimeofantidromicsikeforallstim', 'Stdofantidromicspiketimeforallstim', 'AntidromicstimcurrentuA', 'Antidromicstimchan', 'Percentilebasedstdofantidromicspiketimeforallstim', 'Spikeinvertedornot', 'Gain', 'TotalNumChannels'}
+        case {'Continuousdata', 'Interboutinterval', 'InterINinterval', 'SerialNo', 'Fulldaydata', 'Templateindex', 'Onsettimeinms', 'Offsettimeinms', 'SongChanNo', 'NeuronNo', 'RevisedNeuronNo', 'FinalNeuronNo', 'SpikeChanNo', 'Bout', 'BoutOnset', 'BoutOffset', 'Tutor', 'NestNo', 'Antidromicstimtrialnum', 'Meantimeofantidromicspike', 'Stdofantidromicspiketime', 'Meantimeofantidromicsikeforallstim', 'Stdofantidromicspiketimeforallstim', 'AntidromicstimcurrentuA', 'Antidromicstimchan', 'Percentilebasedstdofantidromicspiketimeforallstim', 'Spikeinvertedornot', 'Gain', 'TotalNumChannels', 'Tetrode'}
             for j = 1:length(BirdDetails),
                 eval(['BirdParameters(', num2str(j), ').', ParameterName, '= str2double(BirdDetails{', num2str(j), '}{', num2str(i), '});']);
             end
@@ -46,6 +47,7 @@ for i = 1:length(HeaderLine),
             
         otherwise
             for j = 1:length(BirdDetails),
+                % fprintf('%g>', j);
                 eval(['BirdParameters(', num2str(j), ').', ParameterName, '= BirdDetails{', num2str(j), '}{', num2str(i), '};']);
             end
     end

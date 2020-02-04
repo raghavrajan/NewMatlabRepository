@@ -76,7 +76,7 @@ for i = 1:length(UniqueFileIndices),
 % much faster - this took only 37.8917 seconds for o19b78-17032011
 
     if (~exist('SAPFeat_FieldNames', 'var'))
-        SAPFeatsMatrix = [SAPFeatsMatrix; [ones(length(OnsetsTobeRemoved), 9)*NaN]];
+        SAPFeatsMatrix = [SAPFeatsMatrix; [ones(length(OnsetsTobeRemoved), 15)*NaN]];
     else
         SAPFeatsMatrix = [SAPFeatsMatrix; [ones(length(OnsetsTobeRemoved), length(SAPFeat_FieldNames))*NaN]];
     end
@@ -105,11 +105,11 @@ for i = 1:length(UniqueFileIndices),
             end
             SAPFeatsMatrix = [SAPFeatsMatrix; [TempSAPFeatsMatrix]];
         else
-            SAPFeatsMatrix = [SAPFeatsMatrix; ones(1,9)*NaN];
+            SAPFeatsMatrix = [SAPFeatsMatrix; ones(1,15)*NaN];
         end            
     end
     if (~exist('SAPFeat_FieldNames', 'var'))
-        SAPFeatsMatrix = [SAPFeatsMatrix; [ones(length(OffsetsTobeRemoved), 9)*NaN]]; 
+        SAPFeatsMatrix = [SAPFeatsMatrix; [ones(length(OffsetsTobeRemoved), 15)*NaN]]; 
     else
         SAPFeatsMatrix = [SAPFeatsMatrix; [ones(length(OffsetsTobeRemoved), length(SAPFeat_FieldNames))*NaN]]; 
     end

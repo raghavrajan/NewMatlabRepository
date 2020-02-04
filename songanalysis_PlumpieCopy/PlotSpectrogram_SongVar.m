@@ -75,4 +75,4 @@ hold on;
 %plot(time, (filtsong2 * 1000) + 14000,'r');
 %NoteTimes = SmoothSong > 10*RMS;
 %plot(time,NoteTimes * 14000,'k');
-disp('Finished');
+%disp('Finished');

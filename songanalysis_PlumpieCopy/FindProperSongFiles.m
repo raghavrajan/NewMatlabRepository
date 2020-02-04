@@ -3,7 +3,7 @@ function [SongFilesList] = FindProperSongFiles(NotesBatchFile,motif)
 ActualNotesFile = ['Actual',NotesBatchFile];
 
 fid = fopen(NotesBatchFile);
-NotesFilesList = textscan(fid,'%s');
+NotesFilesList = textscan(fid,'%s', 'DeLimiter', '\n');
 fclose(fid);
 
 SongFilesList = [];

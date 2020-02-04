@@ -88,8 +88,10 @@ if (nargin >= 1)
     if (TemplateDir(end) ~= FileSep)
         TemplateDir(end+1) = FileSep;
     end
-    if (exist([TemplateDir, 'SyllableTemplates.png'], 'file'))
-        imshow([TemplateDir, 'SyllableTemplates.png'], 'Border', 'tight');
+    if (isfield(varargin{1}, 'TemplateFileName'))
+        if (exist([TemplateDir, varargin{1}.TemplateFileName, '.SyllableTemplates.png'], 'file'))
+            imshow([TemplateDir, varargin{1}.TemplateFileName, '.SyllableTemplates.png'], 'Border', 'tight');
+        end
     end
     
     handles.ASSLReviewTMResults.FileIndex = 1;

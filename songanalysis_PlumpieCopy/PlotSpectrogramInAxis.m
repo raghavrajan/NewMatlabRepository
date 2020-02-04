@@ -83,11 +83,12 @@ t_max = time(end); %convert to ms
 time_spect = [t_min, t_max];   
 axes(gca);
 hold off;
-cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -55, ...
-        -10, 1.2, 'gray', 'classic');
+cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -35, ...
+        -5, 2.5, 'gray', 'classic');
 axis([t_min t_max 300 8000]);
 set(gca, 'FontSize', 10);
-set(gca, 'XTick', []);
+% set(gca, 'XTick', []);
+xlabel('Time (sec)', 'FontSize', 12);
 ylabel('Frequency (Hz)', 'FontSize', 12);
 zoom xon;
 hold on;

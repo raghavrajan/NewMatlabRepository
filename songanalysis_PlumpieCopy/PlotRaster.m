@@ -47,7 +47,7 @@ if (exist('RasterIncrement', 'var'))
 end
 
 hold on;
-Raster = plot([Raster(:,1)'; Raster(:,1)'], [(Raster(:,2)' - 0.25); (Raster(:,2)' + 0.25)], 'k', 'Color', 'k', 'LineWidth', 0.25);
+Raster = plot([Raster(:,1)'; Raster(:,1)'], [(Raster(:,2)' - 0.4); (Raster(:,2)' + 0.4)], 'k', 'Color', 'k', 'LineWidth', 0.25);
 
 if (exist('Colour', 'var'))
     set(Raster, 'Color', Colour);

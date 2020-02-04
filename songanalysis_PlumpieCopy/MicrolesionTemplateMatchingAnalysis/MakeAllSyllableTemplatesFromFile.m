@@ -29,6 +29,7 @@ if (exist('RawDataNormalization', 'var'))
 end
 
 if (~exist('labels', 'var'))
+    cd(DirectoryName);
     cd(NoteDir);
     load([SongFile, '.not.mat']);
 end
@@ -45,13 +46,21 @@ end
 UniqueLabels(find(ExcludedSyllables == 1)) = [];
 
 if (exist('FFTWinSize', 'var'))
-    SyllableTemplates = MakeTemplatesMicrolesionSpectralMatchAnalysis(Song, Fs, [(onsets/1000) (offsets/1000)], labels, UniqueLabels, TimeStretch, FreqStretch, FFTWinSize, FFTWinOverlap, Normalization);
+    [SyllableTemplates, TemplatePNGFig_Syllables, TemplatePNGFig_SyllLabelTimes] = MakeTemplatesMicrolesionSpectralMatchAnalysis(Song, Fs, [(onsets(:)/1000) (offsets(:)/1000)], labels, UniqueLabels, TimeStretch, FreqStretch, FFTWinSize, FFTWinOverlap, Normalization);
 else
-    SyllableTemplates = MakeTemplatesMicrolesionSpectralMatchAnalysis(Song, Fs, [(onsets/1000) (offsets/1000)], labels, UniqueLabels, TimeStretch, FreqStretch);
+    [SyllableTemplates, TemplatePNGFig_Syllables, TemplatePNGFig_SyllLabelTimes] = MakeTemplatesMicrolesionSpectralMatchAnalysis(Song, Fs, [(onsets(:)/1000) (offsets(:)/1000)], labels, UniqueLabels, TimeStretch, FreqStretch);
 end
 
 OutputFileName = [SongFile, '.SyllTemplates.', num2str(TemplateIncrement), '.template.mat'];
 FileSep = filesep;
 
 save(fullfile(OutputDir, OutputFileName), 'SyllableTemplates');
+PlotSpectrogram_SongVar(TemplatePNGFig_Syllables, Fs);
+for i = 1:length(UniqueLabels),
+    text(TemplatePNGFig_SyllLabelTimes(i), 7000, UniqueLabels(i), 'FontSize', 24, 'Color', 'b');
+end
+set(gca, 'YColor', 'w');
+set(gcf, 'PaperPositionMode', 'auto');
+print(fullfile(OutputDir, [OutputFileName, '.SyllableTemplates.png']), '-dpng', '-r300');
 disp(['Saved templates to ', OutputFileName, ' in directory ', OutputDir]);
+cd(PresentDir);

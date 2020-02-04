@@ -9,7 +9,7 @@ h = ones(1, Len)/Len;
 nfft=round(Fs*8/1000);
 nfft = 2^nextpow2(nfft);
 spect_win = hanning(nfft);
-noverlap = round(0.95*length(spect_win)); %number of overlapping points       
+noverlap = round(0.99*length(spect_win)); %number of overlapping points       
 
 %now calculate spectrogram
 %     [spect, freq, time_song] = specgram(filtsong, nfft, Fs, spect_win, noverlap);
@@ -31,7 +31,7 @@ cm = disp_idx_spect(idx_spect, Time_spect, freq_spect, -50, ...
         10, 1.2, 'gray', 'classic');
 axis([t_min t_max 300 8000]);
 set(gca, 'FontSize', 10);
-set(gca, 'XTick', []);
+set(gca, 'XTick', [t_min t_max]);
 ylabel('Frequency (Hz)', 'FontSize', 12);
 zoom xon;
 hold on;
@@ -39,4 +39,4 @@ hold on;
 %plot(time, (filtsong2 * 1000) + 14000,'r');
 %NoteTimes = SmoothSong > 10*RMS;
 %plot(time,NoteTimes * 14000,'k');
-disp('Finished');
+%disp('Finished');

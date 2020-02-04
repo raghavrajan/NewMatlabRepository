@@ -1,4 +1,4 @@
-function [SyllableTemplates] = MakeTemplatesMicrolesionSpectralMatchAnalysis(RawSong, Fs, OnsetsOffsets, labels, UniqueLabels, TimeStretch, FreqStretch, varargin)
+function [SyllableTemplates, TemplatePNGFig_Syllables, TemplatePNGFig_SyllLabelTimes] = MakeTemplatesMicrolesionSpectralMatchAnalysis(RawSong, Fs, OnsetsOffsets, labels, UniqueLabels, TimeStretch, FreqStretch, varargin)
 
 Time = (0:1:length(RawSong)-1)/Fs;
 
@@ -31,6 +31,11 @@ end
 
 fprintf('\n');
 
+PaddingTime = 0.1; % in ms
+TemplatePNGFig_Syllables = [zeros(round(PaddingTime * Fs),1)];
+TempSyllTime = PaddingTime;
+TemplatePNGFig_SyllLabelTimes = [];
+
 for k = 1:length(UniqueLabels),
     Indices = find(labels == UniqueLabels(k));
     fprintf('%c ', UniqueLabels(k));
@@ -56,6 +61,13 @@ for k = 1:length(UniqueLabels),
                 Motif = RawSong(find((Time >= XDur(1)) & (Time <= (XDur(2) - (0.125*(XDur(2) - XDur(1)))))));
                 PitchShiftedMotif = PitchShiftedSong{j}(find((Time >= XDur(1)) & (Time <= (XDur(2) - (0.125*(XDur(2) - XDur(1)))))));
 
+                % Add motif to templates if time stretch = 0
+                if ((SyllIndex == 1) && (i == 1))
+                    TemplatePNGFig_Syllables = [TemplatePNGFig_Syllables; Motif; zeros(round(PaddingTime*Fs),1)];
+                    TemplatePNGFig_SyllLabelTimes(end+1) = TempSyllTime;
+                    TempSyllTime = TempSyllTime + length(Motif)/Fs + PaddingTime;
+                end
+                
                 if ((i == 1) && (j == 1))
                     SyllableTemplates{k}{SyllIndex}.MotifTemplate(Index).Fs = Fs;
                     SyllableTemplates{k}{SyllIndex}.MotifTemplate(Index).RawSound = Motif;
@@ -74,3 +86,4 @@ for k = 1:length(UniqueLabels),
     end
     fprintf('\n');
 end
+

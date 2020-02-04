@@ -1,4 +1,4 @@
-function [Bouts, Gaps] = LSINA_GetBoutInfo(SURecordingDetails)
+function [Bouts, Gaps, BoutDetails] = LSINA_GetBoutInfo(SURecordingDetails)
 
 % This is done separately for triggered and continuous data. 
 % I'm using a structure that keeps track of all the things related to a
@@ -9,7 +9,7 @@ function [Bouts, Gaps] = LSINA_GetBoutInfo(SURecordingDetails)
 % time in that particular file, even if the data is continuous
 % Column 7 is whether a motif is present (1) or not (0)
 % Column 8 is >0 if there is >= 2000ms data in front, otherwise it is <0
-% Column 9 is >0 if there is >= 2000ms data at the back, otherwise it is <0
+% Column 9 is >1 if there is >= 2000ms data at the back, otherwise it is <1
 
 % In addition, I am going to use the silent gaps for getting spontaneous
 % activity - so I should keep track of gaps here - will do this later.
@@ -25,8 +25,13 @@ function [Bouts, Gaps] = LSINA_GetBoutInfo(SURecordingDetails)
 % female was put in or taken out. I also need to remove female calls from
 % this
 
+% 01.06.2017 - Added a new output called BoutDetails that will have the
+% labels, onsets and offsets for each bout in a separate field. The onsets
+% and offsets are relative to the first syllable onset of the bout
+
 Bouts = [];
 Gaps = [];
+BoutDetails = [];
 
 if (SURecordingDetails.Continuousdata == 0)
     for i = 1:length(SURecordingDetails.NoteInfo),
@@ -83,6 +88,10 @@ if (SURecordingDetails.Continuousdata == 0)
             Bouts(end,5:6) = [SURecordingDetails.NoteInfo{i}.onsets(1) SURecordingDetails.NoteInfo{i}.offsets(end)];
             Bouts(end,7) = MotifFlag;
             Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.FileLen(i) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
+            
+            BoutDetails{end+1}.Labels = SURecordingDetails.NoteInfo{i}.labels(1:end);
+            BoutDetails{end}.Onsets = SURecordingDetails.NoteInfo{i}.onsets(1:end) - SURecordingDetails.NoteInfo{i}.onsets(1);
+            BoutDetails{end}.Offsets = SURecordingDetails.NoteInfo{i}.offsets(1:end) - SURecordingDetails.NoteInfo{i}.onsets(1);
         else
             MotifFlag = 0; 
             for j = 1:length(SURecordingDetails.MotifLabels),
@@ -98,6 +107,10 @@ if (SURecordingDetails.Continuousdata == 0)
             Bouts(end,7) = MotifFlag;
             Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.NoteInfo{i}.onsets(LongIntervals(1) + 1) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
             
+            BoutDetails{end+1}.Labels = SURecordingDetails.NoteInfo{i}.labels(1:LongIntervals(1));
+            BoutDetails{end}.Onsets = SURecordingDetails.NoteInfo{i}.onsets(1:LongIntervals(1)) - SURecordingDetails.NoteInfo{i}.onsets(1);
+            BoutDetails{end}.Offsets = SURecordingDetails.NoteInfo{i}.offsets(1:LongIntervals(1)) - SURecordingDetails.NoteInfo{i}.onsets(1);
+            
             for k = 2:length(LongIntervals),
                 MotifFlag = 0; 
                 for j = 1:length(SURecordingDetails.MotifLabels),
@@ -112,6 +125,10 @@ if (SURecordingDetails.Continuousdata == 0)
                 Bouts(end,5:6) = [SURecordingDetails.NoteInfo{i}.onsets(LongIntervals(k-1) + 1) SURecordingDetails.NoteInfo{i}.offsets(LongIntervals(k))];
                 Bouts(end,7) = MotifFlag;
                 Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.NoteInfo{i}.onsets(LongIntervals(k) + 1) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
+                
+                BoutDetails{end+1}.Labels = SURecordingDetails.NoteInfo{i}.labels((LongIntervals(k-1) + 1):LongIntervals(k));
+                BoutDetails{end}.Onsets = SURecordingDetails.NoteInfo{i}.onsets((LongIntervals(k-1) + 1):LongIntervals(k)) - SURecordingDetails.NoteInfo{i}.onsets((LongIntervals(k-1) + 1));
+                BoutDetails{end}.Offsets = SURecordingDetails.NoteInfo{i}.offsets((LongIntervals(k-1) + 1):LongIntervals(k)) - SURecordingDetails.NoteInfo{i}.onsets((LongIntervals(k-1) + 1));
             end
             
             MotifFlag = 0; 
@@ -127,6 +144,10 @@ if (SURecordingDetails.Continuousdata == 0)
             Bouts(end,5:6) = [SURecordingDetails.NoteInfo{i}.onsets(LongIntervals(end) + 1) SURecordingDetails.NoteInfo{i}.offsets(end)];
             Bouts(end,7) = MotifFlag;
             Bouts(end,8:9) = [(((Bouts(end,5) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) (((SURecordingDetails.FileLen(i) - Bouts(end,6))/SURecordingDetails.Interboutinterval))];
+            
+            BoutDetails{end+1}.Labels = SURecordingDetails.NoteInfo{i}.labels((LongIntervals(end) + 1):end);
+            BoutDetails{end}.Onsets = SURecordingDetails.NoteInfo{i}.onsets((LongIntervals(end) + 1):end) - SURecordingDetails.NoteInfo{i}.onsets((LongIntervals(end) + 1));
+            BoutDetails{end}.Offsets = SURecordingDetails.NoteInfo{i}.offsets((LongIntervals(end) + 1):end) - SURecordingDetails.NoteInfo{i}.onsets((LongIntervals(end) + 1));
         end
     end
 else
@@ -176,6 +197,10 @@ else
         Bouts(end,5:6) = [AllUnAdjustedOnsets(1) AllUnAdjustedOffsets(end)];
         Bouts(end,7) = MotifFlag;
         Bouts(end,8:9) = [((AllOnsets(1) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) (((sum(SURecordingDetails.FileLen) - AllOffsets(end))/SURecordingDetails.Interboutinterval))];
+        
+        BoutDetails{end+1}.Labels = AllLabels(1:end);
+        BoutDetails{end}.Onsets = AllOnsets(1:end) - AllOnsets(1);
+        BoutDetails{end}.Offsets = AllOffsets(1:end) - AllOnsets(1);
     else
         MotifFlag = 0; 
         for j = 1:length(SURecordingDetails.MotifLabels),
@@ -191,6 +216,10 @@ else
         Bouts(end,7) = MotifFlag;
         Bouts(end,8:9) = [(((AllOnsets(1) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval)) ((AllOnsets(LongIntervals(1) + 1) - AllOffsets(LongIntervals(1)))/SURecordingDetails.Interboutinterval)];
         
+        BoutDetails{end+1}.Labels = AllLabels(1:LongIntervals(1));
+        BoutDetails{end}.Onsets = AllOnsets(1:LongIntervals(1)) - AllOnsets(1);
+        BoutDetails{end}.Offsets = AllOffsets(1:LongIntervals(1)) - AllOnsets(1);
+        
         for k = 2:length(LongIntervals),
             MotifFlag = 0; 
             for j = 1:length(SURecordingDetails.MotifLabels),
@@ -205,6 +234,10 @@ else
             Bouts(end,5:6) = [AllUnAdjustedOnsets(LongIntervals(k-1) + 1) AllUnAdjustedOffsets(LongIntervals(k))];
             Bouts(end,7) = MotifFlag;
             Bouts(end,8:9) = [((Intervals(LongIntervals(k-1)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) ((AllOnsets(LongIntervals(k) + 1) - AllOffsets(LongIntervals(k)))/SURecordingDetails.Interboutinterval)];
+            
+            BoutDetails{end+1}.Labels = AllLabels((LongIntervals(k-1) + 1):LongIntervals(k));
+            BoutDetails{end}.Onsets = AllOnsets((LongIntervals(k-1) + 1):LongIntervals(k)) - AllOnsets((LongIntervals(k-1) + 1));
+            BoutDetails{end}.Offsets = AllOffsets((LongIntervals(k-1) + 1):LongIntervals(k)) - AllOnsets((LongIntervals(k-1) + 1));
         end
 
         MotifFlag = 0; 
@@ -219,7 +252,10 @@ else
         Bouts(end,3:4) = [OnsetFileNos(LongIntervals(end) + 1) OffsetFileNos(end)];
         Bouts(end,5:6) = [AllUnAdjustedOnsets(LongIntervals(end) + 1) AllUnAdjustedOffsets(end)];
         Bouts(end,7) = MotifFlag;
-        
         Bouts(end,8:9) = [((Intervals(LongIntervals(end)) - SURecordingDetails.Interboutinterval)/SURecordingDetails.Interboutinterval) ((sum(SURecordingDetails.FileLen) - AllOffsets(end))/SURecordingDetails.Interboutinterval)];
+        
+        BoutDetails{end+1}.Labels = AllLabels((LongIntervals(end) + 1):end);
+        BoutDetails{end}.Onsets = AllOnsets((LongIntervals(end) + 1):end) - AllOnsets((LongIntervals(end) + 1));
+        BoutDetails{end}.Offsets = AllOffsets((LongIntervals(end) + 1):end) - AllOnsets((LongIntervals(end) + 1));
     end
 end

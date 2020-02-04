@@ -60,3 +60,4 @@ else
 end
 
 spect_map = ([saturated; cmap; blanked]);
+%spect_map = flipud(spect_map);
