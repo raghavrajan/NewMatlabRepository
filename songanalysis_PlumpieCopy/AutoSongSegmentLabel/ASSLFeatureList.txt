@@ -7,3 +7,9 @@ FrequencyModulation
 AmplitudeModulation
 EntropyVariance
 FundamentalFrequency
+RMSAmplitude
+FirstHalfFM
+SecondHalfFM
+FirstHalfPG
+SecondHalfPG
+SDMeanFreq

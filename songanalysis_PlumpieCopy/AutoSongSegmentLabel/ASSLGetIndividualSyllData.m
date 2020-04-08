@@ -10,12 +10,12 @@ for i = 1:length(handles.ASB.UniqueSyllLabels),
         SyllData{i}.FileSyllIndices(j,:) = [handles.ASB.AllSyllIndices(Matches(j),1) handles.ASB.AllSyllIndices(Matches(j),2)];
         if (j > 1)
             if (handles.ASB.AllSyllIndices(Matches(j),1) ~= handles.ASB.AllSyllIndices(Matches(j-1),1))
-                [RawData, Fs] = ASSLGetRawData(handles.ASB.DirName, handles.ASB.FileName{handles.ASB.AllSyllIndices(Matches(j),1)}, handles.ASB.FileType, handles.ASB.SongChanNo);
+                [RawData, Fs] = ASSLGetRawData(handles.ASB.FileDir{handles.ASB.AllSyllIndices(Matches(j),1)}, handles.ASB.FileName{handles.ASB.AllSyllIndices(Matches(j),1)}, handles.ASB.FileType, handles.ASB.SongChanNo);
                 Time = (1:1:length(RawData))/Fs * 1000;
                 [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASB.FFTWinSizeSegmenting, handles.ASB.FFTWinOverlapSegmenting);
             end
         else
-            [RawData, Fs] = ASSLGetRawData(handles.ASB.DirName, handles.ASB.FileName{handles.ASB.AllSyllIndices(Matches(j),1)}, handles.ASB.FileType, handles.ASB.SongChanNo);
+            [RawData, Fs] = ASSLGetRawData(handles.ASB.FileDir{handles.ASB.AllSyllIndices(Matches(j),1)}, handles.ASB.FileName{handles.ASB.AllSyllIndices(Matches(j),1)}, handles.ASB.FileType, handles.ASB.SongChanNo);
             Time = (1:1:length(RawData))/Fs * 1000;
             [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASB.FFTWinSizeSegmenting, handles.ASB.FFTWinOverlapSegmenting);
         end

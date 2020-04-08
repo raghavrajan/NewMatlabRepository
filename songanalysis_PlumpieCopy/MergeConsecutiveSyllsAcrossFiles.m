@@ -1,4 +1,4 @@
-10function [] = MergeConsecutiveSyllsAcrossFiles(FileList, NoteFileDir, FirstSyll, SecondSyll, MergedSyllLabel)
+function [] = MergeConsecutiveSyllsAcrossFiles(FileList, NoteFileDir, FirstSyll, SecondSyll, MergedSyllLabel)
 
 % This file is used to merge consecutive syllables that have been separated
 % during labelling. 

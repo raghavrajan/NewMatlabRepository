@@ -22,7 +22,7 @@ function varargout = AutoSongSegmentLabel(varargin)
 
 % Edit the above text to modify the response to help AutoSongSegmentLabel
 
-% Last Modified by GUIDE v2.5 27-Aug-2017 23:32:03
+% Last Modified by GUIDE v2.5 02-Apr-2020 13:39:32
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -105,6 +105,8 @@ fclose(Fid);
 handles.ASSL.ToBeUsedFeatures = TempFeatures{1};
 set(handles.ToBeUsedFeaturesListBox, 'String', handles.ASSL.ToBeUsedFeatures);
 
+handles.ASSL.StartDir = pwd;
+
 % Update handles structure
 guidata(hObject, handles);
 
@@ -125,107 +127,18 @@ varargout{1} = handles.output;
 
 % ============ Start of Load Files callbacks =============================%
 
-% --- Executes on button press in OKrankFileButton.
-function OKrankFileButton_Callback(hObject, eventdata, handles)
-% hObject    handle to OKrankFileButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of OKrankFileButton
-Val = get(hObject, 'Value');
-if (Val == 1)
-    handles.ASSL.FileType = 'okrank';
-    set(handles.ObsFileButton, 'Value', 0);
-    set(handles.WavFileButton, 'Value', 0);
-else
-    handles.ASSL.FileType = 'obs';
-    set(handles.ObsFileButton, 'Value', 1);
-    set(handles.WavFileButton, 'Value', 0);
-end
-guidata(hObject, handles);
-
-% --- Executes on button press in ObsFileButton.
-function ObsFileButton_Callback(hObject, eventdata, handles)
-% hObject    handle to ObsFileButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of ObsFileButton
-Val = get(hObject, 'Value');
-if (Val == 1)
-    handles.ASSL.FileType = 'obs';
-    set(handles.OKrankFileButton, 'Value', 0);
-    set(handles.WavFileButton, 'Value', 0);
-else
-    handles.ASSL.FileType = 'wav';
-    set(handles.OKrankFileButton, 'Value', 0);
-    set(handles.WavFileButton, 'Value', 1);
-end
-guidata(hObject, handles);
-
-% --- Executes on button press in WavFileButton.
-function WavFileButton_Callback(hObject, eventdata, handles)
-% hObject    handle to WavFileButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of WavFileButton
-Val = get(hObject, 'Value');
-if (Val == 1)
-    handles.ASSL.FileType = 'wav';
-    set(handles.OKrankFileButton, 'Value', 0);
-    set(handles.ObsFileButton, 'Value', 0);
-else
-    handles.ASSL.FileType = 'okrank';
-    set(handles.OKrankFileButton, 'Value', 1);
-    set(handles.ObsFileButton, 'Value', 0);
-end
-guidata(hObject, handles);
-
-% --- Executes on button press in SingleFileButton.
-function SingleFileButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SingleFileButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of SingleFileButton
-Val = get(hObject, 'Value');
-if (Val == 1)
-    handles.ASSL.InputFileMode = 'single';
-    set(handles.FileListButton, 'Value', 0);
-else
-    handles.ASSL.InputFileMode = 'multiple';
-    set(handles.FileListButton, 'Value', 1);
-end
-guidata(hObject, handles);
-
-% --- Executes on button press in FileListButton.
-function FileListButton_Callback(hObject, eventdata, handles)
-% hObject    handle to FileListButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-Val = get(hObject, 'Value');
-if (Val == 1)
-    handles.ASSL.InputFileMode = 'multiple';
-    set(handles.SingleFileButton, 'Value', 0);
-else
-    handles.ASSL.InputFileMode = 'single';
-    set(handles.SingleFileButton, 'Value', 1);
-end
-guidata(hObject, handles);
-% Hint: get(hObject,'Value') returns toggle state of FileListButton
-
-
 % --- Executes on button press in LoadFilesButton.
 function [RawData, Fs, Time] = LoadFilesButton_Callback(hObject, eventdata, handles, varargin)
 % hObject    handle to LoadFilesButton (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
+handles.ASSL.FileName = [];
+
 if ~isempty(strfind(handles.ASSL.InputFileMode, 'single'))
     if (nargin < 4)
         [handles.ASSL.FileName{1}, handles.ASSL.DirName] = uigetfile('*', 'Choose input file');
+        handles.ASSL.FileDir{1} = handles.ASSL.DirName;
         if (isfield(handles.ASSL, 'Threshold'))
             handles = rmfield(handles.ASSL, 'Threshold');
         end
@@ -237,56 +150,48 @@ if ~isempty(strfind(handles.ASSL.InputFileMode, 'single'))
             handles = rmfield(handles.ASSL, 'SyllLabels');
         end
     end
-    if (ispc)
-        if (handles.ASSL.DirName(end) ~= '\')
-            handles.ASSL.DirName(end+1) = '\';
-        else
-            handles.ASSL.DirName(end+1) = '/';
-        end
-    end
     handles.ASSL.FileIndex = 1;
 else
     if (nargin < 4)
-        [handles.ASSL.FileListName, handles.ASSL.DirName] = uigetfile('*', 'Choose input file list');
-    end
-    
-    if (ispc)
-        if (handles.ASSL.DirName(end) ~= '\')
-            handles.ASSL.DirName(end+1) = '\';
+        if ~isempty(strfind(handles.ASSL.InputFileMode, 'multiplefilelists'))
+            [handles.ASSL.FileListName, handles.ASSL.DirName] = uigetfile('*.csv', 'Choose input .csv file with directories and file lists');
         else
-            handles.ASSL.DirName(end+1) = '/';
+            [handles.ASSL.FileListName, handles.ASSL.DirName] = uigetfile('*', 'Choose input file list');
         end
     end
     
-    Fid = fopen([handles.ASSL.DirName, handles.ASSL.FileListName], 'r');
+    Fid = fopen(fullfile(handles.ASSL.DirName, handles.ASSL.FileListName), 'r');
     TempFiles = textscan(Fid, '%s', 'DeLimiter', '\n');
     handles.ASSL.FileName = TempFiles{1};
     fclose(Fid);
-
     for i = 1:length(handles.ASSL.FileName),
-        SlashIndex = find((handles.ASSL.FileName{i} == '/') | (handles.ASSL.FileName{i} == '\'));
-        if (~isempty(SlashIndex))
-            handles.ASSL.FileName{i} = handles.ASSL.FileName{i}(SlashIndex(end)+1:end);
+        [TempFileDir, TempFileName, TempFileExt] = fileparts(handles.ASSL.FileName{i});
+        if (isempty(TempFileDir))
+            handles.ASSL.FileDir{i} = handles.ASSL.DirName;
+        else
+            handles.ASSL.FileDir{i} = TempFileDir;    
+            handles.ASSL.FileName{i} = [TempFileName, TempFileExt];
         end
     end
 end
 
-[RawData, Fs] = GetData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+
+[RawData, Fs] = GetData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
 
 Time = (1:1:length(RawData))/Fs;
 
-[LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
 
-set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
+set(handles.SongFileNameText, 'String', ['Song File Name : ', fullfile(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex})]);
 
 if (isfield(handles.ASSL, 'SyllOnsets'))
     if (isfield(handles.ASSL, 'SyllLabels'))
-        [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex}, handles.ASSL.SyllLabels{handles.ASSL.FileIndex});
+        [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex}, handles.ASSL.SyllLabels{handles.ASSL.FileIndex});
     else
-        [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
+        [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
     end
 else
-    [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis);
+    [handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis);
 end
 
 set(handles.XOffsetSlider, 'Max', Time(end));
@@ -303,45 +208,20 @@ handles.ASSL.XZoom = get(handles.XZoomSlider, 'Value');
 
 FileSep = filesep;
 
-if (handles.ASSL.DirName(end) ~= FileSep)
-    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, FileSep, 'ASSLNoteFiles', FileSep];
-else
-    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, 'ASSLNoteFiles', FileSep];
+for i = 1:length(handles.ASSL.FileName),
+    handles.ASSL.NoteFileDirName{i} = fullfile(handles.ASSL.FileDir{i}, 'ASSLNoteFiles');
+    if (~exist(handles.ASSL.NoteFileDirName{i}, 'dir'))
+        mkdir(handles.ASSL.NoteFileDirName{i});
+    end
 end
-
-if (~exist(handles.ASSL.NoteFileDirName, 'dir'))
-    mkdir(handles.ASSL.NoteFileDirName);
-end
+%if (handles.ASSL.DirName(end) ~= FileSep)
+%    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, FileSep, 'ASSLNoteFiles', FileSep];
+%else
+%    handles.ASSL.NoteFileDirName = [handles.ASSL.DirName, 'ASSLNoteFiles', FileSep];
+%end
 
 guidata(hObject, handles);
-        
-
-function SongChanNoEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to SongChanNoEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of SongChanNoEdit as text
-%        str2double(get(hObject,'String')) returns contents of SongChanNoEdit as a double
-if (isnan(str2double(get(hObject, 'String'))))
-    handles.ASSL.SongChanNo = get(hObject, 'String');
-else
-    handles.ASSL.SongChanNo = str2double(get(hObject, 'String'));
-end
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function SongChanNoEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to SongChanNoEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
+      
 % ============ End of Load Files callbacks ===============================%
 
 % ============ Start of Syllable Detection callbacks =====================%
@@ -357,8 +237,8 @@ if (isfield(handles.ASSL, 'SyllLabels'))
 end
 
 for i = 1:length(handles.ASSL.FileName),
-    if (exist([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'file'))
-        Temp = load([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat']);
+    if (exist(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']), 'file'))
+        Temp = load(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']));
         handles.ASSL.SyllOnsets{i} = Temp.onsets;
         handles.ASSL.SyllOffsets{i} = Temp.offsets;
         handles.ASSL.SyllLabels{i} = Temp.labels;
@@ -367,14 +247,14 @@ for i = 1:length(handles.ASSL.FileName),
         else
             handles.ASSL.Threshold{i} = -30;
         end
-        disp(['Loaded syllable data from ', handles.ASSL.FileName{i}, '.not.mat']);
+        disp(['Loaded syllable data from ', fullfile(handles.ASSL.NoteFileDirName{i}, handles.ASSL.FileName{i}), '.not.mat']);
         if (~isfield(Temp, 'FileLength'))
-            [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+            [RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{i}, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
             handles.ASSL.FileDur{i} = length(RawData)/Fs;
         end
         continue;
     end
-    [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{i}, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     handles.ASSL.FileDur{i} = length(RawData)/Fs;
     
     Time = (1:1:length(RawData))/Fs;
@@ -396,12 +276,12 @@ for i = 1:length(handles.ASSL.FileName),
 end
 
 set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
-[RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
 
-[handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
+[handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
 
 set(handles.XOffsetSlider, 'Max', Time(end));
 set(handles.XZoomSlider, 'Max', Time(end));
@@ -410,75 +290,6 @@ set(handles.XZoomSlider, 'Value', get(handles.XZoomSlider, 'Max'));
     
 guidata(hObject, handles);
 
-function FFTWinSizeSegmentingEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to FFTWinSizeSegmentingEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of FFTWinSizeSegmentingEdit as text
-%        str2double(get(hObject,'String')) returns contents of FFTWinSizeSegmentingEdit as a double
-handles.ASSL.FFTWinSizeSegmenting = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function FFTWinSizeSegmentingEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to FFTWinSizeSegmentingEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-function MinIntEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to MinIntEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of MinIntEdit as text
-%        str2double(get(hObject,'String')) returns contents of MinIntEdit as a double
-
-handles.ASSL.MinInt = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function MinIntEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to MinIntEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-function FFTWinOverlapSegmentingEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to FFTWinOverlapSegmentingEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of FFTWinOverlapSegmentingEdit as text
-%        str2double(get(hObject,'String')) returns contents of FFTWinOverlapSegmentingEdit as a double
-
-handles.ASSL.FFTWinOverlapSegmenting = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function FFTWinOverlapSegmentingEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to FFTWinOverlapSegmentingEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
 
 % --- Executes on button press in CalculateFeaturesButton.
 function CalculateFeaturesButton_Callback(hObject, eventdata, handles)
@@ -494,18 +305,14 @@ handles.ASSL.SyllIndexLabels = [];
 Filesep = filesep;
 
 for i = 1:length(handles.ASSL.ToBeUsedFeatures),
-    if (handles.ASSL.NoteFileDirName(end) == Filesep)
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
-        end
+    if (~exist(fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles'), 'dir'))
+        mkdir(fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles'));
+    end
+    
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles', handles.ASSL.FileListName);
     else
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
-        end
+        RootOutputFileName = fullfile(handles.ASSL.NoteFileDirName{1}, handles.ASSL.FileName{1});
     end
     
     FeatValuesFileName = [RootOutputFileName, '.FeatValues.mat'];
@@ -574,7 +381,7 @@ for i = 1:length(handles.ASSL.FileName),
     end
     TempFeats = [];
     TempRawFeats = [];
-    [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{i}, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
     Time = (1:1:length(RawData))/Fs;
     
@@ -615,18 +422,10 @@ function SaveFeatValsButton_Callback(hObject, eventdata, handles)
 Filesep = filesep;
 
 for i = 1:length(handles.ASSL.ToBeUsedFeatures),
-    if (handles.ASSL.NoteFileDirName(end) == Filesep)
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
-        end
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles', handles.ASSL.FileListName);
     else
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
-        end
+        RootOutputFileName = fullfile(handles.ASSL.NoteFileDirName{1}, handles.ASSL.FileName{1});
     end
     
     if (i == 1)
@@ -648,9 +447,12 @@ for i = 1:length(handles.ASSL.ToBeUsedFeatures),
     end
     
     RawOutputFileName = [RootOutputFileName,'.', handles.ASSL.ToBeUsedFeatures{i}, '.raw.mat'];
-    if (((isempty(strfind(handles.ASSL.ToBeUsedFeatures{i}, 'Duration')))) && ((isempty(strfind(handles.ASSL.ToBeUsedFeatures{i}, 'EntropyVariance')))))
-        Temp = eval(['handles.ASSL.Raw.', handles.ASSL.ToBeUsedFeatures{i}]);
-        save(RawOutputFileName, 'Temp');
+    switch (handles.ASSL.ToBeUsedFeatures{i})
+        case {'Duration', 'EntropyVariance', 'RMSAmplitude', 'FirstHalfFM', 'SecondHalfFM', 'FirstHalfPG', 'SecondHalfPG', 'SDMeanFreq'}
+            
+        otherwise
+            Temp = eval(['handles.ASSL.Raw.', handles.ASSL.ToBeUsedFeatures{i}]);
+            save(RawOutputFileName, 'Temp');
     end
     
     OutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
@@ -702,8 +504,8 @@ for i = 1:length(handles.ASSL.FileName),
         continue;
     end
     
-    if (exist([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'file'))
-        Temp = load([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat']);
+    if (exist(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']), 'file'))
+        Temp = load(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']));
         if (isfield(Temp, 'template_match'))
             if (Temp.template_match == 1)
                 fprintf('%s: Already done\n', [num2str(i), ':', handles.ASSL.FileName{i}]);
@@ -715,7 +517,7 @@ for i = 1:length(handles.ASSL.FileName),
     handles.ASSL.SyllableTemplateMatches{i} = [];
 
     fprintf('%s:', [num2str(i), ':', handles.ASSL.FileName{i}]); 
-    [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{i}, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
     
     Time = (1:1:length(RawData))/Fs;
     
@@ -823,19 +625,19 @@ for i = 1:length(handles.ASSL.FileName),
     min_int = handles.ASSL.MinInt;
     min_dur = handles.ASSL.MinDur;
     template_match = 1;
-    save([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int', 'template_match');
+    save(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']), 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int', 'template_match');
     clear onsets offsets labels threshold sm_win min_int min_dur;
     
     fprintf('\n');
 end    
 
 set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
-[RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
 
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
 
-[handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex}, handles.ASSL.SyllLabels{handles.ASSL.FileIndex});
+[handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex}, handles.ASSL.SyllLabels{handles.ASSL.FileIndex});
 
 set(handles.XOffsetSlider, 'Max', Time(end));
 set(handles.XZoomSlider, 'Max', Time(end));
@@ -853,56 +655,6 @@ function ShowResultsButton_Callback(hObject, eventdata, handles)
 TempFields = handles.ASSL.ToBeUsedFeatures;
 ASSLTemplateMatchPlotResults(handles.ASSL.FeatValues, TempFields, handles.ASSL);
 
-function MinSyllDurEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to MinSyllDurEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of MinSyllDurEdit as text
-%        str2double(get(hObject,'String')) returns contents of MinSyllDurEdit as a double
-
-handles.ASSL.MinDur = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function MinSyllDurEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to MinSyllDurEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
-function FFTWinOverlapTempMatchEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to FFTWinOverlapTempMatchEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of FFTWinOverlapTempMatchEdit as text
-%        str2double(get(hObject,'String')) returns contents of FFTWinOverlapTempMatchEdit as a double
-
-handles.ASSL.FFTWinOverlapTempMatch = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function FFTWinOverlapTempMatchEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to FFTWinOverlapTempMatchEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
-
 % --- Executes on button press in WriteNoteFilesButton.
 function WriteNoteFilesButton_Callback(hObject, eventdata, handles)
 % hObject    handle to WriteNoteFilesButton (see GCBO)
@@ -917,7 +669,7 @@ for i = 1:length(handles.ASSL.FileName),
     sm_win = handles.ASSL.FFTWinSizeSegmenting;
     min_int = handles.ASSL.MinInt;
     min_dur = handles.ASSL.MinDur;
-    save([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int');
+    save(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']), 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int');
     clear onsets offsets labels threshold sm_win min_int min_dur;
 end
 
@@ -937,14 +689,11 @@ function WriteAdjustedNoteFilesButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-if (~ispc)
-    handles.ASB.AdjustDirName = [handles.ASSL.DirName, '/AdjustedNoteFiles/'];
-else
-    handles.ASB.AdjustDirName = [handles.ASSL.DirName, '\AdjustedNoteFiles\'];
-end
-
-if (~exist(handles.ASB.AdjustDirName, 'dir'))
-    mkdir(handles.ASB.AdjustDirName);
+for i = 1:length(handles.ASSL.FileName),
+    handles.ASB.AdjustDirName{i} = fullfile(handles.ASSL.FileDir{i}, 'AdjustedNoteFiles');
+    if (~exist(handles.ASB.AdjustDirName{i}, 'dir'))
+        mkdir(handles.ASB.AdjustDirName{i});
+    end
 end
 
 for i = 1:length(handles.ASSL.FileName),
@@ -961,7 +710,7 @@ for i = 1:length(handles.ASSL.FileName),
     sm_win = handles.ASSL.FFTWinSizeSegmenting;
     min_int = handles.ASSL.MinInt;
     min_dur = handles.ASSL.MinDur;
-    save([handles.ASB.AdjustDirName, handles.ASSL.FileName{i}, '.not.mat'], 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int');
+    save(fullfile(handles.ASB.AdjustDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']), 'onsets', 'offsets', 'labels', 'threshold', 'sm_win', 'min_dur', 'min_int');
     clear onsets offsets labels threshold sm_win min_int min_dur;
 end
 
@@ -994,6 +743,584 @@ fclose(Fid);
 
 disp(['Wrote log file ', OutputFileName]);
 
+% --- Executes on button press in SetTemplateDirButton.
+function SetTemplateDirButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SetTemplateDirButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+handles.ASSL.TemplateDir = uigetdir(pwd, 'Choose the directory with the template files');
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in ReviewLabelsPushButton.
+function ReviewLabelsPushButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ReviewLabelsPushButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ASSLReviewTemplateMatching(handles.ASSL);
+guidata(hObject, handles);
+
+
+% --- Executes on button press in FixSyllBoundariesButton.
+function FixSyllBoundariesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to FixSyllBoundariesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of M
+% handles    empty - handles not created until after all CreateFcns called
+% handles    empty - handles not created until after all CreateFcns calledATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ASSLAdjustSyllableBoundaries(handles);
+
+guidata(hObject, handles);
+
+
+% --- Executes on button press in SegementSongsAronovFeeButton.
+function SegementSongsAronovFeeButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SegementSongsAronovFeeButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% First remove existing labels, onsets, offsets
+if (isfield(handles.ASSL, 'SyllLabels'))
+    handles.ASSL = rmfield(handles.ASSL, 'SyllLabels');
+end
+if (isfield(handles.ASSL, 'SyllOnsets'))
+    handles.ASSL = rmfield(handles.ASSL, 'SyllOnsets');
+end
+if (isfield(handles.ASSL, 'SyllOffsets'))
+    handles.ASSL = rmfield(handles.ASSL, 'SyllOffsets');
+end
+
+for i = 1:length(handles.ASSL.FileName),
+    if (isfield(handles.ASSL, 'SyllLabels'))
+        if (length(handles.ASSL.SyllLabels) >= i)
+            if (~isempty(handles.ASSL.SyllLabels{i}))
+                handles.ASSL.SyllLabels(i) = [];
+            end
+        end
+    end
+    
+    if (exist(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']), 'file'))
+        Temp = load(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']));
+        handles.ASSL.SyllOnsets{i} = Temp.onsets;
+        handles.ASSL.SyllOffsets{i} = Temp.offsets;
+        handles.ASSL.SyllLabels{i} = Temp.labels;
+        if (isfield(Temp, 'threshold'))
+            handles.ASSL.Threshold{i} = Temp.threshold;
+        else
+            handles.ASSL.Threshold{i} = -30;
+        end
+        if (~isfield(Temp, 'FileLength'))
+            [RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{i}, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+            handles.ASSL.FileDur{i} = length(RawData)/Fs;
+        end
+        disp([' File #', num2str(i), ': Loaded syllable data from ', fullfile(handles.ASSL.NoteFileDirName{i},handles.ASSL.FileName{i}), '.not.mat']);
+        continue;
+    end
+    [RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{i}, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+    handles.ASSL.FileDur{i} = length(RawData)/Fs;
+    
+    Time = (1:1:length(RawData))/Fs;
+    
+    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
+    
+    if (handles.ASSL.AutoThreshold == 0)
+        handles.ASSL.Threshold{i} = handles.ASSL.FixedThreshold;
+    else
+        %Obj = gmdistribution.fit(LogAmplitude', 2);
+        handles.ASSL.Threshold{i} = ASSLCalculateFisherThreshold(LogAmplitude);
+        %handles.ASSL.Threshold{i} = mean(Obj.mu);
+    end
+    
+    [handles.ASSL.SyllOnsets{i}, handles.ASSL.SyllOffsets{i}] = ASSLSegmentDataAronovFee(LogAmplitude, Fs, handles.ASSL.MinInt, handles.ASSL.MinDur, handles.ASSL.Threshold{i});
+    if (isempty(handles.ASSL.SyllOnsets{i}))
+        handles.ASSL.SyllLabels{i} = [];
+    else
+        for j = 1:length(handles.ASSL.SyllOnsets{i}),
+            handles.ASSL.SyllLabels{i}(j) = '0';
+        end
+    end
+    disp([' File #', num2str(i), ': Detected ', num2str(length(handles.ASSL.SyllOnsets{i})), ' syllables for ', fullfile(handles.ASSL.FileDir{i}, handles.ASSL.FileName{i})]);
+end
+
+% for i = 1:length(handles.ASSL.FileName),
+%     if (~isempty(handles.ASSL.SyllOnsets{i}))
+%         SyllDur = handles.ASSL.SyllOffsets{i} - handles.ASSL.SyllOnsets{i};
+%         handles.ASSL.SyllOnsets{i}(find(SyllDur >=  1000)) = [];
+%         handles.ASSL.SyllOffsets{i}(find(SyllDur >=  1000)) = [];
+%         handles.ASSL.SyllLabels{i}(find(SyllDur >=  1000)) = [];
+%     end
+% end
+
+set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
+[RawData, Fs] = ASSLGetRawData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
+    
+Time = (1:1:length(RawData))/Fs;
+[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
+
+[handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.FileDir{handles.ASSL.FileIndex}, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
+
+set(handles.XOffsetSlider, 'Max', Time(end));
+set(handles.XZoomSlider, 'Max', Time(end));
+set(handles.XZoomSlider, 'Min', 0.01);
+set(handles.XZoomSlider, 'Value', get(handles.XZoomSlider, 'Max'));
+    
+guidata(hObject, handles);
+
+
+% --- Executes on button press in LabelSongsButton.
+function LabelSongsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to LabelSongsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ASSLLabelSongs(handles.ASSL);
+guidata(hObject, handles);
+
+% --- Executes on button press in AnalyzeSyllablesButton.
+function AnalyzeSyllablesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to AnalyzeSyllablesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ASSLAnalyzeSyllables(handles.ASSL);
+guidata(hObject, handles);
+
+
+% --- Executes on button press in SaveDataButton.
+function SaveDataButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveDataButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.ToBeUsedFeatures),
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles', handles.ASSL.FileListName);
+    else
+        RootOutputFileName = fullfile(handles.ASSL.NoteFileDirName{1}, handles.ASSL.FileName{1});
+    end
+end
+
+OutputFileName = [RootOutputFileName, '.ASSLData.mat'];
+save(OutputFileName, 'handles');
+disp('Finished saving data');
+guidata(hObject, handles);
+
+
+% --- Executes on button press in SaveExcelButton.
+function SaveExcelButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveExcelButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Filesep = filesep;
+
+if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+    RootOutputFileName = fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles', handles.ASSL.FileListName);
+else
+    RootOutputFileName = fullfile(handles.ASSL.NoteFileDirName{1}, handles.ASSL.FileName{1});
+end
+
+TextOutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.txt'];
+OutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.xls'];
+
+Fid = fopen(TextOutputFileName, 'w');
+fprintf(Fid, 'FileName\tSyll #\tSyll Label\t Syll Onset (ms)\t Syll Offset (ms)\t Syll Duration (sec)\t Mean Frequency (Hz)\t Entropy\tLog Amplitude (dB)\tPitch Goodness\tFrequency Modulation\tAmplitude Modulation\tEntropy Variance\tFundamental Frequency (Hz)\tRMS Amplitude\n');
+
+RowIndex = 1;
+for i = 1:length(handles.ASSL.SyllOnsets),
+    for j = 1:length(handles.ASSL.SyllOnsets{i}),
+        fprintf(Fid, '%s\t%i\t%c\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        for k = 1:length(handles.ASSL.ToBeUsedFeatures),
+            fprintf(Fid, '%g\t', eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{k}, '{', num2str(i), '}', '(', num2str(j), ')']));
+        end
+        fprintf(Fid, '\n');
+        Temp(RowIndex,:) = {i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j)};
+        RowIndex = RowIndex + 1;
+    end
+end
+fclose(Fid);
+disp(['Wrote data about labels, onsets and offsets to ', TextOutputFileName]); 
+% xlswrite(OutputFileName, Temp, 1, 'A1');
+% disp(['Wrote data about labels, onsets and offsets to ', OutputFileName]); 
+
+
+% --- Executes on button press in DelFeatValueFilesButton.
+function DelFeatValueFilesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to DelFeatValueFilesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.ToBeUsedFeatures),
+    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+        RootOutputFileName = fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles', handles.ASSL.FileListName);
+    else
+        RootOutputFileName = fullfile(handles.ASSL.NoteFileDirName{1}, handles.ASSL.FileName{1});
+    end
+    
+    FeatValuesFileName = [RootOutputFileName, '.FeatValues.mat'];
+    RawFeatValuesFileName = [RootOutputFileName, '.RawFeatValues.mat'];
+    SyllIndicesFileName = [RootOutputFileName, '.SyllIndices.mat'];
+    SyllIndexLabelsFileName = [RootOutputFileName, '.SyllIndexLabels.mat'];
+    RawOutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.raw.mat'];
+    OutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
+    
+    delete(OutputFileName, FeatValuesFileName, RawFeatValuesFileName, SyllIndicesFileName, SyllIndexLabelsFileName, RawOutputFileName);
+end
+
+set(handles.ClusterKlustakwikButton, 'enable', 'off');
+
+disp('Finished deleting feature value files');
+
+
+% --- Executes on button press in ChooseSyllFFBoundariesButton.
+function ChooseSyllFFBoundariesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ChooseSyllFFBoundariesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+ASSLChooseSyllFFBoundaries(handles.ASSL);
+guidata(hObject, handles);
+
+
+% --- Executes on button press in PickBoutsButton.
+function PickBoutsButton_Callback(hObject, eventdata, handles)
+% hObject    handle to PickBoutsButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+ASSLPickBouts(handles.ASSL);
+guidata(hObject, handles);
+
+
+% --- Executes on button press in ClusterKlustakwikButton.
+function ClusterKlustakwikButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ClusterKlustakwikButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Don't use LogAmplitude, RMSAmplitude and FundamentalFrequency for
+% clustering
+FeaturesNotToBeUsed = {'LogAmplitude' 'RMSAmplitude' 'FundamentalFrequency'};
+for i = 1:length(FeaturesNotToBeUsed),
+    FeaturesNotToBeUsedIndices(i) = find(strcmp(handles.ASSL.ToBeUsedFeatures, FeaturesNotToBeUsed{i}));
+end
+FeaturesToBeUsedIndices = setdiff(1:1:length(handles.ASSL.ToBeUsedFeatures), FeaturesNotToBeUsedIndices);
+
+Fid = fopen([handles.ASSL.FileName{1}, '.fet.1'], 'w');
+fprintf(Fid, '%i\n', size(handles.ASSL.FeatValues(:,FeaturesToBeUsedIndices), 2));
+TempFeatValues = zscore(handles.ASSL.FeatValues(:,FeaturesToBeUsedIndices));
+for i = 1:size(handles.ASSL.FeatValues(:,FeaturesToBeUsedIndices), 1),
+    for j = 1:size(handles.ASSL.FeatValues(:,FeaturesToBeUsedIndices), 2),
+        fprintf(Fid, '%g\t', TempFeatValues(i,j));
+    end
+    fprintf(Fid, '\n');
+end
+fclose(Fid);
+
+if (~isfield(handles.ASSL, 'KlustaKwikFile'))
+    msgbox('You have not chosen the KlustaKwik executable file');
+    return;
+else
+    eval(['!', handles.ASSL.KlustaKwikDir, handles.ASSL.KlustaKwikFile, ' ', handles.ASSL.FileName{1}, ' 1 -UseDistributional 0 -MaxClusters 25 -MaxPossibleClusters 30 -MinClusters 15']);
+    Temp = load([handles.ASSL.FileName{1}, '.clu.1']);
+    % Convert numbers to ascii numbers for A-P and a-p - that is a total of
+    % 30 clusters which is the maximum number of clusters that Klustakwik
+    % will generate
+    Temp(find(Temp < 16)) = Temp(find(Temp < 16)) + 64;
+    Temp(find((Temp > 15) & (Temp < 31))) = Temp(find((Temp > 15) & (Temp < 31))) - 15 + 96;
+    
+    handles.ASSL = rmfield(handles.ASSL, 'SyllIndexLabels');
+    handles.ASSL.SyllIndexLabels = char(Temp(2:end));
+end
+guidata(hObject, handles);
+disp(['Clustered syllables into ', num2str(length(unique(Temp))), ' groups']);
+
+% --- Executes on button press in SetKlustaKwikExecButton.
+function SetKlustaKwikExecButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SetKlustaKwikExecButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+[handles.ASSL.KlustaKwikFile, handles.ASSL.KlustaKwikDir] = uigetfile('*', 'Choose the klustakwik executable file');
+    
+guidata(hObject, handles);
+disp('Finished setting location of KlustaKwik executable');
+
+
+% --- Executes on button press in DeleteNoteFilesButton.
+function DeleteNoteFilesButton_Callback(hObject, eventdata, handles)
+% hObject    handle to DeleteNoteFilesButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Filesep = filesep;
+
+for i = 1:length(handles.ASSL.FileName),
+    delete(fullfile(handles.ASSL.NoteFileDirName{i}, [handles.ASSL.FileName{i}, '.not.mat']));
+end
+
+disp('Finished deleting notes files');
+
+% --- Executes on button press in ReviewIndividualSyllButton.
+function ReviewIndividualSyllButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ReviewIndividualSyllButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+
+
+% --- Executes on button press in SaveSyllTransButton.
+function SaveSyllTransButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SaveSyllTransButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Syll = inputdlg('Choose the syllable for which transitions need to be written to file', 'Syllable choice box');
+
+Filesep = filesep;
+
+if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
+    RootOutputFileName = fullfile(handles.ASSL.StartDir, 'ASSLNoteFiles', handles.ASSL.FileListName);
+else
+    RootOutputFileName = fullfile(handles.ASSL.NoteFileDirName{1}, handles.ASSL.FileName{1});
+end
+
+TextOutputFileName = [RootOutputFileName, '.ASSLSyllTransitionData.Syll', Syll{1}, '.txt'];
+
+Fid = fopen(TextOutputFileName, 'w');
+fprintf(Fid, 'FileName\tSyll #\tSyll Label\t Next Syll Label\t Syll Onset (ms)\t Syll Offset (ms)\t Syll Duration (sec)\t Mean Frequency (Hz)\t Entropy\tLog Amplitude (dB)\tPitch Goodness\tFrequencyModulation\tAmplitudeModulation\tEntropyVariance\n');
+
+RowIndex = 1;
+for i = 1:length(handles.ASSL.SyllOnsets),
+    Indices = find(handles.ASSL.SyllLabels{i} == Syll{1});
+    for j = Indices(:)',
+        if (j == length(handles.ASSL.SyllLabels{i}))
+            fprintf(Fid, '%s\t%i\t%c\tq\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        else
+            fprintf(Fid, '%s\t%i\t%c\t%c\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllLabels{i}(j+1), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
+        end
+        for k = 1:length(handles.ASSL.ToBeUsedFeatures),
+            fprintf(Fid, '%g\t', eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{k}, '{', num2str(i), '}', '(', num2str(j), ')']));
+        end
+        fprintf(Fid, '\n');
+        Temp(RowIndex,:) = {i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j)};
+        RowIndex = RowIndex + 1;
+    end
+end
+fclose(Fid);
+disp(['Wrote data about syllable transition information to ', TextOutputFileName]); 
+
+
+% --- Executes on button press in GenerateSummaryButton.
+function GenerateSummaryButton_Callback(hObject, eventdata, handles)
+% hObject    handle to GenerateSummaryButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% This function is to generate a summary of the labelling. I basically want
+% the following in the summary
+% a) spectrogram with examples of all syllable labels
+% b) # of occurences of each of the syllables
+% c) cluster variance as measured by mean distance of individual points
+% from cluster centroid - Mahalanobis distance (only if there are more than
+% 5 points)
+% d) spectrograms of some of the outliers, chosen based on the criteria
+% that Mahalanobis distance of that point is > 75th percentile + 3*IQR
+% e) also show the most common sequences
+
+ASSL_GenerateSummaryReport(handles);
+
+
+%% All of the code associated with setting parameters
+% ====================================================
+% --- Executes on button press in OKrankFileButton.
+function OKrankFileButton_Callback(hObject, eventdata, handles)
+% hObject    handle to OKrankFileButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of OKrankFileButton
+Val = get(hObject, 'Value');
+if (Val == 1)
+    handles.ASSL.FileType = 'okrank';
+    set(handles.ObsFileButton, 'Value', 0);
+    set(handles.WavFileButton, 'Value', 0);
+else
+    handles.ASSL.FileType = 'obs';
+    set(handles.ObsFileButton, 'Value', 1);
+    set(handles.WavFileButton, 'Value', 0);
+end
+guidata(hObject, handles);
+
+% --- Executes on button press in ObsFileButton.
+function ObsFileButton_Callback(hObject, eventdata, handles)
+% hObject    handle to ObsFileButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ObsFileButton
+Val = get(hObject, 'Value');
+if (Val == 1)
+    handles.ASSL.FileType = 'obs';
+    set(handles.OKrankFileButton, 'Value', 0);
+    set(handles.WavFileButton, 'Value', 0);
+else
+    handles.ASSL.FileType = 'wav';
+    set(handles.OKrankFileButton, 'Value', 0);
+    set(handles.WavFileButton, 'Value', 1);
+end
+guidata(hObject, handles);
+
+% --- Executes on button press in WavFileButton.
+function WavFileButton_Callback(hObject, eventdata, handles)
+% hObject    handle to WavFileButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of WavFileButton
+Val = get(hObject, 'Value');
+if (Val == 1)
+    handles.ASSL.FileType = 'wav';
+    set(handles.OKrankFileButton, 'Value', 0);
+    set(handles.ObsFileButton, 'Value', 0);
+else
+    handles.ASSL.FileType = 'okrank';
+    set(handles.OKrankFileButton, 'Value', 1);
+    set(handles.ObsFileButton, 'Value', 0);
+end
+guidata(hObject, handles);
+
+% --- Executes on button press in SingleFileButton.
+function SingleFileButton_Callback(hObject, eventdata, handles)
+% hObject    handle to SingleFileButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of SingleFileButton
+Val = get(hObject, 'Value');
+if (Val == 1)
+    handles.ASSL.InputFileMode = 'single';
+    set(handles.FileListButton, 'Value', 0);
+end
+guidata(hObject, handles);
+
+% --- Executes on button press in FileListButton.
+function FileListButton_Callback(hObject, eventdata, handles)
+% hObject    handle to FileListButton (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+Val = get(hObject, 'Value');
+if (Val == 1)
+    handles.ASSL.InputFileMode = 'multiple';
+    set(handles.SingleFileButton, 'Value', 0);
+end
+guidata(hObject, handles);
+% Hint: get(hObject,'Value') returns toggle state of FileListButton
+
+function SongChanNoEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to SongChanNoEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of SongChanNoEdit as text
+%        str2double(get(hObject,'String')) returns contents of SongChanNoEdit as a double
+if (isnan(str2double(get(hObject, 'String'))))
+    handles.ASSL.SongChanNo = get(hObject, 'String');
+else
+    handles.ASSL.SongChanNo = str2double(get(hObject, 'String'));
+end
+guidata(hObject, handles);
+
+function FFTWinOverlapSegmentingEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to FFTWinOverlapSegmentingEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of FFTWinOverlapSegmentingEdit as text
+%        str2double(get(hObject,'String')) returns contents of FFTWinOverlapSegmentingEdit as a double
+
+handles.ASSL.FFTWinOverlapSegmenting = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+function FFTWinSizeSegmentingEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to FFTWinSizeSegmentingEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of FFTWinSizeSegmentingEdit as text
+%        str2double(get(hObject,'String')) returns contents of FFTWinSizeSegmentingEdit as a double
+handles.ASSL.FFTWinSizeSegmenting = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+function MinIntEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to MinIntEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of MinIntEdit as text
+%        str2double(get(hObject,'String')) returns contents of MinIntEdit as a double
+
+handles.ASSL.MinInt = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+function MinSyllDurEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to MinSyllDurEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of MinSyllDurEdit as text
+%        str2double(get(hObject,'String')) returns contents of MinSyllDurEdit as a double
+
+handles.ASSL.MinDur = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+function FFTWinOverlapTempMatchEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to FFTWinOverlapTempMatchEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of FFTWinOverlapTempMatchEdit as text
+%        str2double(get(hObject,'String')) returns contents of FFTWinOverlapTempMatchEdit as a double
+
+handles.ASSL.FFTWinOverlapTempMatch = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+function LoPassCutOffEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to LoPassCutOffEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of LoPassCutOffEdit as text
+%        str2double(get(hObject,'String')) returns contents of LoPassCutOffEdit as a double
+handles.ASSL.LoPassCutOff = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+function HiPassCutOffEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to LoPassCutOffEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of LoPassCutOffEdit as text
+%        str2double(get(hObject,'String')) returns contents of LoPassCutOffEdit as a double
+handles.ASSL.HiPassCutOff = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+function LowerThresholdEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to LowerThresholdEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of LowerThresholdEdit as text
+%        str2double(get(hObject,'String')) returns contents of LowerThresholdEdit as a double
+handles.ASSL.FixedThreshold(2) = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
 
 % --- Executes on slider movement.
 function XZoomSlider_Callback(hObject, eventdata, handles)
@@ -1022,18 +1349,6 @@ handles.ASSL.AmpAxisLimits = [handles.ASSL.XOffset (handles.ASSL.XOffset + handl
 axis(handles.ASSL.AmpAxisLimits);
 
 guidata(hObject, handles);
-
-% --- Executes during object creation, after setting all properties.
-function XZoomSlider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to XZoomSlider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
 
 % --- Executes on button press in PrevFileButton.
 function PrevFileButton_Callback(hObject, eventdata, handles)
@@ -1099,18 +1414,6 @@ axis(handles.ASSL.AmpAxisLimits);
 
 guidata(hObject, handles);
 
-% --- Executes during object creation, after setting all properties.
-function XOffsetSlider_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to XOffsetSlider (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: slider controls usually have a light gray background.
-if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor',[.9 .9 .9]);
-end
-
-
 % --- Executes on button press in SingleMultipleThresholdToggle.
 function SingleMultipleThresholdToggle_Callback(hObject, eventdata, handles)
 % hObject    handle to SingleMultipleThresholdToggle (see GCBO)
@@ -1171,20 +1474,6 @@ function UpperThresholdEdit_Callback(hObject, eventdata, handles)
 handles.ASSL.FixedThreshold(1) = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
-
-% --- Executes during object creation, after setting all properties.
-function UpperThresholdEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to UpperThresholdEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: edit controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 % --- Executes on selection change in ToBeUsedFeaturesListBox.
 function ToBeUsedFeaturesListBox_Callback(hObject, eventdata, handles)
 % hObject    handle to ToBeUsedFeaturesListBox (see GCBO)
@@ -1193,21 +1482,6 @@ function ToBeUsedFeaturesListBox_Callback(hObject, eventdata, handles)
 
 % Hints: contents = cellstr(get(hObject,'String')) returns ToBeUsedFeaturesListBox contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from ToBeUsedFeaturesListBox
-
-
-% --- Executes during object creation, after setting all properties.
-function ToBeUsedFeaturesListBox_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to ToBeUsedFeaturesListBox (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
-
-% Hint: listbox controls usually have a white background on Windows.
-%       See ISPC and COMPUTER.
-if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
-    set(hObject,'BackgroundColor','white');
-end
-
-
 
 function FFTWinSizeTempMatchEdit_Callback(hObject, eventdata, handles)
 % hObject    handle to FFTWinSizeTempMatchEdit (see GCBO)
@@ -1219,9 +1493,36 @@ function FFTWinSizeTempMatchEdit_Callback(hObject, eventdata, handles)
 handles.ASSL.FFTWinSizeTempMatch = str2double(get(hObject, 'String'));
 guidata(hObject, handles);
 
+%% Code associated with creating the different edit boxes
+% ========================================================
+
 % --- Executes during object creation, after setting all properties.
-function FFTWinSizeTempMatchEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to FFTWinSizeTempMatchEdit (see GCBO)
+function SongChanNoEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to SongChanNoEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function FFTWinSizeSegmentingEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to FFTWinSizeSegmentingEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function MinIntEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to MinIntEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -1232,365 +1533,9 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
 end
 
 
-% --- Executes on button press in SetTemplateDirButton.
-function SetTemplateDirButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SetTemplateDirButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-handles.ASSL.TemplateDir = uigetdir(pwd, 'Choose the directory with the template files');
-
-guidata(hObject, handles);
-
-
-% --- Executes on button press in ReviewLabelsPushButton.
-function ReviewLabelsPushButton_Callback(hObject, eventdata, handles)
-% hObject    handle to ReviewLabelsPushButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-ASSLReviewTemplateMatching(handles.ASSL);
-guidata(hObject, handles);
-
-
-% --- Executes on button press in FixSyllBoundariesButton.
-function FixSyllBoundariesButton_Callback(hObject, eventdata, handles)
-% hObject    handle to FixSyllBoundariesButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of M
-% handles    empty - handles not created until after all CreateFcns called
-% handles    empty - handles not created until after all CreateFcns calledATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-ASSLAdjustSyllableBoundaries(handles);
-
-guidata(hObject, handles);
-
-
-% --- Executes on button press in SegementSongsAronovFeeButton.
-function SegementSongsAronovFeeButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SegementSongsAronovFeeButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% First remove existing labels, onsets, offsets
-if (isfield(handles.ASSL, 'SyllLabels'))
-    handles.ASSL = rmfield(handles.ASSL, 'SyllLabels');
-end
-if (isfield(handles.ASSL, 'SyllOnsets'))
-    handles.ASSL = rmfield(handles.ASSL, 'SyllOnsets');
-end
-if (isfield(handles.ASSL, 'SyllOffsets'))
-    handles.ASSL = rmfield(handles.ASSL, 'SyllOffsets');
-end
-
-for i = 1:length(handles.ASSL.FileName),
-    if (isfield(handles.ASSL, 'SyllLabels'))
-        if (length(handles.ASSL.SyllLabels) >= i)
-            if (~isempty(handles.ASSL.SyllLabels{i}))
-                handles.ASSL.SyllLabels(i) = [];
-            end
-        end
-    end
-    
-    if (exist([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat'], 'file'))
-        Temp = load([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat']);
-        handles.ASSL.SyllOnsets{i} = Temp.onsets;
-        handles.ASSL.SyllOffsets{i} = Temp.offsets;
-        handles.ASSL.SyllLabels{i} = Temp.labels;
-        if (isfield(Temp, 'threshold'))
-            handles.ASSL.Threshold{i} = Temp.threshold;
-        else
-            handles.ASSL.Threshold{i} = -30;
-        end
-        if (~isfield(Temp, 'FileLength'))
-            [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
-            handles.ASSL.FileDur{i} = length(RawData)/Fs;
-        end
-        disp([' File #', num2str(i), ': Loaded syllable data from ', handles.ASSL.FileName{i}, '.not.mat']);
-        continue;
-    end
-    [RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{i}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
-    handles.ASSL.FileDur{i} = length(RawData)/Fs;
-    
-    Time = (1:1:length(RawData))/Fs;
-    
-    [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
-    
-    if (handles.ASSL.AutoThreshold == 0)
-        handles.ASSL.Threshold{i} = handles.ASSL.FixedThreshold;
-    else
-        %Obj = gmdistribution.fit(LogAmplitude', 2);
-        handles.ASSL.Threshold{i} = ASSLCalculateFisherThreshold(LogAmplitude);
-        %handles.ASSL.Threshold{i} = mean(Obj.mu);
-    end
-    
-    [handles.ASSL.SyllOnsets{i}, handles.ASSL.SyllOffsets{i}] = ASSLSegmentDataAronovFee(LogAmplitude, Fs, handles.ASSL.MinInt, handles.ASSL.MinDur, handles.ASSL.Threshold{i});
-    if (isempty(handles.ASSL.SyllOnsets{i}))
-        handles.ASSL.SyllLabels{i} = [];
-    else
-        for j = 1:length(handles.ASSL.SyllOnsets{i}),
-            handles.ASSL.SyllLabels{i}(j) = '0';
-        end
-    end
-    disp([' File #', num2str(i), ': Detected ', num2str(length(handles.ASSL.SyllOnsets{i})), ' syllables for ', handles.ASSL.FileName{i}]);
-end
-
-% for i = 1:length(handles.ASSL.FileName),
-%     if (~isempty(handles.ASSL.SyllOnsets{i}))
-%         SyllDur = handles.ASSL.SyllOffsets{i} - handles.ASSL.SyllOnsets{i};
-%         handles.ASSL.SyllOnsets{i}(find(SyllDur >=  1000)) = [];
-%         handles.ASSL.SyllOffsets{i}(find(SyllDur >=  1000)) = [];
-%         handles.ASSL.SyllLabels{i}(find(SyllDur >=  1000)) = [];
-%     end
-% end
-
-set(handles.SongFileNameText, 'String', ['Song File Name : ', handles.ASSL.FileName{handles.ASSL.FileIndex}]);
-[RawData, Fs] = ASSLGetRawData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, handles.ASSL.SongChanNo);
-    
-Time = (1:1:length(RawData))/Fs;
-[LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSL.FFTWinSizeSegmenting, handles.ASSL.FFTWinOverlapSegmenting, handles.ASSL.HiPassCutOff, handles.ASSL.LoPassCutOff);
-
-[handles.ASSL.SpecAxisLimits, handles.ASSL.AmpAxisLimits] = ASSLPlotData(handles.ASSL.DirName, handles.ASSL.FileName{handles.ASSL.FileIndex}, handles.ASSL.FileType, Time, LogAmplitude, handles.ASSLSpecAxis, handles.ASSLAmpAxis, handles.ASSL.Threshold{handles.ASSL.FileIndex}, handles.ASSL.SyllOnsets{handles.ASSL.FileIndex}, handles.ASSL.SyllOffsets{handles.ASSL.FileIndex});
-
-set(handles.XOffsetSlider, 'Max', Time(end));
-set(handles.XZoomSlider, 'Max', Time(end));
-set(handles.XZoomSlider, 'Min', 0.01);
-set(handles.XZoomSlider, 'Value', get(handles.XZoomSlider, 'Max'));
-    
-guidata(hObject, handles);
-
-
-% --- Executes on button press in LabelSongsButton.
-function LabelSongsButton_Callback(hObject, eventdata, handles)
-% hObject    handle to LabelSongsButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-ASSLLabelSongs(handles.ASSL);
-guidata(hObject, handles);
-
-% --- Executes on button press in AnalyzeSyllablesButton.
-function AnalyzeSyllablesButton_Callback(hObject, eventdata, handles)
-% hObject    handle to AnalyzeSyllablesButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-ASSLAnalyzeSyllables(handles.ASSL);
-guidata(hObject, handles);
-
-
-% --- Executes on button press in SaveDataButton.
-function SaveDataButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SaveDataButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-Filesep = filesep;
-
-for i = 1:length(handles.ASSL.ToBeUsedFeatures),
-    if (handles.ASSL.NoteFileDirName(end) == Filesep)
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
-        end
-    else
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
-        end
-    end
-end
-
-OutputFileName = [RootOutputFileName, '.ASSLData.mat'];
-save(OutputFileName, 'handles');
-disp('Finished saving data');
-guidata(hObject, handles);
-
-
-% --- Executes on button press in SaveExcelButton.
-function SaveExcelButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SaveExcelButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-Filesep = filesep;
-
-if (handles.ASSL.NoteFileDirName(end) == Filesep)
-    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
-    else
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
-    end
-else
-    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
-    else
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
-    end
-end
-
-TextOutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.txt'];
-OutputFileName = [RootOutputFileName, '.ASSLOnsetOffsetData.xls'];
-
-Fid = fopen(TextOutputFileName, 'w');
-fprintf(Fid, 'FileName\tSyll #\tSyll Label\t Syll Onset (ms)\t Syll Offset (ms)\t Syll Duration (sec)\t Mean Frequency (Hz)\t Entropy\tLog Amplitude (dB)\tPitch Goodness\tFrequencyModulation\tAmplitudeModulation\tEntropyVariance\n');
-
-RowIndex = 1;
-for i = 1:length(handles.ASSL.SyllOnsets),
-    for j = 1:length(handles.ASSL.SyllOnsets{i}),
-        fprintf(Fid, '%s\t%i\t%c\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
-        for k = 1:length(handles.ASSL.ToBeUsedFeatures),
-            fprintf(Fid, '%g\t', eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{k}, '{', num2str(i), '}', '(', num2str(j), ')']));
-        end
-        fprintf(Fid, '\n');
-        Temp(RowIndex,:) = {i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j)};
-        RowIndex = RowIndex + 1;
-    end
-end
-fclose(Fid);
-disp(['Wrote data about labels, onsets and offsets to ', TextOutputFileName]); 
-% xlswrite(OutputFileName, Temp, 1, 'A1');
-% disp(['Wrote data about labels, onsets and offsets to ', OutputFileName]); 
-
-
-% --- Executes on button press in DelFeatValueFilesButton.
-function DelFeatValueFilesButton_Callback(hObject, eventdata, handles)
-% hObject    handle to DelFeatValueFilesButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-Filesep = filesep;
-
-for i = 1:length(handles.ASSL.ToBeUsedFeatures),
-    if (handles.ASSL.NoteFileDirName(end) == Filesep)
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
-        end
-    else
-        if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
-        else
-            RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
-        end
-    end
-    
-    FeatValuesFileName = [RootOutputFileName, '.FeatValues.mat'];
-    RawFeatValuesFileName = [RootOutputFileName, '.RawFeatValues.mat'];
-    SyllIndicesFileName = [RootOutputFileName, '.SyllIndices.mat'];
-    SyllIndexLabelsFileName = [RootOutputFileName, '.SyllIndexLabels.mat'];
-    RawOutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.raw.mat'];
-    OutputFileName = [RootOutputFileName, '.', handles.ASSL.ToBeUsedFeatures{i}, '.mat'];
-    
-    delete(OutputFileName, FeatValuesFileName, RawFeatValuesFileName, SyllIndicesFileName, SyllIndexLabelsFileName, RawOutputFileName);
-end
-
-set(handles.ClusterKlustakwikButton, 'enable', 'off');
-
-disp('Finished deleting feature value files');
-
-
-% --- Executes on button press in ChooseSyllFFBoundariesButton.
-function ChooseSyllFFBoundariesButton_Callback(hObject, eventdata, handles)
-% hObject    handle to ChooseSyllFFBoundariesButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-ASSLChooseSyllFFBoundaries(handles.ASSL);
-guidata(hObject, handles);
-
-
-% --- Executes on button press in PickBoutsButton.
-function PickBoutsButton_Callback(hObject, eventdata, handles)
-% hObject    handle to PickBoutsButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-ASSLPickBouts(handles.ASSL);
-guidata(hObject, handles);
-
-
-% --- Executes on button press in ClusterKlustakwikButton.
-function ClusterKlustakwikButton_Callback(hObject, eventdata, handles)
-% hObject    handle to ClusterKlustakwikButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-Fid = fopen([handles.ASSL.FileName{1}, '.fet.1'], 'w');
-fprintf(Fid, '%i\n', size(handles.ASSL.FeatValues(:,1:8), 2));
-TempFeatValues = zscore(handles.ASSL.FeatValues(:,1:8));
-for i = 1:size(handles.ASSL.FeatValues(:,1:8), 1),
-    for j = 1:size(handles.ASSL.FeatValues(:,1:8), 2),
-        fprintf(Fid, '%g\t', TempFeatValues(i,j));
-    end
-    fprintf(Fid, '\n');
-end
-fclose(Fid);
-
-if (~isfield(handles.ASSL, 'KlustaKwikFile'))
-    msgbox('You have not chosen the KlustaKwik executable file');
-    return;
-else
-    eval(['!', handles.ASSL.KlustaKwikDir, handles.ASSL.KlustaKwikFile, ' ', handles.ASSL.FileName{1}, ' 1 -UseDistributional 0 -MaxClusters 25 -MaxPossibleClusters 30 -MinClusters 15']);
-    Temp = load([handles.ASSL.FileName{1}, '.clu.1']);
-    % Convert numbers to ascii numbers for A-P and a-p - that is a total of
-    % 30 clusters which is the maximum number of clusters that Klustakwik
-    % will generate
-    Temp(find(Temp < 16)) = Temp(find(Temp < 16)) + 64;
-    Temp(find((Temp > 15) & (Temp < 31))) = Temp(find((Temp > 15) & (Temp < 31))) - 15 + 96;
-    
-    handles.ASSL = rmfield(handles.ASSL, 'SyllIndexLabels');
-    handles.ASSL.SyllIndexLabels = char(Temp(2:end));
-end
-guidata(hObject, handles);
-disp(['Clustered syllables into ', num2str(length(unique(Temp))), ' groups']);
-
-% --- Executes on button press in SetKlustaKwikExecButton.
-function SetKlustaKwikExecButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SetKlustaKwikExecButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-[handles.ASSL.KlustaKwikFile, handles.ASSL.KlustaKwikDir] = uigetfile('*', 'Choose the klustakwik executable file');
-    
-guidata(hObject, handles);
-disp('Finished setting location of KlustaKwik executable');
-
-
-% --- Executes on button press in DeleteNoteFilesButton.
-function DeleteNoteFilesButton_Callback(hObject, eventdata, handles)
-% hObject    handle to DeleteNoteFilesButton (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-Filesep = filesep;
-
-for i = 1:length(handles.ASSL.FileName),
-    if (handles.ASSL.NoteFileDirName(end) == Filesep)
-        delete([handles.ASSL.NoteFileDirName, handles.ASSL.FileName{i}, '.not.mat']);
-    else
-        delete([handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{i}, '.not.mat']);
-    end
-end
-
-disp('Finished deleting notes files');
-
-
-
-function LowerThresholdEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to LowerThresholdEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of LowerThresholdEdit as text
-%        str2double(get(hObject,'String')) returns contents of LowerThresholdEdit as a double
-handles.ASSL.FixedThreshold(2) = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
 % --- Executes during object creation, after setting all properties.
-function LowerThresholdEdit_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to LowerThresholdEdit (see GCBO)
+function FFTWinOverlapSegmentingEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to FFTWinOverlapSegmentingEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    empty - handles not created until after all CreateFcns called
 
@@ -1600,24 +1545,29 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-% --- Executes on button press in ReviewIndividualSyllButton.
-function ReviewIndividualSyllButton_Callback(hObject, eventdata, handles)
-% hObject    handle to ReviewIndividualSyllButton (see GCBO)
+% --- Executes during object creation, after setting all properties.
+function MinSyllDurEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to MinSyllDurEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% handles    empty - handles not created until after all CreateFcns called
 
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
-
-function LoPassCutOffEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to LoPassCutOffEdit (see GCBO)
+% --- Executes during object creation, after setting all properties.
+function FFTWinOverlapTempMatchEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to FFTWinOverlapTempMatchEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% handles    empty - handles not created until after all CreateFcns called
 
-% Hints: get(hObject,'String') returns contents of LoPassCutOffEdit as text
-%        str2double(get(hObject,'String')) returns contents of LoPassCutOffEdit as a double
-handles.ASSL.LoPassCutOff = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
 
 % --- Executes during object creation, after setting all properties.
 function LoPassCutOffEdit_CreateFcn(hObject, eventdata, handles)
@@ -1631,17 +1581,6 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-function HiPassCutOffEdit_Callback(hObject, eventdata, handles)
-% hObject    handle to LoPassCutOffEdit (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: get(hObject,'String') returns contents of LoPassCutOffEdit as text
-%        str2double(get(hObject,'String')) returns contents of LoPassCutOffEdit as a double
-handles.ASSL.HiPassCutOff = str2double(get(hObject, 'String'));
-guidata(hObject, handles);
-
 % --- Executes during object creation, after setting all properties.
 function HiPassCutOffEdit_CreateFcn(hObject, eventdata, handles)
 % hObject    handle to LoPassCutOffEdit (see GCBO)
@@ -1654,72 +1593,72 @@ if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgr
     set(hObject,'BackgroundColor','white');
 end
 
-
-% --- Executes on button press in SaveSyllTransButton.
-function SaveSyllTransButton_Callback(hObject, eventdata, handles)
-% hObject    handle to SaveSyllTransButton (see GCBO)
+% --- Executes during object creation, after setting all properties.
+function LowerThresholdEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to LowerThresholdEdit (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% handles    empty - handles not created until after all CreateFcns called
 
-Syll = inputdlg('Choose the syllable for which transitions need to be written to file', 'Syllable choice box');
-
-Filesep = filesep;
-
-if (handles.ASSL.NoteFileDirName(end) == Filesep)
-    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileListName];
-    else
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, handles.ASSL.FileName{1}];
-    end
-else
-    if ((isfield(handles.ASSL, 'FileListName')) && (~isempty(handles.ASSL.FileListName)))
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileListName];
-    else
-        RootOutputFileName = [handles.ASSL.NoteFileDirName, Filesep, handles.ASSL.FileName{1}];
-    end
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
 end
 
-TextOutputFileName = [RootOutputFileName, '.ASSLSyllTransitionData.Syll', Syll{1}, '.txt'];
-
-Fid = fopen(TextOutputFileName, 'w');
-fprintf(Fid, 'FileName\tSyll #\tSyll Label\t Next Syll Label\t Syll Onset (ms)\t Syll Offset (ms)\t Syll Duration (sec)\t Mean Frequency (Hz)\t Entropy\tLog Amplitude (dB)\tPitch Goodness\tFrequencyModulation\tAmplitudeModulation\tEntropyVariance\n');
-
-RowIndex = 1;
-for i = 1:length(handles.ASSL.SyllOnsets),
-    Indices = find(handles.ASSL.SyllLabels{i} == Syll{1});
-    for j = Indices(:)',
-        if (j == length(handles.ASSL.SyllLabels{i}))
-            fprintf(Fid, '%s\t%i\t%c\tq\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
-        else
-            fprintf(Fid, '%s\t%i\t%c\t%c\t%g\t%g\t', handles.ASSL.FileName{i}, j, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllLabels{i}(j+1), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j));
-        end
-        for k = 1:length(handles.ASSL.ToBeUsedFeatures),
-            fprintf(Fid, '%g\t', eval(['handles.ASSL.', handles.ASSL.ToBeUsedFeatures{k}, '{', num2str(i), '}', '(', num2str(j), ')']));
-        end
-        fprintf(Fid, '\n');
-        Temp(RowIndex,:) = {i, handles.ASSL.SyllLabels{i}(j), handles.ASSL.SyllOnsets{i}(j), handles.ASSL.SyllOffsets{i}(j)};
-        RowIndex = RowIndex + 1;
-    end
-end
-fclose(Fid);
-disp(['Wrote data about syllable transition information to ', TextOutputFileName]); 
-
-
-% --- Executes on button press in GenerateSummaryButton.
-function GenerateSummaryButton_Callback(hObject, eventdata, handles)
-% hObject    handle to GenerateSummaryButton (see GCBO)
+% --- Executes during object creation, after setting all properties.
+function XZoomSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to XZoomSlider (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
+% handles    empty - handles not created until after all CreateFcns called
 
-% This function is to generate a summary of the labelling. I basically want
-% the following in the summary
-% a) spectrogram with examples of all syllable labels
-% b) # of occurences of each of the syllables
-% c) cluster variance as measured by mean distance of individual points
-% from cluster centroid - Mahalanobis distance (only if there are more than
-% 5 points)
-% d) spectrograms of some of the outliers, chosen based on the criteria
-% that Mahalanobis distance of that point is > 75th percentile + 3*IQR
-% e) also show the most common sequences
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
 
-ASSL_GenerateSummaryReport(handles);
+% --- Executes during object creation, after setting all properties.
+function XOffsetSlider_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to XOffsetSlider (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: slider controls usually have a light gray background.
+if isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor',[.9 .9 .9]);
+end
+
+% --- Executes during object creation, after setting all properties.
+function UpperThresholdEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to UpperThresholdEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function ToBeUsedFeaturesListBox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ToBeUsedFeaturesListBox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
+
+% --- Executes during object creation, after setting all properties.
+function FFTWinSizeTempMatchEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to FFTWinSizeTempMatchEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

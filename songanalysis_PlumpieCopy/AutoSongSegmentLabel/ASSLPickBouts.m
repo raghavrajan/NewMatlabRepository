@@ -75,7 +75,7 @@ if (nargin >= 1)
     handles.ASSLPickBoutsMainFig.FileIndex = 1;
     set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, ' : #', num2str(handles.ASSLPickBoutsMainFig.FileIndex), ' of ', num2str(length(handles.ASSLPickBoutsMainFig.FileName)), ' files']);
     
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.DirName, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.FileDir{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
 
     Time = (1:1:length(RawData))/Fs;
 
@@ -239,7 +239,7 @@ if (handles.ASSLPickBoutsMainFig.FileIndex > length(handles.ASSLPickBoutsMainFig
 end
 
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, ' : #', num2str(handles.ASSLPickBoutsMainFig.FileIndex), ' of ', num2str(length(handles.ASSLPickBoutsMainFig.FileName)), ' files']);
-[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.DirName, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.FileDir{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLPickBoutsMainFig.FFTWinSizeSegmenting, handles.ASSLPickBoutsMainFig.FFTWinOverlapSegmenting);
 
@@ -274,7 +274,7 @@ if (handles.ASSLPickBoutsMainFig.FileIndex > length(handles.ASSLPickBoutsMainFig
 end
 
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, ' : #', num2str(handles.ASSLPickBoutsMainFig.FileIndex), ' of ', num2str(length(handles.ASSLPickBoutsMainFig.FileName)), ' files']);
-[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.DirName, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.FileDir{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLPickBoutsMainFig.FFTWinSizeSegmenting, handles.ASSLPickBoutsMainFig.FFTWinOverlapSegmenting);
 
@@ -392,7 +392,7 @@ if (handles.ASSLPickBoutsMainFig.FileIndex > length(handles.ASSLPickBoutsMainFig
 end
 
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, ' : #', num2str(handles.ASSLPickBoutsMainFig.FileIndex), ' of ', num2str(length(handles.ASSLPickBoutsMainFig.FileName)), ' files']);
-[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.DirName, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.FileDir{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.ASSLPickBoutsMainFig.FFTWinSizeSegmenting, handles.ASSLPickBoutsMainFig.FFTWinOverlapSegmenting);
 
@@ -496,7 +496,7 @@ function PlayFileButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.DirName, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.FileDir{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
 RawData = RawData(ceil(handles.ASSLPickBoutsMainFig.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLPickBoutsMainFig.ZoomSpecAxisLimits(2)*Fs));
 soundsc(RawData, Fs);
 
@@ -515,7 +515,7 @@ end
 handles.ASSLPickBoutsMainFig.FileIndex = 1;
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, ' : #', num2str(handles.ASSLPickBoutsMainFig.FileIndex), ' of ', num2str(length(handles.ASSLPickBoutsMainFig.FileName)), ' files']);
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.DirName, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLPickBoutsMainFig.FileDir{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileName{handles.ASSLPickBoutsMainFig.FileIndex}, handles.ASSLPickBoutsMainFig.FileType, handles.ASSLPickBoutsMainFig.SongChanNo);
 
 Time = (1:1:length(RawData))/Fs;
 

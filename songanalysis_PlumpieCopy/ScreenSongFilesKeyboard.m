@@ -46,12 +46,12 @@ for i = 1:length(AllSongFiles),
     catch
         PIndex = PIndex + 1;
         ProblemSongFiles{PIndex} = AllSongFiles(i).name;
-        fid = fopen('ProblemSongFileNames.txt','a');
-        for j = 1:length(ProblemSongFiles{PIndex});
-            fprintf(fid,'%c',ProblemSongFiles{PIndex}(j));
-        end
-        fprintf(fid,'\n');
-        fclose(fid);
+        %fid = fopen('ProblemSongFileNames.txt','a');
+        %for j = 1:length(ProblemSongFiles{PIndex});
+        %    fprintf(fid,'%c',ProblemSongFiles{PIndex}(j));
+        %end
+        %fprintf(fid,'\n');
+        %fclose(fid);
     end
     close(gcf);
 end

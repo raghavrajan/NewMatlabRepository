@@ -33,6 +33,15 @@ if (isempty(Onsets))
     for i = 1:length(FeatsToCalculate),
     	eval(['Feats.', eval(['FeatsToCalculate{', num2str(i), '}']), ' = [];']);
     end
+    % Added rms amplitude also in the list of things calculated
+    Feats.RMSAmplitude = [];
+    % Added a few more features also in the list of things to calculate
+    Feats.FirstHalfFM = [];
+    Feats.SecondHalfFM = [];
+    Feats.FirstHalfPG = [];
+    Feats.SecondHalfPG = [];
+    Feats.SDMeanFreq = [];
+    
     % Feats.Duration = []; % Duration 
     % Feats.LogAmplitude = []; % Amplitude
     % Feats.Entropy = []; % Entropy 
@@ -84,7 +93,16 @@ for i = 1:length(Onsets),
     for j = 1:length(FeatsToCalculate),
         eval(['Feats.', eval(['FeatsToCalculate{', num2str(j), '}']), '(', num2str(i), ') = TempFeats.', eval(['FeatsToCalculate{', num2str(j), '}']), ';']);
     end
-
+    
+    Feats.RMSAmplitude(i) = sqrt(mean(Song(StartIndex:EndIndex).^2));
+    
+    LenSyll = length(TempRawFeats.FrequencyModulation{1});
+    Feats.FirstHalfFM(i) = mean(TempRawFeats.FrequencyModulation{1}(1:round(LenSyll/2)));
+    Feats.SecondHalfFM(i) = mean(TempRawFeats.FrequencyModulation{1}(1+round(LenSyll/2):end));
+    Feats.FirstHalfPG(i) = mean(TempRawFeats.PitchGoodness{1}(1:round(LenSyll/2)));
+    Feats.SecondHalfPG(i) = mean(TempRawFeats.PitchGoodness{1}(1+round(LenSyll/2):end));
+    Feats.SDMeanFreq(i) = std(TempRawFeats.MeanFrequency{1});
+    
     % Feats.Duration(SyllNo) = Offsets(i) - Onsets(i); % Duration 
     % Feats.LogAmplitude(SyllNo) = mean(m_amplitude(StartIndex:EndIndex)); % Amplitude
     % Feats.Entropy(SyllNo) = mean(m_Entropy(StartIndex:EndIndex)); % Entropy 

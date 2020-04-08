@@ -22,7 +22,7 @@ for i = 1:length(Indices),
         continue;
     end
     
-    [Syllable, Fs] = ASSLGetRawData(DataStruct.DataStruct.DirName, DataStruct.DataStruct.FileName{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}, DataStruct.DataStruct.FileType, DataStruct.DataStruct.SongChanNo);
+    [Syllable, Fs] = ASSLGetRawData(DataStruct.DataStruct.FileDir{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}, DataStruct.DataStruct.FileName{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}, DataStruct.DataStruct.FileType, DataStruct.DataStruct.SongChanNo);
     if (isfield(DataStruct.DataStruct, 'AdjSyllOnsets'))
         StartTime = (ceil(Fs * DataStruct.DataStruct.AdjSyllOnsets{DataStruct.DataStruct.SyllIndices(Indices(i), 1)}(DataStruct.DataStruct.SyllIndices(Indices(i),2))/1000));
     else

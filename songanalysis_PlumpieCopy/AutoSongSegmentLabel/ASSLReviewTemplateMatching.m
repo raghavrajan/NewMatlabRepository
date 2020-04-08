@@ -97,7 +97,7 @@ if (nargin >= 1)
     handles.ASSLReviewTMResults.FileIndex = 1;
     set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, ' : #', num2str(handles.ASSLReviewTMResults.FileIndex), ' of ', num2str(length(handles.ASSLReviewTMResults.FileName)), ' files']);
     
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 
     Time = (1:1:length(RawData))/Fs;
 
@@ -158,7 +158,7 @@ else
 end
 
 if (SyllableChanged == 1)
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -205,7 +205,7 @@ else
 end
 
 if (SyllableChanged == 1)
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
     
@@ -288,7 +288,7 @@ else
 end
 
 if (SyllableChanged == 1)
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -332,7 +332,7 @@ if (button ~= 113)
     if (x(1) > handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart))
         msgbox('Click inside a syllable');
     else
-        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
         [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -387,11 +387,11 @@ SyllableChanged = 0;
 
 axes(handles.ReviewSpecAxis);
 
-if (ismac)
-    [x, y, button] = ginputax(2, handles.ReviewSpecAxis);
-else
+% if (ismac)
+%     [x, y, button] = ginputax(2, handles.ReviewSpecAxis);
+% else
     [x, y, button] = ginput(2);
-end
+% end
 x(1) = x(1) * 1000;
 
 SyllableStart = find(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} <= x(1), 1, 'last');
@@ -403,7 +403,7 @@ else
 end
 
 if (SyllableChanged == 1)
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -461,7 +461,7 @@ if (handles.ASSLReviewTMResults.FileIndex > length(handles.ASSLReviewTMResults.F
 end
 
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, ' : #', num2str(handles.ASSLReviewTMResults.FileIndex), ' of ', num2str(length(handles.ASSLReviewTMResults.FileName)), ' files']);
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -488,7 +488,7 @@ if (handles.ASSLReviewTMResults.FileIndex > length(handles.ASSLReviewTMResults.F
 end
 
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, ' : #', num2str(handles.ASSLReviewTMResults.FileIndex), ' of ', num2str(length(handles.ASSLReviewTMResults.FileName)), ' files']);
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -628,7 +628,7 @@ while (Flag == 1)
     end
 
     if (SyllableChanged == 1)
-        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
         [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -693,7 +693,7 @@ while (Flag == 1)
     end
 
     if (SyllableChanged == 1)
-        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
         [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -751,7 +751,7 @@ if (handles.ASSLReviewTMResults.FileIndex > length(handles.ASSLReviewTMResults.F
 end
 
 set(handles.SongFileNameTextLabel, 'String', ['Song File Name : ', handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, ' : #', num2str(handles.ASSLReviewTMResults.FileIndex), ' of ', num2str(length(handles.ASSLReviewTMResults.FileName)), ' files']);
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -829,7 +829,7 @@ if (DeleteSylls == 1)
 end
 
 if (SyllableChanged == 1)
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -860,7 +860,7 @@ handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = 
 handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.PrevSyllOnsets{handles.ASSLReviewTMResults.FileIndex};
 handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = handles.ASSLReviewTMResults.PrevSyllOffsets{handles.ASSLReviewTMResults.FileIndex};
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -883,7 +883,7 @@ function PlayFileButton_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 if ((handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs) < length(RawData))
     RawData = RawData(ceil(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(1)*Fs):floor(handles.ASSLReviewTMResults.ZoomSpecAxisLimits(2)*Fs));
 else
@@ -932,7 +932,7 @@ handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = 
 handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} = [];
 handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = [];
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -1003,7 +1003,7 @@ while (Flag == 1)
     end
 
     if (SyllableChanged == 1)
-        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
         [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -1092,7 +1092,7 @@ if (DeleteSylls == 1)
 end
 
 if (SyllableChanged == 1)
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -1127,7 +1127,7 @@ handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex} = 
 handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex} = [];
 handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex} = [];
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -1211,7 +1211,7 @@ if (DeleteSylls == 1)
 end
 
 if (SyllableChanged == 1)
-    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
     Time = (1:1:length(RawData))/Fs;
     [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -1295,7 +1295,7 @@ if (AddSylls == 1)
     if (~isempty(Syllables))
         msgbox('Cannot add syllable as specified boundaries already have a syllable inside them');
     else
-        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
         [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -1373,7 +1373,7 @@ while (Flag == 1)
     end
 end
 
-[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
 RawData = RawData(ceil(LeftLimit*Fs/1000):floor(RightLimit*Fs/1000));
 
 soundsc(RawData, Fs);
@@ -1417,7 +1417,7 @@ while (Flag == 1)
     if (x(1) > handles.ASSLReviewTMResults.SyllOffsets{handles.ASSLReviewTMResults.FileIndex}(SyllableStart))
         disp('Click inside a syllable');
     else
-        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.DirName, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
+        [RawData, Fs] = ASSLGetRawData(handles.ASSLReviewTMResults.FileDir{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileName{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.FileType, handles.ASSLReviewTMResults.SongChanNo);
         Time = (1:1:length(RawData))/Fs;
         [LogAmplitude] = ASSLCalculateLogAmplitudeAronovFee(RawData, Fs, Time, handles.ASSLReviewTMResults.FFTWinSizeSegmenting, handles.ASSLReviewTMResults.FFTWinOverlapSegmenting, handles.ASSLReviewTMResults.HiPassCutOff, handles.ASSLReviewTMResults.LoPassCutOff);
 
@@ -1557,11 +1557,11 @@ CurrentSyllable = CurrentSyllable(1);
 ASSLReviewPlotLabels(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.ZoomLabelAxisLimits, CurrentSyllable);
 
 while (button ~= 113)
-    if (ismac)
-        [x, y, button] = ginputax(1, handles.ReviewLabelAxis);
-    else
+%     if (ismac)
+%         [x, y, button] = ginputax(1, handles.ReviewLabelAxis);
+%     else
         [x, y, button] = ginput(1);
-    end
+%     end
         
     if (button ~= 113)
         if (button <= 3)

@@ -424,7 +424,7 @@ if (strfind(handles.ASSLAS.BoutDefinitions{handles.ASSLAS.BoutDefinitionChoice},
     end
 else
     if (strfind(handles.ASSLAS.BoutDefinitions{handles.ASSLAS.BoutDefinitionChoice}, 'Use specified inter-bout interval'))
-        [TempSyllTransitionProb, AllLabels] = CalculateSyllTransitionProbabilities(handles.DataStruct.FileListName, handles.DataStruct.NoteFileDirName, handles.ASSLAS.InterBoutInterval);
+        [TempSyllTransitionProb, AllLabels] = CalculateSyllTransitionProbabilities(handles.DataStruct.FileListName, handles.DataStruct.NoteFileDirName{i}, handles.ASSLAS.InterBoutInterval);
     end
 end
 
@@ -650,7 +650,7 @@ Syllnum=handles.DataStruct.SyllIndices(Num,2);
 Filename=handles.DataStruct.FileName{Filenum};
 
 % Added code to plot log amplitude and spectrogram of chosen syllable
-[RawData, Fs] = ASSLGetRawData(handles.DataStruct.DirName, Filename, handles.DataStruct.FileType, 1);
+[RawData, Fs] = ASSLGetRawData(handles.DataStruct.FileDir{Filenum}, Filename, handles.DataStruct.FileType, 1);
 SyllOnset = (handles.DataStruct.SyllOnsets{Filenum}(Syllnum) - 10) * Fs/1000; % take 10ms before syll onset and convert to index
 if (SyllOnset < 1)
     SyllOnset = 1;
@@ -742,7 +742,7 @@ Syllnum=handles.DataStruct.SyllIndices(Num,2);
 Filename=handles.DataStruct.FileName{Filenum};
 
 % Added code to plot log amplitude and spectrogram of chosen syllable
-[RawData, Fs] = ASSLGetRawData(handles.DataStruct.DirName, Filename, handles.DataStruct.FileType, 1);
+[RawData, Fs] = ASSLGetRawData(handles.DataStruct.FileDir{Filenum}, Filename, handles.DataStruct.FileType, 1);
 SyllOnset = round((handles.DataStruct.SyllOnsets{Filenum}(Syllnum) - 10) * Fs/1000); % take 10ms before syll onset and convert to index
 if (SyllOnset < 1)
     SyllOnset = 1;

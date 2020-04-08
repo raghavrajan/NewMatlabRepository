@@ -219,20 +219,16 @@ TimeRange(1) = handles.DataStruct.SyllOnsets{handles.DataStruct.SyllIndices(hand
 TimeRange(2) = handles.DataStruct.SyllOffsets{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}(handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,2))/1000 + 0.005;
 
 PresentDir = pwd;
-cd(handles.DataStruct.DirName);
+cd(handles.DataStruct.StartDir);
 if (~exist('Templates', 'dir'))
-    mkdir(handles.DataStruct.DirName, 'Templates');
+    mkdir(handles.DataStruct.StartDir, 'Templates');
 end
 cd(PresentDir);
 
 
-if (ispc)
-    handles.TemplateFileDir = [handles.DataStruct.DirName, '\Templates\'];
-else
-    handles.TemplateFileDir = [handles.DataStruct.DirName, '/Templates/'];
-end
+handles.TemplateFileDir = fullfile(handles.DataStruct.StartDir, 'Templates');
 
-ASSLMakeTemplatesSpectralMatchAnalysis(handles.DataStruct.DirName, handles.DataStruct.FileName{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileType, handles.DataStruct.SongChanNo, TimeRange, handles.DataStruct.FFTWinSizeTempMatch, handles.DataStruct.FFTWinOverlapTempMatch, handles.TemplateFileDir, handles.TemplateFileName, handles.SyllableLabel)
+ASSLMakeTemplatesSpectralMatchAnalysis(handles.DataStruct.FileDir{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileName{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileType, handles.DataStruct.SongChanNo, TimeRange, handles.DataStruct.FFTWinSizeTempMatch, handles.DataStruct.FFTWinOverlapTempMatch, handles.TemplateFileDir, handles.TemplateFileName, handles.SyllableLabel)
 
 
 

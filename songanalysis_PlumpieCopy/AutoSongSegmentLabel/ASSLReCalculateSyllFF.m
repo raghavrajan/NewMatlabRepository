@@ -4,7 +4,7 @@ for i = 1:length(DataStruct.DataStruct.FileName),
     if (mod(i,10) == 0)
         fprintf('>%d', i);
     end
-    [RawData, Fs] = ASSLGetRawData(DataStruct.DataStruct.DirName, DataStruct.DataStruct.FileName{i}, DataStruct.DataStruct.FileType, DataStruct.DataStruct.SongChanNo);
+    [RawData, Fs] = ASSLGetRawData(DataStruct.DataStruct.FileDir{i}, DataStruct.DataStruct.FileName{i}, DataStruct.DataStruct.FileType, DataStruct.DataStruct.SongChanNo);
     % Parameters P for calculating FF for yin
     % sr for sample rate
     % maxf0 for max ff

@@ -17,7 +17,7 @@ plot(handles.ASSLTMPF.FeatVals(Indices, handles.ASSLTMPF.XVal), handles.ASSLTMPF
 cla(handles.ASSLTMPFSpecAxis);
 set(handles.SyllableNoText, 'String', ['Syllable # : ', num2str(handles.ASSLTMPF.SyllIndex), ' of ', num2str(size(handles.ASSLTMPF.FeatVals,1)), ' syllables']);
 
-[RawData, Fs] = ASSLGetRawData(handles.DataStruct.DirName, handles.DataStruct.FileName{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileType, handles.DataStruct.SongChanNo);
+[RawData, Fs] = ASSLGetRawData(handles.DataStruct.FileDir{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileName{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileType, handles.DataStruct.SongChanNo);
     
 Time = (1:1:length(RawData))/Fs;
 [LogAmplitude] = ASSLCalculateLogAmplitude(RawData, Fs, Time, handles.DataStruct.FFTWinSizeSegmenting, handles.DataStruct.FFTWinOverlapSegmenting);
@@ -25,7 +25,7 @@ Time = (1:1:length(RawData))/Fs;
 TimeRange(1) = handles.DataStruct.SyllOnsets{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}(handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,2))/1000 - 0.005;
 TimeRange(2) = handles.DataStruct.SyllOffsets{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}(handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,2))/1000 + 0.005;
 
-ASSLPlotData(handles.DataStruct.DirName, handles.DataStruct.FileName{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileType, Time, LogAmplitude, handles.ASSLTMPFSpecAxis, handles.ASSLTMPFAmpAxis, handles.DataStruct.Threshold{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, (TimeRange(1)+0.005)*1000, (TimeRange(2)-0.005)*1000, [], TimeRange);
+ASSLPlotData(handles.DataStruct.FileDir{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileName{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, handles.DataStruct.FileType, Time, LogAmplitude, handles.ASSLTMPFSpecAxis, handles.ASSLTMPFAmpAxis, handles.DataStruct.Threshold{handles.DataStruct.SyllIndices(handles.ASSLTMPF.SyllIndex,1)}, (TimeRange(1)+0.005)*1000, (TimeRange(2)-0.005)*1000, [], TimeRange);
 
 cla(handles.TemplateSpecAxis);
 axes(handles.TemplateSpecAxis);
