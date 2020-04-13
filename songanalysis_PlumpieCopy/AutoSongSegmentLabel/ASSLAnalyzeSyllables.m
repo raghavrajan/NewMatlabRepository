@@ -22,7 +22,7 @@ function varargout = ASSLAnalyzeSyllables(varargin)
 
 % Edit the above text to modify the response to help ASSLAnalyzeSyllables
 
-% Last Modified by GUIDE v2.5 08-Apr-2020 13:58:13
+% Last Modified by GUIDE v2.5 09-Apr-2020 17:44:20
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -362,6 +362,7 @@ function SyllableListBox_Callback(hObject, eventdata, handles)
 % Hints: contents = cellstr(get(hObject,'String')) returns SyllableListBox contents as cell array
 %        contents{get(hObject,'Value')} returns selected item from SyllableListBox
 SyllsToPlot = get(hObject, 'Value');
+ConfsToPlot = get(handles.ConfEllipseListBox, 'Value');
 
 for i = 1:length(SyllsToPlot),
     if (SyllsToPlot(i) == 1)
@@ -377,6 +378,10 @@ for i = 1:length(SyllsToPlot),
     end
 end
 
+for i = 1:length(ConfsToPlot),
+    Indices = find(handles.DataStruct.SyllIndexLabels == handles.ASSLAS.UniqueSylls(ConfsToPlot(i)));
+    PlotConfidenceEllipse(handles.DataStruct.FeatValues(Indices, [handles.ASSLAS.XVal handles.ASSLAS.YVal]), handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(ConfsToPlot(i))), 1.96);
+end
 guidata(hObject, handles);
 
 
@@ -1154,10 +1159,15 @@ for i = 1:length(handles.ASSLAS.UniqueSylls),
     text(1, (length(handles.ASSLAS.UniqueSylls) - i + 1), [handles.ASSLAS.UniqueSylls(i), ' - ', handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(i)), ' - ', num2str(length(find(handles.DataStruct.SyllIndexLabels == handles.ASSLAS.UniqueSylls(i))))], 'Color', handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(i)), 'FontSize', 16, 'FontWeight', 'bold');
     hold on;
 end
+axes(handles.ASSLASLegendAxis);
 axis([0.9 1.4 0 length(handles.ASSLAS.UniqueSylls)+1]);
 
 set(handles.SyllableListBox, 'String', [{'All'}; handles.ASSLAS.UniqueSylls]);
 set(handles.SyllableListBox, 'Max', length(handles.ASSLAS.UniqueSylls) + 1);
+
+set(handles.ConfEllipseListBox, 'String', [handles.ASSLAS.UniqueSylls]);
+set(handles.ConfEllipseListBox, 'Max', length(handles.ASSLAS.UniqueSylls));
+set(handles.ConfEllipseListBox, 'Value', []);
 
 set(handles.CurrSyllListBox, 'String', handles.ASSLAS.UniqueSylls);
 
@@ -1295,3 +1305,68 @@ handles.DataStruct.SyllIndexLabels = handles.DataStruct.OldSyllIndexLabels;
 
 guidata(hObject, handles);
 disp(['Undid last change']);
+
+
+% --- Executes on button press in ConfidenceEllipseToggle.
+function ConfidenceEllipseToggle_Callback(hObject, eventdata, handles)
+% hObject    handle to ConfidenceEllipseToggle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ConfidenceEllipseToggle
+
+handles.ASSLAS.ConfidenceEllipsePlot = get(hObject, 'Value');
+if (handles.ASSLAS.ConfidenceEllipsePlot == 1)
+    set(handles.ConfidenceEllipseToggle, 'String', 'Confidence ellipses ON');
+    set(handles.ConfidenceEllipseToggle, 'BackgroundColor', [1 0 0]);
+else
+    set(handles.ConfidenceEllipseToggle, 'String', 'Confidence ellipses OFF');
+    set(handles.ConfidenceEllipseToggle, 'BackgroundColor', [0.5 0.5 0.5]);
+end
+
+[handles] = RePlotSyllFeatures(handles);
+guidata(hObject, handles);
+
+
+% --- Executes on selection change in ConfEllipseListBox.
+function ConfEllipseListBox_Callback(hObject, eventdata, handles)
+% hObject    handle to ConfEllipseListBox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns ConfEllipseListBox contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from ConfEllipseListBox
+SyllsToPlot = get(handles.SyllableListBox, 'Value');
+ConfsToPlot = get(hObject, 'Value');
+
+for i = 1:length(SyllsToPlot),
+    if (SyllsToPlot(i) == 1)
+        ASSLASPlotData(handles, 0, [0.5 0.5 0.5], '.', min(abs(handles.ASSLAS.MarkerSize-2), 1)+1, handles.ASSLFeaturePlotAxis);
+    else
+        if (i == 1)
+            ClearAxis = 1;
+        else
+            ClearAxis = 0;
+        end
+        Indices = find(handles.DataStruct.SyllIndexLabels == handles.ASSLAS.UniqueSylls(SyllsToPlot(i) - 1));
+        ASSLASPlotData(handles, 0, handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(SyllsToPlot(i) - 1)), handles.ASSLAS.Symbols(handles.ASSLAS.UniqueSyllSymbols(SyllsToPlot(i) - 1)), handles.ASSLAS.MarkerSize, handles.ASSLFeaturePlotAxis, ClearAxis, Indices);
+    end
+end
+
+for i = 1:length(ConfsToPlot),
+    Indices = find(handles.DataStruct.SyllIndexLabels == handles.ASSLAS.UniqueSylls(ConfsToPlot(i)));
+    PlotConfidenceEllipse(handles.DataStruct.FeatValues(Indices, [handles.ASSLAS.XVal handles.ASSLAS.YVal]), handles.ASSLAS.Colors(handles.ASSLAS.UniqueSyllColors(ConfsToPlot(i))), 1.96);
+end
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function ConfEllipseListBox_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to ConfEllipseListBox (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: listbox controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end
