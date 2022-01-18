@@ -27,8 +27,8 @@ t_max = Time(end); %convert to ms
 Time_spect = [t_min, t_max];   
 axes(Axes);
 hold off;
-cm = disp_idx_spect(idx_spect, Time_spect, freq_spect, -50, ...
-        10, 1.2, 'gray', 'classic');
+cm = disp_idx_spect(idx_spect, Time_spect, freq_spect, -55, ...
+        0, 2, 'hot', 'classic');
 axis([t_min t_max 300 8000]);
 set(gca, 'FontSize', 10);
 set(gca, 'XTick', [t_min t_max]);

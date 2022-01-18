@@ -83,8 +83,8 @@ t_max = time(end); %convert to ms
 time_spect = [t_min, t_max];   
 axes(gca);
 hold off;
-cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -35, ...
-        -5, 2.5, 'gray', 'classic');
+cm = disp_idx_spect(idx_spect, time_spect, freq_spect, -55, ...
+        0, 2, 'hot', 'classic');
 axis([t_min t_max 300 8000]);
 set(gca, 'FontSize', 10);
 % set(gca, 'XTick', []);

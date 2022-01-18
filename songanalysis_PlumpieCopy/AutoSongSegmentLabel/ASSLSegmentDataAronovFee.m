@@ -11,13 +11,13 @@ end
 % Do this check only if the data being segmented comes from a large file. 
 % If it comes from only a bout, then don't apply this.
 
-if (BoutOrNot == 0)
-    if (threshold(1) < median(smooth))
-        onsets = [];
-        offsets = [];
-        return;
-    end
-end
+% if (BoutOrNot == 0)
+%     if (threshold(1) < median(smooth))
+%         onsets = [];
+%         offsets = [];
+%         return;
+%     end
+% end
 
 % segment takes smoothed filtered song and returns vectors of note onsets and offsets
 % values are in ms 

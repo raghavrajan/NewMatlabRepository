@@ -108,7 +108,7 @@ end
 
 Notes = load([pathname, 'ASSLNoteFiles', FileSep, filename, '.not.mat']);
 for i = 1:length(Notes.onsets),
-    plot([Notes.onsets(i)/1000 Notes.onsets(i)/1000 Notes.offsets(i)/1000 Notes.offsets(i)/1000], [300 8000 8000 300], 'b', 'LineWidth', 2);
+    % plot([Notes.onsets(i)/1000 Notes.onsets(i)/1000 Notes.offsets(i)/1000 Notes.offsets(i)/1000], [300 8000 8000 300], 'b', 'LineWidth', 2);
     text((Notes.onsets(i))/1000, 6500, Notes.labels(i), 'FontSize', 18, 'Color', 'b');
 end
 

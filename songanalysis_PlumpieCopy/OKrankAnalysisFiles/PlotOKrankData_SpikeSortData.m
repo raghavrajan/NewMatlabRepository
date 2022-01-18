@@ -53,7 +53,7 @@ if ((recfid) > 0)
         if (num_read ~= NoOfSamples)
             disp(['No of samples does not match that of recfile: ',FileName]);
         end
-        time = 0:1/Fs:(length(data)/Fs);
+        time = 0:1/Fs:(length(data)/Fs) * 1000;
         time(end) = [];
         if (i ~= 1)
             for j = 1:length(SpikeSortTimes),

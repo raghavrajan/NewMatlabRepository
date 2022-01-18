@@ -22,7 +22,7 @@ function varargout = ASSLReviewTemplateMatching(varargin)
 
 % Edit the above text to modify the response to help ASSLReviewTemplateMatching
 
-% Last Modified by GUIDE v2.5 16-Sep-2017 14:14:58
+% Last Modified by GUIDE v2.5 27-Apr-2020 15:05:32
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -62,6 +62,15 @@ handles.ASSLReviewTMResults.SpectCeil = get(handles.SpectrumCeilSlider, 'Value')
 handles.ASSLReviewTMResults.SpectFloor = get(handles.SpectrumFloorSlider, 'Value');
 handles.ASSLReviewTMResults.Brightness = get(handles.BrightnessSlider, 'Value');
 
+handles.ASSLReviewTMResults.ScaleBarToggleValue = get(handles.ScaleBarToggle, 'Value');
+if (handles.ASSLReviewTMResults.ScaleBarToggleValue == 1)
+    set(handles.ScaleBarToggle, 'String', 'Mark Long Intervals ON');
+else
+    set(handles.ScaleBarToggle, 'String', 'Mark Long Intervals OFF');
+end
+
+handles.ASSLReviewTMResults.LongIntervalCutoff = str2double(get(handles.LongIntervalCutoffEdit, 'String'));
+
 handles.ASSLReviewTMResults.LoResHiRes = 0;
 set(handles.LoResHiResToggle, 'Value', handles.ASSLReviewTMResults.LoResHiRes);
 if (handles.ASSLReviewTMResults.LoResHiRes == 0)
@@ -78,6 +87,15 @@ if (nargin >= 1)
     handles.ASSLReviewTMResults.SpectCeil = get(handles.SpectrumCeilSlider, 'Value');
     handles.ASSLReviewTMResults.SpectFloor = get(handles.SpectrumFloorSlider, 'Value');
     handles.ASSLReviewTMResults.Brightness = get(handles.BrightnessSlider, 'Value');
+
+    handles.ASSLReviewTMResults.ScaleBarToggleValue = get(handles.ScaleBarToggle, 'Value');
+    if (handles.ASSLReviewTMResults.ScaleBarToggleValue == 1)
+        set(handles.ScaleBarToggle, 'String', 'Mark Long Intervals ON');
+    else
+        set(handles.ScaleBarToggle, 'String', 'Mark Long Intervals OFF');
+    end
+
+    handles.ASSLReviewTMResults.LongIntervalCutoff = str2double(get(handles.LongIntervalCutoffEdit, 'String'));
 
     cla(handles.TemplateSpecAxis);
     axes(handles.TemplateSpecAxis);
@@ -1592,3 +1610,43 @@ end
 ASSLReviewPlotLabels(handles.ASSLReviewTMResults.SyllOnsets{handles.ASSLReviewTMResults.FileIndex}, handles.ASSLReviewTMResults.SyllLabels{handles.ASSLReviewTMResults.FileIndex}, handles.ReviewLabelAxis, handles.ASSLReviewTMResults.ZoomLabelAxisLimits, -1);
 set(handles.InstructionsTextLabel, 'String', 'Instructions:');
 guidata(hObject, handles);
+
+
+% --- Executes on button press in ScaleBarToggle.
+function ScaleBarToggle_Callback(hObject, eventdata, handles)
+% hObject    handle to ScaleBarToggle (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hint: get(hObject,'Value') returns toggle state of ScaleBarToggle
+if (handles.ASSLReviewTMResults.ScaleBarToggleValue == 1)
+    set(handles.ScaleBarToggle, 'String', 'Mark Long Intervals OFF');
+    handles.ASSLReviewTMResults.ScaleBarToggleValue = 0;
+else
+    set(handles.ScaleBarToggle, 'String', 'Mark Long Intervals ON');
+    handles.ASSLReviewTMResults.ScaleBarToggleValue = 1;
+end
+guidata(hObject, handles);
+
+
+function LongIntervalCutoffEdit_Callback(hObject, eventdata, handles)
+% hObject    handle to LongIntervalCutoffEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: get(hObject,'String') returns contents of LongIntervalCutoffEdit as text
+%        str2double(get(hObject,'String')) returns contents of LongIntervalCutoffEdit as a double
+handles.ASSLReviewTMResults.LongIntervalCutoff = str2double(get(hObject, 'String'));
+guidata(hObject, handles);
+
+% --- Executes during object creation, after setting all properties.
+function LongIntervalCutoffEdit_CreateFcn(hObject, eventdata, handles)
+% hObject    handle to LongIntervalCutoffEdit (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    empty - handles not created until after all CreateFcns called
+
+% Hint: edit controls usually have a white background on Windows.
+%       See ISPC and COMPUTER.
+if ispc && isequal(get(hObject,'BackgroundColor'), get(0,'defaultUicontrolBackgroundColor'))
+    set(hObject,'BackgroundColor','white');
+end

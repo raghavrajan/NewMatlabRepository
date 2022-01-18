@@ -103,7 +103,7 @@ else
             else
                 TempFullDurOffsets = TempOffsets + ContinuousFileTime;
             end
-            ContinuousFileTime = ContinuousFileTime + BirdParameters.FileLen(i);
+            
             
             SyllableData = [SyllableData; [double(TempLabels) TempOnsetFileNo(:) TempOffsetFileNo(:) TempOnsets(:) TempOffsets(:) TempFullDurOnsets(:) TempFullDurOffsets(:)]];
             clear TempLabels TempOnsetFileNo TempOffsetFileNo TempOnsets TempOffsets
@@ -113,5 +113,6 @@ else
                 ContinuousFirstSyllFlag = 0;
             end
         end
+        ContinuousFileTime = ContinuousFileTime + BirdParameters.FileLen(i);
     end
 end

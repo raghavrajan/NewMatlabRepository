@@ -16,7 +16,7 @@ if (strfind(FileType,'obs'))
     % Convert to uV - 5V on the data acquisition is 32768
     rawsong = rawsong * 5/32768;
 else
-    if (strfind(FileType,'wav'));
+    if (strfind(FileType,'wav'))
         PresentDir = pwd;
         cd(pathname);
         [rawsong, Fs] = audioread(filename);

@@ -11,26 +11,12 @@ cd(DirectoryName);
 
 MainFigure = figure;
 set(gcf, 'Color', 'w');
-if ~isempty(strfind(FileType, 'okrank'))
-    [RawData, Fs] = ReadOKrankData(DirectoryName, FileName, 1);
-else
-    if (~isempty(strfind(handles.SS.FileType, 'obs')))
-        [RawData, Fs] = soundin_copy([DirectoryName, '/'], FileName, 'obs0r');
-        RawData = RawData * 5/32768;
-    end
-end
+[RawData, Fs] = ReadOKrankData(DirectoryName, FileName, 1);
 plot_motif_spectrogram(RawData, Fs, MainFigure,subplot(1,1,1))
 SpecAxis = axis;
 hold on;
 
-if ~isempty(strfind(FileType, 'okrank'))
-    [RawData, Fs] = ReadOKrankData(DirectoryName, FileName, ChannelNo);
-else
-    if (~isempty(strfind(handles.SS.FileType, 'obs')))
-        [RawData, Fs] = soundin_copy([DirectoryName, '/'], FileName, ['obs', num2str(5-ChannelNo), 'r']);
-        RawData = RawData * 5/32768;
-    end
-end
+[RawData, Fs] = ReadOKrankData(DirectoryName, FileName, ChannelNo);
 RawData = RawData * 2000;
 RawData = RawData + 11000 + abs(min(RawData));
     

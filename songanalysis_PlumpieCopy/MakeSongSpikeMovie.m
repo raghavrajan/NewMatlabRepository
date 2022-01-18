@@ -13,7 +13,7 @@ VideoObj.FrameRate = FrameRate;
 
 open(VideoObj);
 
-SpikeMultiplier = 20;
+SpikeMultiplier = 2000;
 
 for i = 1:NoofFrames,
     SI = 1;
