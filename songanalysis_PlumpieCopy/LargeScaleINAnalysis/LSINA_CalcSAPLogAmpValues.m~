@@ -1,0 +1,41 @@
+function [SAPLogAmplitudes, BaselineAmpValue, SyllableStatus] = LSINA_CalcSAPLogAmpValues(BirdParameters)
+
+% SAPLogAmplitudes - the raw amplitude traces with some padding before and
+% after set by the padding variable below
+% BaselineAmpValue - for each file, this is obtained by fitting two
+% gaussians to the entire log amplitude trace - assumed to be fitting noise
+% and sound. The lower mean is the one for the noise and this is taken as
+% the baseline amplitude value - BaselineAmpValue
+% SyllableStatus - 0 or 1 depending on whether there was enough data for
+% padding or not.
+
+Padding = 0.025; % in s
+if (BirdParameters.Continuousdata == 0)
+    for i = 1:length(BirdParameters.SongFileNames),
+        if (isempty(BirdParameters.NoteInfo{i}.onsets))
+            SAPLogAmplitudes{i} = [];
+            BaselineAmpValue{i} = [];
+            continue;
+        end
+        [RawData, Fs] = ASSLGetRawData(BirdParameters.DataDirectory, BirdParameters.SongFileNames{i}, BirdParameters.FileType, 0);
+        LogAmplitude = deriv_OnlyLogAmp(RawData, Fs);
+        Time = linspace(0, length(RawData)/Fs, length(LogAmplitude));
+        RawDataFs = Fs;
+        Fs = 1/(Time(2) - Time(1));
+        
+        Temp = gmdistribution.fit(LogAmplitude(:), 2);
+        for j = 1:length(BirdParameters.NoteInfo{i}.onsets),
+            SyllableOnsetTimeIndex = round(((BirdParameters.NoteInfo{i}.onsets(j)/1000) - Padding) * Fs);
+            SyllableOffsetTimeIndex = round(BirdParameters.NoteInfo{i}.offsets(j)/1000 * Fs);
+            if (SyllableOnsetTimeIndex(1) <= 0)
+                SyllableOnsetTimeIndex(1) = 1;
+            end
+            if (SyllableOffsetTimeIndex > length(RawData))
+                SyllableOffsetTimeIndex = length(RawData);
+            end
+            SAPLogAmpValues{i}(j) = mean(LogAmplitude(SyllableOnsetTimeIndex:SyllableOffsetTimeIndex));
+            
+            BaselineAmpValue{i}(j) = min(Temp.mu);
+        end
+    end
+end

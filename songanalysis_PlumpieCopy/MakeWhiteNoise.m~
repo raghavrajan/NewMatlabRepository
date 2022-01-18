@@ -1,0 +1,34 @@
+function [Output] = MakeWhiteNoise(TotalDur)
+
+    
+for i = 1:NumStacks,
+    t = (1:round(Durs(i)*Fs))/Fs;
+    HarmonicIndex = 1;
+    Stack{i} = zeros(size(t));
+    while (HarmonicIndex*Freqs(i) <= 8000)
+        s = sin(2*pi*HarmonicIndex*Freqs(i)*t);
+        HarmonicIndex = HarmonicIndex + 1;
+        r = sin(linspace(0,pi/2,round(length(t)/10)));
+        r = [r, ones(1, length(t) - length(r)*2), fliplr(r)];
+        s = s.*r;
+        Stack{i} = Stack{i} + s;
+    end
+end
+
+Output = [];
+for i = 1:length(OnsetTimes),
+    if (i == 1)
+        GapDur = OnsetTimes(i);
+    else
+        GapDur = OnsetTimes(i) - (OnsetTimes(i-1) + Durs(i-1));
+    end
+    Output = [Output [zeros(1, (round(GapDur*Fs))) Stack{i}]];
+end
+EndGapDur = TotalDur - (OnsetTimes(end) + Durs(end));
+Output = [Output [zeros(1, (round(EndGapDur*Fs)))]];
+Output = Output + rand(size(Output))/1000;
+Output = Output/(max(Output)*1.1);
+
+if (strfind(PlotToggle, 'on'))
+    PlotSpectrogram_SongVar(Output, Fs);
+end
